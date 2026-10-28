@@ -28,13 +28,18 @@ import java.util.UUID
  * 再交给 `ResourceResolver` 去数据目录根上找。子目录里的文件它完全看不见。
  * Trime 自己的主题扫描（`ThemeFilesManager`）同理，只扫数据目录根。
  *
- * 所以「方案」「皮肤」只是**源**，[mirror] 会把它们摊平复制到「运行数据」。
+ * 所以「方案」「皮肤」只是**源**，默认模式下 [mirror] 会把它们摊平复制到「运行数据」。
  * 摊平规则：**剥掉包文件夹这一层**，再往下的结构原样保留——
  * `方案/某方案/dicts/a.dict.yaml` → `运行数据/dicts/a.dict.yaml`，
  * 这样包里的相对引用（`dicts/…`、`backgrounds/…`）不会断。
  *
+ * **方案包不用复制**：v16 起选中「方案/<包>/」里的包时，Rime 的 `user_data_dir`
+ * 直接指向包目录（见 [RimeProfileManager]），不再复制到方案库，也就没有双份空间；
+ * 摊平只发生在「默认（运行数据）」模式（散装文件）下。
+ *
  * 部署产物和学习数据不再跟方案源混在「运行数据」里：
- * - `staging_dir` 由 JNI 传给 librime，指向 [deployDir]
+ * - `staging_dir` 由 JNI 传给 librime：默认模式指向 [deployDir]，
+ *   直连方案包时指向 `部署/<包名>/`（编译产物按包分开，包目录保持纯源）
  * - `userdb_dir` 由 JNI 传给 librime，指向 [learnDir]
  * - `sync_dir` 写在 `installation.yaml` 里，指向 [syncDir]
  */
@@ -137,6 +142,8 @@ object RimeDataLayout {
     fun prepare() {
         ensureLayout()
         if (RimeProfileManager.isProfile()) {
+            // 直连/方案目录模式下也展开用户丢进来的 zip，随后 listPackages 就能看到新包
+            expandUserZips()
             val profile = RimeProfileManager.currentDir()
             installPrebuiltBins(profile, RimeProfileManager.stagingDir())
             ensureSyncDirConfigured(profile)
@@ -263,8 +270,11 @@ object RimeDataLayout {
 
     /** 把「方案」「皮肤」里的每个包都清一遍，保证包就是纯源。 */
     private fun sanitizePackages() {
+        // 正在被直连使用的包是 Rime 的工作目录（user.yaml / installation.yaml 是运行时文件），不能清
+        val active = RimeProfileManager.activeLinkedPackage()
         listOf(schemaDir, themeDir).forEach { dir ->
             dir.listFiles { f -> f.isDirectory && !f.name.startsWith(".") }?.forEach { pkg ->
+                if (pkg == active) return@forEach
                 runCatching { sanitizePackage(pkg) }
                     .onFailure { Timber.w(it, "清理包失败: %s", pkg.name) }
             }

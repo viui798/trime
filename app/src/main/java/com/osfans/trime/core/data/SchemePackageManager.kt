@@ -12,19 +12,23 @@ import java.io.File
  *
  * 用户导入多个方案包后，一次只想用其中一个包里的方案。这里负责：
  * 1. 扫描 `方案/<包>/`，读出包名（芝鹤音形、芝士虎整…）；
- * 2. 第一次选中某个包时，把包内容复制到 `方案库/<包>/`，作为独立 user_data_dir；
- * 3. 之后 Rime 只看到这个包里的 schema，`学习/` 仍然是全局共享。
+ * 2. 选中某个包时，Rime 的 `user_data_dir` **直接指向包目录**（零复制，
+ *    见 [RimeProfileManager]）；编译产物放 `部署/<包名>/`。
  *
- * 复制会占双份空间（用户已确认可接受）；包内容变化时按 mtime 重新复制。
+ * 包目录里会被 Rime 写入 `user.yaml` / `installation.yaml` 两个运行时小文件，
+ * 清理逻辑（[RimeDataLayout]）对当前选中的包放行。
  */
 data class SchemePackage(
     val dir: File,
     val profileName: String,
     val displayName: String,
-)
+) {
+    override fun toString(): String = displayName
+}
 
 object SchemePackageManager {
-    private const val MARKER = ".profile-source"
+    /** v15 复制方案留下的标记文件；迁移逻辑用它识别可回收的旧复制。 */
+    const val COPY_MARKER = ".profile-source"
 
     /** 列出 `方案/` 下所有至少含一个 schema 的包，按显示名排序。 */
     fun listPackages(): List<SchemePackage> =
@@ -44,29 +48,16 @@ object SchemePackageManager {
             .orEmpty()
 
     /**
-     * 确保 `方案库/<包>/` 存在并与 `方案/<包>/` 同步。
+     * 确保方案包可直接作为 user_data_dir 使用。
      *
-     * 只在包内容变化时重建；会跳过 `build/`（旧编译产物）、用户词典和其他平台文件，
-     * 保留 `.prebuilt/`，由 [RimeDataLayout.prepare] 在部署前放进 `build/`。
+     * v16 起不再复制包内容：包目录本身就是 Rime 的工作目录，这里只校验目录
+     * 仍然存在且带方案。返回包目录。
      */
     fun ensureProfile(pkg: SchemePackage): File {
-        val target = File(RimeProfileManager.root, pkg.profileName)
-        val marker = File(target, MARKER)
-        val stamp = sourceStamp(pkg.dir)
-        if (target.isDirectory &&
-            marker.isFile &&
-            marker.readText() == stamp &&
-            schemaIds(target).isNotEmpty()
-        ) {
-            return target
+        if (!pkg.dir.isDirectory || schemaIds(pkg.dir).isEmpty()) {
+            error("方案包不存在或没有方案：${pkg.dir.absolutePath}")
         }
-        if (target.exists() && !target.deleteRecursively()) {
-            error("无法清理旧方案目录：${target.absolutePath}")
-        }
-        target.mkdirs()
-        copyTree(pkg.dir, target)
-        marker.writeText(stamp)
-        return target
+        return pkg.dir
     }
 
     // ------------------------------------------------------------ 显示名
@@ -127,46 +118,12 @@ object SchemePackageManager {
             ?.trim('"', '\'')
     }
 
-    private fun schemaIds(dir: File): List<String> =
+    internal fun schemaIds(dir: File): List<String> =
         dir
             .listFiles { f -> f.isFile && f.name.endsWith(".schema.yaml") }
             ?.map { it.name.removeSuffix(".schema.yaml") }
             ?.sorted()
             .orEmpty()
-
-    // ------------------------------------------------------------ 复制
-
-    private fun sourceStamp(dir: File): String =
-        dir
-            .walkTopDown()
-            .filter { it.isFile }
-            .maxOfOrNull { it.lastModified() }
-            ?.toString()
-            ?: "0"
-
-    private fun copyTree(
-        src: File,
-        dst: File,
-    ) {
-        if (src.isDirectory) {
-            dst.mkdirs()
-            src.listFiles()?.forEach { child ->
-                if (!shouldSkip(child)) copyTree(child, File(dst, child.name))
-            }
-        } else {
-            dst.parentFile?.mkdirs()
-            src.copyTo(dst, overwrite = true)
-        }
-    }
-
-    private fun shouldSkip(file: File): Boolean {
-        val name = file.name
-        if (name == "build" || name == ".zips" || name == ".git" || name == "sync") return true
-        if (name == "user.yaml" || name == "installation.yaml" || name == ".DS_Store") return true
-        if (name.contains(".userdb")) return true
-        if (name.endsWith(".plist") || name.endsWith(".ico")) return true
-        return false
-    }
 
     private val schemaLine =
         Regex("""^\s*-\s*\{?\s*schema:\s*["']?([A-Za-z0-9_]+)""", RegexOption.MULTILINE)

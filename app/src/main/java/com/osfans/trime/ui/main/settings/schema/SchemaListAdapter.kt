@@ -49,6 +49,7 @@ open class SchemaListAdapter(
     ) : RecyclerView.ViewHolder(ui.root) {
         val checkBox = ui.checkBox
         val nameText = ui.nameText
+        val subtitleText = ui.subtitleText
     }
 
     override fun onCreateViewHolder(
@@ -65,10 +66,16 @@ open class SchemaListAdapter(
         item ?: return
         with(holder) {
             nameText.text = item.name
-            checkBox.isVisible = multiselect
-            checkBox.isChecked = selected.map(SchemaItem::id).contains(item.id)
+            subtitleText.text = item.id
+            // 勾选框常驻：勾着 = 已启用；取消勾选即从启用列表移除。
+            checkBox.isVisible = true
+            checkBox.isChecked = if (multiselect) selected.any { it.id == item.id } else true
             checkBox.setOnCheckedChangeListener { _, isChecked ->
-                select(item, isChecked)
+                if (multiselect) {
+                    select(item, isChecked)
+                } else if (!isChecked) {
+                    remove(item)
+                }
             }
             nameText.setOnClickListener {
                 checkBox.toggle()
@@ -140,7 +147,6 @@ open class SchemaListAdapter(
         item: SchemaItem,
     ) {
         listener?.onItemAdded(idx, item)
-        mainViewModel?.showToolbarEditButton()
     }
 
     @CallSuper
@@ -159,16 +165,14 @@ open class SchemaListAdapter(
     override fun addAll(collection: Collection<SchemaItem>, commitCallback: Runnable?) {
         super.addAll(collection, commitCallback)
         listener?.onItemAddedBatch(collection.toList())
-        mainViewModel?.showToolbarEditButton()
     }
 
     /** This also valid for [BaseQuickAdapter.remove] */
     @CallSuper
     override fun removeAt(position: Int, commitCallback: Runnable?) {
-        listener?.onItemRemoved(position, items[position])
+        // 先让 adapter 真正移除，再通知监听器；否则监听器里的 itemCount/标题还是旧值。
+        val item = items[position]
         super.removeAt(position, commitCallback)
-        if (items.isEmpty()) {
-            mainViewModel?.hideToolbarEditButton()
-        }
+        listener?.onItemRemoved(position, item)
     }
 }

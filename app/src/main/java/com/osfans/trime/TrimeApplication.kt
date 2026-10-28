@@ -17,6 +17,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import com.osfans.trime.core.data.RimeDataLayout
 import com.osfans.trime.daemon.RimeDaemon
 import com.osfans.trime.data.db.ClipboardHelper
 import com.osfans.trime.data.db.CollectionHelper
@@ -25,6 +26,7 @@ import com.osfans.trime.data.theme.ColorManager
 import com.osfans.trime.data.theme.ThemeManager
 import com.osfans.trime.receiver.RimeIntentReceiver
 import com.osfans.trime.ui.main.LogActivity
+import com.osfans.trime.data.stats.InputStats
 import com.osfans.trime.util.isNightMode
 import com.osfans.trime.worker.BackgroundSyncWork
 import kotlinx.coroutines.CoroutineName
@@ -132,6 +134,8 @@ class TrimeApplication : Application() {
             }
         }
         instance = this
+        // 芝版同文：保证 rime/方案、rime/皮肤 一进应用就存在，并完成老布局迁移
+        runCatching { RimeDataLayout.ensureLayout() }
         try {
             if (BuildConfig.DEBUG) {
                 Timber.plant(
@@ -182,6 +186,9 @@ class TrimeApplication : Application() {
             }
             ClipboardHelper.init(ctx)
             CollectionHelper.init(ctx)
+            InputStats.init(ctx)
+            // 芝版同文：剪贴板同步开关，装上就按 pref 起前台服务
+            com.osfans.trime.data.clipsync.ClipSync.init(this)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !isDirectBootMode) {
                 AppPrefs.defaultInstance().syncToDeviceEncryptedStorage()
                 ThemeManager.syncToDeviceEncryptedStorage()

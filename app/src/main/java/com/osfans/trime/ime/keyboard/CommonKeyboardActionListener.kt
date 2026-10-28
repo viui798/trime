@@ -26,6 +26,7 @@ import com.osfans.trime.ime.clipboard.ClipboardWindow
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ime.dialog.EnabledSchemaPickerDialog
 import com.osfans.trime.ime.switches.SwitchOptionWindow
+import com.osfans.trime.ime.voice.VoiceInputManager
 import com.osfans.trime.ime.symbol.LiquidWindow
 import com.osfans.trime.ime.window.BoardWindowManager
 import com.osfans.trime.ui.main.settings.ColorPickerDialog
@@ -322,6 +323,12 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
 
             private fun switchToVoiceInputMethod() {
                 val pkgName = prefs.general.preferredVoiceInput.getValue()
+                // 内置 JS 语音插件与外部语音输入法共用同一个「首选语音输入」设置，
+                // 用 js: 前缀区分：命中就走进程内识别，否则保持原来的切换输入法行为。
+                if (VoiceInputManager.isBuiltIn(pkgName)) {
+                    VoiceInputManager.toggle(service, pkgName)
+                    return
+                }
                 val voiceInputSubType = if (pkgName.isNotEmpty()) {
                     InputMethodUtils.voiceInputMethods().find {
                         it.first.packageName == pkgName
@@ -373,6 +380,11 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                 keyEventCode: Int,
                 metaState: Int,
             ) {
+                // 硬件语音键（蓝牙耳机等）与键盘长按空格走同一条内置语音入口。
+                if (keyEventCode == KeyEvent.KEYCODE_VOICE_ASSIST) {
+                    switchToVoiceInputMethod()
+                    return
+                }
                 // An uppercase letter key (e.g. from `{x: A}`) is passed to
                 // rime as the uppercase keysym with Shift, matching what a
                 // physical keyboard reports via the unicode char, so that

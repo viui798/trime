@@ -13,9 +13,15 @@ import com.osfans.trime.R
 import com.osfans.trime.ui.main.settings.AdvancedSettingsFragment
 import com.osfans.trime.ui.main.settings.CandidatesSettingsFragment
 import com.osfans.trime.ui.main.settings.ClipboardSettingsFragment
+import com.osfans.trime.ui.main.settings.ClipSyncSettingsFragment
 import com.osfans.trime.ui.main.settings.GeneralSettingsFragment
 import com.osfans.trime.ui.main.settings.KeyboardSettingsFragment
 import com.osfans.trime.ui.main.settings.ProfileSettingsFragment
+import com.osfans.trime.ui.main.settings.hub.AppearanceFragment
+import com.osfans.trime.ui.main.settings.hub.DataBackupFragment
+import com.osfans.trime.ui.main.settings.hub.InputCandidatesFragment
+import com.osfans.trime.ui.main.settings.hub.UtilitiesFragment
+import com.osfans.trime.ui.main.settings.phrase.PhraseFragment
 import com.osfans.trime.ui.main.settings.schema.SchemaListFragment
 import com.osfans.trime.ui.main.settings.theme.ThemeSettingsFragment
 import com.osfans.trime.ui.main.settings.userdict.UserDictionaryFragment
@@ -41,6 +47,18 @@ sealed class NavigationRoute : Parcelable {
     data object General : NavigationRoute()
 
     @Serializable
+    data object InputCandidates : NavigationRoute()
+
+    @Serializable
+    data object Appearance : NavigationRoute()
+
+    @Serializable
+    data object Utilities : NavigationRoute()
+
+    @Serializable
+    data object DataBackup : NavigationRoute()
+
+    @Serializable
     data object VirtualKeyboard : NavigationRoute()
 
     @Serializable
@@ -51,6 +69,12 @@ sealed class NavigationRoute : Parcelable {
 
     @Serializable
     data object Clipboard : NavigationRoute()
+
+    @Serializable
+    data object ClipSync : NavigationRoute()
+
+    @Serializable
+    data object Phrase : NavigationRoute()
 
     @Serializable
     data object Advanced : NavigationRoute()
@@ -82,6 +106,19 @@ sealed class NavigationRoute : Parcelable {
                 label = ctx.getString(R.string.profile)
             }
 
+            fragment<InputCandidatesFragment, InputCandidates> {
+                label = ctx.getString(R.string.input_and_candidates)
+            }
+            fragment<AppearanceFragment, Appearance> {
+                label = ctx.getString(R.string.appearance)
+            }
+            fragment<UtilitiesFragment, Utilities> {
+                label = ctx.getString(R.string.utilities)
+            }
+            fragment<DataBackupFragment, DataBackup> {
+                label = ctx.getString(R.string.data_and_backup)
+            }
+
             fragment<GeneralSettingsFragment, General> {
                 label = ctx.getString(R.string.general)
             }
@@ -96,6 +133,12 @@ sealed class NavigationRoute : Parcelable {
             }
             fragment<ClipboardSettingsFragment, Clipboard> {
                 label = ctx.getString(R.string.clipboard)
+            }
+            fragment<ClipSyncSettingsFragment, ClipSync> {
+                label = ctx.getString(R.string.clip_sync)
+            }
+            fragment<PhraseFragment, Phrase> {
+                label = ctx.getString(R.string.phrase_title)
             }
             fragment<AdvancedSettingsFragment, Advanced> {
                 label = ctx.getString(R.string.advanced)

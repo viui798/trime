@@ -4,7 +4,8 @@
 
 package com.osfans.trime.ime.dialog
 
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.Context
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.osfans.trime.R
@@ -24,8 +25,7 @@ object EnabledSchemaPickerDialog {
         val selectedIds = selecteds.map { it.id }
         val selectedSchemaId = rime.selectedSchemaId()
         val selectedIndex = selecteds.indexOfFirst { it.id == selectedSchemaId }
-        return AlertDialog
-            .Builder(context)
+        return MaterialAlertDialogBuilder(context)
             .apply {
                 setTitle(R.string.select_current_schema)
                 if (rime.isEmpty()) {

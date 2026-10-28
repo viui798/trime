@@ -11,12 +11,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/appBar"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@color/settings_surface">
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimary"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight" />
+        android:background="@color/settings_surface"
+        android:theme="@style/ThemeOverlay.AppCompat.Light"
+        app:navigationIconTint="@color/settings_on_surface"
+        app:titleTextAppearance="@style/TextAppearance.Trime.ToolbarTitle"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight"
+        app:subtitleTextColor="@color/settings_on_surface_variant"
+        app:titleTextColor="@color/settings_on_surface" />
 </com.google.android.material.appbar.AppBarLayout>

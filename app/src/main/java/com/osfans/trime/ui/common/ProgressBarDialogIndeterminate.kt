@@ -8,6 +8,7 @@ package com.osfans.trime.ui.common
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.osfans.trime.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -30,8 +31,7 @@ fun Context.ProgressBarDialogIndeterminate(
     @StringRes title: Int,
 ): AlertDialog.Builder {
     val androidStyles = AndroidStyles(this)
-    return AlertDialog
-        .Builder(this)
+    return MaterialAlertDialogBuilder(this)
         .setTitle(title)
         .setView(
             verticalLayout {

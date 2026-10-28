@@ -22,6 +22,8 @@ import splitties.views.dsl.constraintlayout.startOfParent
 import splitties.views.dsl.core.Ui
 import splitties.views.dsl.core.add
 import splitties.views.dsl.core.checkBox
+import splitties.views.dsl.core.lParams as coreLParams
+import splitties.views.dsl.core.verticalLayout
 import splitties.views.dsl.core.matchParent
 import splitties.views.dsl.core.textView
 import splitties.views.dsl.core.wrapContent
@@ -32,16 +34,24 @@ class SchemaListEntryUi(
     override val ctx: Context,
 ) : Ui {
     val checkBox = checkBox()
+
     val nameText =
         textView {
-            setPaddingDp(0, 16, 0, 16)
+            setPaddingDp(0, 12, 0, 0)
             textAppearance = ctx.resolveThemeAttribute(android.R.attr.textAppearanceListItem)
+        }
+
+    val subtitleText =
+        textView {
+            setPaddingDp(0, 0, 0, 12)
+            textSize = 12f
+            alpha = 0.6f
         }
 
     override val root: View =
         constraintLayout {
             layoutParams = ViewGroup.LayoutParams(matchParent, wrapContent)
-            backgroundColor = styledColor(android.R.attr.colorBackground)
+            backgroundColor = styledColor(com.google.android.material.R.attr.colorSurface)
             minHeight = styledDimenPxSize(android.R.attr.listPreferredItemHeightSmall)
 
             val paddingStart = styledDimenPxSize(android.R.attr.listPreferredItemPaddingStart)
@@ -55,8 +65,13 @@ class SchemaListEntryUi(
                 },
             )
 
+            val textContainer =
+                verticalLayout {
+                        add(nameText, coreLParams(matchParent, wrapContent))
+                    add(subtitleText, coreLParams(matchParent, wrapContent))
+                }
             add(
-                nameText,
+                textContainer,
                 lParams {
                     width = matchConstraints
                     height = wrapContent

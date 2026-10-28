@@ -10,6 +10,7 @@ import android.content.res.TypedArray
 import android.util.AttributeSet
 import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.preference.DialogPreference
 import com.osfans.trime.R
 import splitties.dimensions.dp
@@ -158,8 +159,7 @@ class DialogSeekBarPreference : DialogPreference {
                 },
             )
         }
-        AlertDialog
-            .Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(this@DialogSeekBarPreference.title)
             .setView(dialogView)
             .setPositiveButton(android.R.string.ok) { _, _ ->

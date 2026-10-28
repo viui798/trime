@@ -11,6 +11,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.SwitchPreference
 import com.osfans.trime.ui.main.settings.DialogSeekBarPreference
+import com.osfans.trime.ui.main.settings.MaterialListPreference
 import com.osfans.trime.ui.main.settings.EditTextIntPreference
 
 abstract class PreferenceDelegateUi<T : Preference>(
@@ -74,7 +75,7 @@ abstract class PreferenceDelegateUi<T : Preference>(
         val entryLabels: List<Int>,
         enableUiOn: (() -> Boolean)? = null,
     ) : PreferenceDelegateUi<ListPreference>(key, enableUiOn) {
-        override fun createUi(context: Context) = ListPreference(context).apply {
+        override fun createUi(context: Context): ListPreference = MaterialListPreference(context).apply {
             key = this@StringList.key
             isIconSpaceReserved = false
             isSingleLineTitle = false
@@ -96,7 +97,7 @@ abstract class PreferenceDelegateUi<T : Preference>(
         val entryLabels: ((Context) -> List<CharSequence>),
         enableUiOn: (() -> Boolean)? = null,
     ) : PreferenceDelegateUi<ListPreference>(key, enableUiOn) {
-        override fun createUi(context: Context) = ListPreference(context).apply {
+        override fun createUi(context: Context): ListPreference = MaterialListPreference(context).apply {
             key = this@UniversalStringList.key
             isIconSpaceReserved = false
             isSingleLineTitle = false

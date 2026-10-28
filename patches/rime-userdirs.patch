@@ -1,0 +1,94 @@
+diff --git a/src/rime/deployer.cc b/src/rime/deployer.cc
+index 92c52afd..80780c8e 100644
+--- a/src/rime/deployer.cc
++++ b/src/rime/deployer.cc
+@@ -17,6 +17,7 @@ Deployer::Deployer()
+       user_data_dir("."),
+       prebuilt_data_dir("build"),
+       staging_dir("build"),
++      userdb_dir("."),
+       sync_dir("sync"),
+       user_id("unknown"),
+       backup_config_files(true) {}
+diff --git a/src/rime/deployer.h b/src/rime/deployer.h
+index c13bc10f..e385e5bc 100644
+--- a/src/rime/deployer.h
++++ b/src/rime/deployer.h
+@@ -36,6 +36,7 @@ class Deployer : public Messenger {
+   path user_data_dir;
+   path prebuilt_data_dir;
+   path staging_dir;
++  path userdb_dir;
+   path sync_dir;
+   string user_id;
+   string distribution_name;
+diff --git a/src/rime/dict/user_db.h b/src/rime/dict/user_db.h
+index 6d1d8ae9..813bd590 100644
+--- a/src/rime/dict/user_db.h
++++ b/src/rime/dict/user_db.h
+@@ -9,8 +9,10 @@
+ 
+ #include <stdint.h>
+ #include <rime/component.h>
++#include <rime/deployer.h>
+ #include <rime/dict/db.h>
+ #include <rime/dict/db_utils.h>
++#include <rime/service.h>
+ 
+ namespace rime {
+ 
+@@ -102,7 +104,10 @@ class UserDbComponent : public UserDb::Component, protected DbComponentBase {
+  public:
+   using UserDbImpl = UserDbWrapper<BaseDb>;
+   Db* Create(const string& name) override {
+-    return new UserDbImpl(DbFilePath(name, extension()), name);
++    // Zhi Trime: user dictionaries live in their own directory (Deployer::userdb_dir)
++    // instead of the user data root, so that learning data can be managed separately.
++    const auto& userdb_dir = Service::instance().deployer().userdb_dir;
++    return new UserDbImpl(userdb_dir / (name + extension()), name);
+   }
+ 
+   string extension() const override;
+diff --git a/src/rime/lever/user_dict_manager.cc b/src/rime/lever/user_dict_manager.cc
+index 04874b6d..f1cbfc86 100644
+--- a/src/rime/lever/user_dict_manager.cc
++++ b/src/rime/lever/user_dict_manager.cc
+@@ -23,7 +23,8 @@ namespace rime {
+ UserDictManager::UserDictManager(Deployer* deployer)
+     : deployer_(deployer), user_db_component_(UserDb::Require("userdb")) {
+   if (deployer) {
+-    path_ = deployer->user_data_dir;
++    // Zhi Trime: user dictionaries are kept in Deployer::userdb_dir.
++    path_ = deployer->userdb_dir;
+   }
+ }
+ 
+diff --git a/src/rime/setup.cc b/src/rime/setup.cc
+index 4e644b0e..57f01f28 100644
+--- a/src/rime/setup.cc
++++ b/src/rime/setup.cc
+@@ -78,6 +78,10 @@ RIME_DLL void SetupDeployer(RimeTraits* traits) {
+     deployer.staging_dir = path(traits->staging_dir);
+   else
+     deployer.staging_dir = deployer.user_data_dir / "build";
++  if (RIME_PROVIDED(traits, userdb_dir))
++    deployer.userdb_dir = path(traits->userdb_dir);
++  else
++    deployer.userdb_dir = deployer.user_data_dir;
+ }
+ 
+ RIME_DLL void SetupLogging(const char* app_name,
+diff --git a/src/rime_api.h b/src/rime_api.h
+index 5b8985df..371d9eb9 100644
+--- a/src/rime_api.h
++++ b/src/rime_api.h
+@@ -114,6 +114,9 @@ typedef struct rime_traits_t {
+   const char* prebuilt_data_dir;
+   //! staging directory. defaults to ${user_data_dir}/build
+   const char* staging_dir;
++  // v1.7 (Zhi Trime)
++  //! user dictionary (userdb) directory. defaults to ${user_data_dir}
++  const char* userdb_dir;
+ } RimeTraits;
+ 
+ typedef struct {

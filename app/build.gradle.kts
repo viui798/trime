@@ -22,11 +22,11 @@ android {
     buildToolsVersion = "37.0.0"
 
     defaultConfig {
-        applicationId = "com.osfans.trime"
+        applicationId = "com.viui.zhitr"
         minSdk = 21
         targetSdk = 37
-        versionCode = 20261101
-        versionName = "3.3.13"
+        versionCode = 20261104
+        versionName = "3.3.13-zhi.4"
 
         multiDexEnabled = true
         buildConfigField("String", "BUILDER", "\"${project.builder}\"")
@@ -131,8 +131,11 @@ dependencies {
     ksp(project(":codegen"))
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.quickjs.kt)
+    implementation(libs.okhttp)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.appcompat)
+    implementation(libs.material)
     implementation(libs.androidx.autofill)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)

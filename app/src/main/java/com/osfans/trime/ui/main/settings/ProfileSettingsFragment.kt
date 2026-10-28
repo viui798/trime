@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.DocumentsContract
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.ListPreference
@@ -147,8 +148,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
     }
 
     private fun promptSelectAnotherDirectory() {
-        AlertDialog
-            .Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setMessage(R.string.select_another_directory_to_sync)
             .setPositiveButton(R.string.select_another_directory) { _, _ ->
                 // The current folder stays in place until the user picks another one.
@@ -159,8 +159,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
 
     private fun promptExternalSyncFolderSelection() {
         val ctx = requireContext()
-        AlertDialog
-            .Builder(ctx)
+        MaterialAlertDialogBuilder(ctx)
             .setMessage(R.string.external_sync_select_folder_message)
             .setPositiveButton(R.string.setup__select_data_path) { _, _ ->
                 pendingExternalSyncSetup = true
@@ -182,8 +181,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
         prefs.dataStorageMode.setValue(DataStorageMode.APP_STORAGE)
         updateStorageModeUi()
         updateDataPathSummary()
-        AlertDialog
-            .Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setMessage(R.string.external_sync_fallback_app_storage)
             .setPositiveButton(android.R.string.ok, null)
             .show()
@@ -199,7 +197,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                 isIconSpaceReserved = false
                 val storageModes = DataStorageMode.entries
                 addPreference(
-                    ListPreference(ctx).apply {
+                    MaterialListPreference(ctx).apply {
                         dataStorageModePreference = this
                         key = AppPrefs.Profile.DATA_STORAGE_MODE
                         isIconSpaceReserved = false
@@ -207,6 +205,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                         entries = storageModes.map { getString(it.stringRes) }.toTypedArray()
                         entryValues = storageModes.map { it.name }.toTypedArray()
                         value = dataStorageMode.name
+                        setDefaultValue(DataStorageMode.APP_STORAGE.name)
                         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
                         setOnPreferenceChangeListener { _, newValue ->
                             val oldMode = prefs.dataStorageMode.getValue()
@@ -314,7 +313,8 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                 isIconSpaceReserved = false
                 addPreference(
                     title = getString(R.string.browse_app_data_dir),
-                    summary = DataManager.userDataDir.absolutePath,
+                    // 文件浏览器打开的是应用 external files 根目录，rime/ 就在里面。
+                    summary = DataManager.rimeRootDir.absolutePath,
                 ) {
                     runCatching {
                         ctx.startActivity(buildDocumentsProviderIntent())
@@ -325,8 +325,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                 addPreference(R.string.reset, R.string.reset_hint) {
                     val items = ctx.assets.list("shared") ?: return@addPreference
                     val checked = BooleanArray(items.size) { false }
-                    AlertDialog
-                        .Builder(ctx)
+                    MaterialAlertDialogBuilder(ctx)
                         .setTitle(R.string.reset)
                         .setMultiChoiceItems(items, checked) { _, id, isChecked ->
                             checked[id] = isChecked

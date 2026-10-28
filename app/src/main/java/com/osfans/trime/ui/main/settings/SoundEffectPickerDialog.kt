@@ -4,7 +4,8 @@
 
 package com.osfans.trime.ui.main.settings
 
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.Context
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.osfans.trime.R
@@ -19,8 +20,7 @@ object SoundEffectPickerDialog {
         val all = SoundEffectManager.getAllSoundEffects().map { it.name }
         val current = SoundEffectManager.activeSoundEffect?.name ?: ""
         val currentIndex = all.indexOfFirst { it == current }
-        return AlertDialog
-            .Builder(context)
+        return MaterialAlertDialogBuilder(context)
             .apply {
                 setTitle(R.string.custom_sound_effect_name)
                 if (all.isEmpty()) {

@@ -6,7 +6,10 @@
 package com.osfans.trime.util
 
 import android.content.Context
+import android.widget.EditText
 import androidx.annotation.DrawableRes
+import androidx.core.widget.doAfterTextChanged
+import com.osfans.trime.R
 import androidx.annotation.StringRes
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -48,10 +51,32 @@ fun Preference.setup(
         )
     }
     onClick?.also {
+        // 中州鹅式版式：可点进去的行才带右侧箭头
+        setLayoutResource(R.layout.preference_settings_link_row)
         setOnPreferenceClickListener { _ ->
             it.invoke()
             true
         }
+    }
+}
+
+/** 主页顶部的搜索框：只负责把输入回传，过滤逻辑由页面自己做。 */
+class SearchPreference(
+    context: Context,
+    private val onQuery: (String) -> Unit,
+) : Preference(context) {
+    init {
+        isPersistent = false
+        isIconSpaceReserved = false
+        isSelectable = false
+        layoutResource = R.layout.preference_settings_search
+    }
+
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+        holder.itemView
+            .findViewById<EditText>(R.id.settings_search_input)
+            ?.doAfterTextChanged { onQuery(it?.toString().orEmpty()) }
     }
 }
 

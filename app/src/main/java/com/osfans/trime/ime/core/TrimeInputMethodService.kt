@@ -49,6 +49,7 @@ import com.osfans.trime.data.theme.ThemeManager
 import com.osfans.trime.data.theme.ThemeScope
 import com.osfans.trime.ime.composition.CandidatesView
 import com.osfans.trime.ime.keyboard.InputFeedbackManager
+import com.osfans.trime.ime.voice.VoiceInputManager
 import com.osfans.trime.receiver.RimeIntentReceiver
 import com.osfans.trime.util.any
 import com.osfans.trime.util.findSectionFrom
@@ -331,6 +332,8 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     }
 
     override fun onDestroy() {
+        VoiceInputManager.onServiceDestroyed(this)
+        com.osfans.trime.data.stats.InputStats.endSession()
         InputFeedbackManager.destroy()
         inputView = null
         recreateInputViewPrefs.forEach {
@@ -569,6 +572,8 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     ) {
         Timber.d("onStartInputView: restarting=$restarting")
         InputFeedbackManager.startInput()
+        // 剪贴板同步服务若因后台启动受限没起来，输入框唤起时补一次
+        com.osfans.trime.data.clipsync.ClipSync.ensureStarted(this)
         postRimeJob {
             updateRimeOption(this)
         }
@@ -591,6 +596,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
 
     override fun onFinishInputView(finishingInput: Boolean) {
         Timber.d("onFinishInputView: finishingInput=$finishingInput")
+        VoiceInputManager.cancel()
         decorLocationUpdated = false
         inputView?.dismissCandidateActionMenu()
         candidatesView?.dismissCandidateActionMenu()
@@ -602,6 +608,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         composingText = ""
         postRimeJob {
             clearComposition()
+            com.osfans.trime.data.stats.InputStats.endSession()
         }
         InputFeedbackManager.finishInput()
     }

@@ -20,39 +20,51 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/app_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:src="@mipmap/ic_app_icon"
+        <FrameLayout
+            android:id="@+id/app_icon_frame"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:background="@drawable/bg_setup_icon"
             app:layout_constraintBottom_toTopOf="@id/step_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_chainStyle="packed" />
+            app:layout_constraintVertical_chainStyle="packed">
+
+            <ImageView
+                android:id="@+id/app_icon"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/step_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:layout_marginHorizontal="20dp"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="28dp"
             android:gravity="center"
-            android:textSize="24sp"
+            android:textColor="@color/settings_on_surface"
+            android:textSize="28sp"
+            android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@id/hint_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/app_icon"
-            tools:text="Step text here ..." />
+            app:layout_constraintTop_toBottomOf="@id/app_icon_frame"
+            tools:text="启用输入法" />
 
         <TextView
             android:id="@+id/hint_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginTop="12dp"
             android:gravity="center"
-            android:textSize="16sp"
+            android:lineSpacingExtra="4dp"
+            android:textColor="@color/settings_on_surface_variant"
+            android:textSize="15sp"
             app:layout_constraintBottom_toTopOf="@id/storage_mode_options"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -85,6 +97,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:text="@string/sync_from_external_desc"
+                android:textColor="@color/settings_on_surface_variant"
                 android:textSize="14sp" />
 
             <RadioButton
@@ -101,28 +114,32 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:text="@string/use_app_specific_storage_desc"
+                android:textColor="@color/settings_on_surface_variant"
                 android:textSize="14sp" />
         </RadioGroup>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/action_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="28dp"
+            android:paddingStart="32dp"
+            android:paddingEnd="32dp"
+            app:cornerRadius="26dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/storage_mode_options"
-            tools:text="Action" />
+            tools:text="启用输入法" />
 
         <ImageView
             android:id="@+id/done_icon"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="28dp"
             android:layout_marginEnd="8dp"
             android:src="@drawable/ic_baseline_check_circle_24"
-            android:tint="?android:attr/colorAccent"
+            android:tint="@color/colorPrimary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/done_text"
             app:layout_constraintHorizontal_chainStyle="packed"
@@ -135,7 +152,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/done"
-            android:textColor="?android:attr/colorAccent"
+            android:textColor="@color/colorPrimary"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@id/done_icon"

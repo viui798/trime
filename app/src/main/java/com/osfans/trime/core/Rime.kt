@@ -5,10 +5,14 @@
 
 package com.osfans.trime.core
 
+import android.system.Os
 import com.osfans.trime.BuildConfig
 import com.osfans.trime.core.data.DataManager
+import com.osfans.trime.core.data.RimeDataLayout
+import com.osfans.trime.core.data.RimeProfileManager
 import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.data.opencc.OpenCCDictManager
+import com.osfans.trime.data.stats.InputStats
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.ime.core.InlinePreeditMode
 import kotlinx.coroutines.CompletableDeferred
@@ -221,6 +225,7 @@ class Rime :
     override suspend fun moveCursorPos(position: Int) = withRimeContext {
         setRimeCaretPos(position)
         emitResponse()
+        Unit
     }
 
     override suspend fun availableSchemata(): Array<SchemaItem> = withRimeContext { getAvailableRimeSchemaList() }
@@ -244,6 +249,7 @@ class Rime :
     override suspend fun clearComposition() = withRimeContext {
         clearRimeComposition()
         emitResponse()
+        Unit
     }
 
     override suspend fun getRawInput(): String = withRimeContext {
@@ -275,18 +281,31 @@ class Rime :
     override suspend fun setCandidatePagingMode(enabled: Boolean) = withRimeContext {
         pagingMode = enabled
         emitResponse()
+        Unit
     }
 
     private fun startRime(fullCheck: Boolean) {
         DataManager.sync()
+        // 先把「方案」「皮肤」摊平到「运行数据」，Rime 才看得见；顺带处理老布局迁移
+        RimeDataLayout.prepare()
         UserDataManager.ensureDefaultCustomConfig()
+        InputStats.restoreFromRimeIfEmpty()
         val sharedDataDir = DataManager.sharedDataDir.absolutePath
-        val userDataDir = UserDataManager.userDataDir.absolutePath
+        val userDataDir = RimeProfileManager.currentDir().absolutePath
+        val stagingDir = RimeProfileManager.stagingDir().absolutePath
+        // 部署产物与学习数据各走各的目录；JNI 从环境变量读进 RimeTraits。
+        // 必须放在 startupRime 之前，setup() 只在第一次读这些值。
+        runCatching {
+            Os.setenv("RIME_STAGING_DIR", stagingDir, true)
+            Os.setenv("RIME_USERDB_DIR", DataManager.learnDir.absolutePath, true)
+        }.onFailure { Timber.w(it, "设置 Rime 目录环境变量失败") }
         Timber.d(
             """
             Starting rime with:
             sharedDataDir: $sharedDataDir
             userDataDir: $userDataDir
+            deployDir: $stagingDir
+            learnDir: ${DataManager.learnDir.absolutePath}
             fullCheck: $fullCheck
             """.trimIndent(),
         )
@@ -299,15 +318,19 @@ class Rime :
     }
 
     private fun processKeyInner(value: Int, modifiers: Int, isVirtual: Boolean): Boolean {
-        lastAsciiTipsText = asciiTipsText(getRimeStatus())
+        val status = getRimeStatus()
+        lastAsciiTipsText = asciiTipsText(status)
+        val rawInputBefore = getRimeRawInput()
+        InputStats.onKeyDown(status.schemaId)
         val handled = processRimeKey(value, modifiers)
-        emitResponse()
+        val committed = emitResponse(rawInputBefore = rawInputBefore)
         if (!handled) {
             handleRimeMessage(
                 10, // RimeMessage.MessageType.Key,
                 arrayOf(value, modifiers, isVirtual),
             )
         }
+        InputStats.onKeyProcessed(getRimeRawInput(), committed)
         return handled
     }
 
@@ -320,9 +343,10 @@ class Rime :
         else -> ""
     }
 
-    private fun emitResponse(commit: CommitProto? = null) {
+    private fun emitResponse(commit: CommitProto? = null, rawInputBefore: String? = null): Boolean {
         val response = getRimeResponse(pagingMode)
-        handleRimeMessage(4, arrayOf(commit ?: response.commit))
+        val commitProto = commit ?: response.commit
+        handleRimeMessage(4, arrayOf(commitProto))
         handlePreedit(response.composition)
         if (response.composition.length <= 0 && lastAsciiTipsText != asciiTipsText(response.status)) {
             showAsciiSwitchTips(response.status)
@@ -332,6 +356,16 @@ class Rime :
             is Candidates.Bulk -> handleRimeMessage(9, arrayOf(candidates))
         }
         handleRimeMessage(8, arrayOf(response.status))
+        val commitText = commitProto.text
+        if (!commitText.isNullOrEmpty()) {
+            InputStats.onCommit(
+                commitText,
+                rawInputBefore,
+                response.status.schemaId,
+                response.status.schemaName,
+            )
+        }
+        return !commitText.isNullOrEmpty()
     }
 
     private fun handlePreedit(composition: CompositionProto) {

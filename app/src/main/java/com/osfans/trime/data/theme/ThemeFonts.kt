@@ -10,7 +10,6 @@ import android.graphics.fonts.Font
 import android.graphics.fonts.FontFamily
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.osfans.trime.core.data.DataManager
 import timber.log.Timber
 import java.io.File
 
@@ -24,8 +23,6 @@ class ThemeFonts(private val theme: Theme) {
     )
 
     private data class TypefaceKey(val files: List<FileState>)
-
-    private val fontDir get() = File(DataManager.userDataDir, "fonts")
 
     private val fontFamilyCache =
         object : androidx.collection.LruCache<FileState, FontFamily>(16) {}
@@ -68,8 +65,8 @@ class ThemeFonts(private val theme: Theme) {
         get() = getTypeface(theme.toolBar.buttonFont.toList())
 
     private fun makeFileStateList(names: List<String>): List<FileState> = names.asSequence()
-        .map { File(fontDir, it) }
-        .filter { it.isFile }
+        // 皮肤包里的 fonts 直读，其次才是「运行数据」和 shared。
+        .mapNotNull { ThemeAssets.resolveFont(it) }
         .map { FileState(it.path, it.lastModified(), it.length()) }
         .toList()
 

@@ -8,6 +8,7 @@ package com.osfans.trime.ime.keyboard
 import android.content.Context
 import android.view.KeyEvent
 import com.osfans.trime.data.prefs.AppPrefs
+import com.osfans.trime.data.stats.InputStats
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.model.TextKeyboard
 import com.osfans.trime.data.theme.model.orAbsent
@@ -314,7 +315,27 @@ class Keyboard(
                 if (key.row == 0) key.edgeFlags = key.edgeFlags or EDGE_TOP
                 if (key.row == row) key.edgeFlags = key.edgeFlags or EDGE_BOTTOM
             }
+
+            recordHeatLayout()
         }
+    }
+
+    /** 键盘构建完成时记录行列结构，统计页的热力图按同一套几何渲染。 */
+    fun recordHeatLayout() {
+        if (mKeys.isEmpty() || allowedWidth <= 0) return
+        val density = context.resources.displayMetrics.density
+        InputStats.recordLayoutGeometry(
+            mKeys.groupBy { it.row }.toSortedMap().values.map { rowKeys ->
+                rowKeys.sortedBy { it.x }.map {
+                    InputStats.HeatKey(
+                        it.heatLabel(),
+                        it.x.toFloat() / allowedWidth,
+                        it.width.toFloat() / allowedWidth,
+                        it.height / density,
+                    )
+                }
+            },
+        )
     }
 
     fun setModifierKey(

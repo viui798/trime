@@ -66,4 +66,20 @@ abstract class ProgressFragment : Fragment() {
             newView.animate().setDuration(150L).alphaBy(1f)
         }
     }
+
+    /**
+     * 重新执行一遍 [initialize] 并替换内容视图。
+     *
+     * 用于「页面内改了数据，需要重读一次」的场景（例如导入新方案后刷新列表）。
+     * 注意：detach/attach 同一个 Fragment 不会重新触发 [onViewCreated]，
+     * 所以不能靠重挂载来刷新。
+     */
+    protected fun reload() {
+        if (!isInitialized) return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val newView = initialize()
+            root.removeAllViews()
+            root.addView(newView)
+        }
+    }
 }

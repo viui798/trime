@@ -7,6 +7,36 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <resources>
-    <color name="colorAccent">#0A7CB2</color>
-    <color name="colorAccentDark">#28566d</color>
+    <color name="colorAccent">#7FBC9C</color>
+    <color name="colorAccentDark">#4E7D66</color>
+    <color name="stats_hero_start">#24332C</color>
+    <color name="stats_hero_end">#4E7D66</color>
+    <color name="stats_surface">#141815</color>
+    <color name="stats_surface_variant">#252B27</color>
+    <color name="stats_primary_container">#2C4A3A</color>
+    <color name="stats_secondary_container">#2A3530</color>
+    <color name="stats_surface_container_lowest">#0F1210</color>
+    <color name="stats_surface_container_low">#1A1F1C</color>
+    <color name="stats_surface_container">#1E2421</color>
+    <color name="stats_surface_container_high">#252B27</color>
+    <color name="stats_surface_container_highest">#2B332E</color>
+
+    <color name="settings_category_title">#7FBC9C</color>
+
+    <!-- 设置页 Material3 表面色（夜间） -->
+    <color name="settings_surface">#131714</color>
+    <color name="settings_surface_variant">#242B26</color>
+    <color name="settings_on_surface">#E3EAE4</color>
+    <color name="settings_on_surface_variant">#B6C1B8</color>
+    <color name="settings_outline">#7A857C</color>
+    <color name="settings_outline_variant">#3A443D</color>
+    <color name="settings_primary_container">#2C4A3A</color>
+    <color name="settings_on_primary_container">#D7E6DC</color>
+    <color name="settings_secondary_container">#2A3A30</color>
+    <color name="settings_on_secondary_container">#D7E6DC</color>
+    <color name="settings_surface_container_lowest">#0E120F</color>
+    <color name="settings_surface_container_low">#171C18</color>
+    <color name="settings_surface_container">#1B201C</color>
+    <color name="settings_surface_container_high">#202622</color>
+    <color name="settings_surface_container_highest">#252C27</color>
 </resources>

@@ -42,10 +42,15 @@ class Rime {
     const char* userDir = getenv("RIME_USER_DATA_DIR");
     const char* sharedDir = getenv("RIME_SHARED_DATA_DIR");
     const char* versionName = getenv("RIME_DISTRIBUTION_VERSION");
+    // Zhi Trime: deployment artifacts and learning data live in their own dirs.
+    const char* stagingDir = getenv("RIME_STAGING_DIR");
+    const char* userdbDir = getenv("RIME_USERDB_DIR");
 
     RIME_STRUCT(RimeTraits, trime_traits)
     trime_traits.shared_data_dir = sharedDir;
     trime_traits.user_data_dir = userDir;
+    trime_traits.staging_dir = stagingDir;
+    trime_traits.userdb_dir = userdbDir;
     trime_traits.log_dir = "";  // set empty log_dir to log to logcat only
     trime_traits.app_name = "rime.trime";
     trime_traits.distribution_name = "Trime";

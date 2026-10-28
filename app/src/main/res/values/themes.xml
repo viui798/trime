@@ -7,12 +7,145 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <resources>
-    <style name="Theme.TrimeAppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <!-- 芝版全局界面：Material3 + 墨绿品牌色（设置页版式借鉴中州鹅） -->
+    <style name="Theme.TrimeAppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">@color/settings_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/settings_on_primary_container</item>
+        <item name="colorSecondary">@color/colorAccentDark</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondaryContainer">@color/settings_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/settings_on_secondary_container</item>
+        <item name="colorTertiary">@color/colorAccent</item>
+        <item name="colorSurface">@color/settings_surface</item>
+        <item name="colorOnSurface">@color/settings_on_surface</item>
+        <item name="colorSurfaceVariant">@color/settings_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/settings_on_surface_variant</item>
+        <item name="colorOutline">@color/settings_outline</item>
+        <item name="colorOutlineVariant">@color/settings_outline_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/settings_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/settings_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/settings_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/settings_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/settings_surface_container_highest</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:colorAccent" >@color/colorAccent</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/settings_surface</item>
+        <item name="android:statusBarColor">@color/settings_surface</item>
+        <item name="android:navigationBarColor">@color/settings_surface</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="preferenceTheme">@style/ThemeOverlay.Trime.Preference</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Trime.AlertDialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Trime.AlertDialog</item>
+    </style>
+
+    <!-- 所有悬浮对话框统一走 Material3：28dp 大圆角、跟随主题色 -->
+    <style name="ThemeOverlay.Trime.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Trime.Dialog</item>
+    </style>
+
+    <style name="ShapeAppearance.Trime.Dialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <!-- 设置项统一走 Material 行版式：56dp 图标位、16dp 上下留白、无分隔线 -->
+    <style name="ThemeOverlay.Trime.Preference" parent="PreferenceThemeOverlay">
+        <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.Trime.CategoryTitle</item>
+        <item name="preferenceCategoryTitleTextColor">@color/settings_category_title</item>
+        <item name="preferenceFragmentCompatStyle">@style/PreferenceFragment.Trime</item>
+        <item name="preferenceStyle">@style/Preference.Trime.Row</item>
+        <item name="switchPreferenceStyle">@style/Preference.Trime.Switch</item>
+        <item name="switchPreferenceCompatStyle">@style/Preference.Trime.SwitchCompat</item>
+        <item name="checkBoxPreferenceStyle">@style/Preference.Trime.CheckBox</item>
+        <item name="editTextPreferenceStyle">@style/Preference.Trime.EditText</item>
+        <item name="dialogPreferenceStyle">@style/Preference.Trime.Dialog</item>
+    </style>
+
+    <style name="TextAppearance.Trime.ToolbarTitle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/settings_on_surface</item>
+    </style>
+
+    <style name="TextAppearance.Trime.CategoryTitle" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/settings_category_title</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <style name="PreferenceFragment.Trime" parent="PreferenceFragment.Material">
+        <item name="android:divider">@null</item>
+        <item name="allowDividerAfterLastItem">false</item>
+    </style>
+
+    <!-- 设置行：64dp、24dp 图标、16sp 标题 / 13sp 摘要，行内 16dp 留白 -->
+    <style name="Preference.Trime.Row" parent="Preference.Material">
+        <item name="android:layout">@layout/preference_settings_row</item>
+    </style>
+
+    <style name="Preference.Trime.Switch" parent="Preference.SwitchPreference.Material">
+        <item name="android:layout">@layout/preference_settings_row</item>
+    </style>
+
+    <style name="Preference.Trime.SwitchCompat" parent="Preference.SwitchPreferenceCompat.Material">
+        <item name="android:layout">@layout/preference_settings_row</item>
+    </style>
+
+    <style name="Preference.Trime.CheckBox" parent="Preference.CheckBoxPreference.Material">
+        <item name="android:layout">@layout/preference_settings_row</item>
+    </style>
+
+    <style name="Preference.Trime.EditText" parent="Preference.DialogPreference.EditTextPreference.Material">
+        <item name="android:layout">@layout/preference_settings_row</item>
+    </style>
+
+    <style name="Preference.Trime.Dialog" parent="Preference.DialogPreference.Material">
+        <item name="android:layout">@layout/preference_settings_row</item>
+    </style>
+
+    <!-- 输入统计页专用：Material3 组件（Chip / 分段按钮 / 进度条）只在这一页生效 -->
+    <style name="Theme.Trime.Stats" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">@color/stats_primary_container</item>
+        <item name="colorOnPrimaryContainer">#12211A</item>
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorSecondaryContainer">@color/stats_secondary_container</item>
+        <item name="colorOnSecondaryContainer">#1B2A21</item>
+        <item name="colorTertiary">@color/colorAccentDark</item>
+        <item name="colorSurface">@color/stats_surface</item>
+        <item name="colorOnSurface">#1C2420</item>
+        <item name="colorSurfaceVariant">@color/stats_surface_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/stats_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/stats_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/stats_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/stats_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/stats_surface_container_highest</item>
+        <item name="colorOnSurfaceVariant">#4B554E</item>
+        <item name="colorOutline">#8A948C</item>
+        <item name="colorOutlineVariant">#C9D2CA</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="android:statusBarColor">@color/stats_surface</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/stats_surface</item>
     </style>
 
     <style name="Theme.DialogTheme" parent="@android:style/Theme.DeviceDefault.Light.Dialog" />
+
+    <!-- 录音权限代理页：界面全透明，只负责弹系统授权框 -->
+    <style name="Theme.Trime.Transparent" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>

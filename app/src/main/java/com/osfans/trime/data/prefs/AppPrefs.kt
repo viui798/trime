@@ -14,6 +14,7 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.osfans.trime.R
 import com.osfans.trime.core.data.DataStorageMode
+import com.osfans.trime.data.voice.JsVoiceProviders
 import com.osfans.trime.ime.candidates.compact.CompactCandidateMode
 import com.osfans.trime.ime.candidates.popup.PopupCandidatesLayout
 import com.osfans.trime.ime.candidates.popup.PopupCandidatesMode
@@ -49,6 +50,7 @@ class AppPrefs(
     val keyboard = Keyboard(shared).register()
     val candidates = Candidates(shared).register()
     val clipboard = Clipboard(shared).register()
+    val clipSync = ClipSync(shared).register()
     val advanced = Advanced(shared).register()
 
     @Keep
@@ -108,10 +110,14 @@ class AppPrefs(
         val preferredVoiceInput = list(
             R.string.preferred_voice_input,
             PREFERRED_VOICE_INPUT,
-            "",
-            { InputMethodUtils.voiceInputMethods().map { it.first.packageName } },
+            JsVoiceProviders.QWEN_ASR_ID,
+            {
+                JsVoiceProviders.all().map { it.id } +
+                    InputMethodUtils.voiceInputMethods().map { it.first.packageName }
+            },
             { ctx ->
-                InputMethodUtils.voiceInputMethods().map { it.first.loadLabel(ctx.packageManager) }
+                JsVoiceProviders.all().map { it.label } +
+                    InputMethodUtils.voiceInputMethods().map { it.first.loadLabel(ctx.packageManager) }
             },
         )
     }
@@ -210,7 +216,7 @@ class AppPrefs(
             "",
         ) { soundOnKeyPress.getValue() && useCustomSoundEffect.getValue() }
 
-        val vibrateOnKeyPress = switch(R.string.vibrate_on_key_press, VIBRATE_ON_KEY_PRESS, false)
+        val vibrateOnKeyPress = switch(R.string.vibrate_on_key_press, VIBRATE_ON_KEY_PRESS, true)
         val vibrateOnKeyRelease = switch(
             R.string.vibrate_on_key_release,
             VIBRATE_ON_KEY_RELEASE,
@@ -373,9 +379,15 @@ class AppPrefs(
             const val PERIODIC_BACKGROUND_SYNC_INTERVAL = "periodic_background_sync_interval"
             const val LAST_BACKGROUND_SYNC_STATUS = "last_background_sync_status"
             const val LAST_BACKGROUND_SYNC_TIME = "last_background_sync_time"
+
+            /** 芝版同文：当前 Rime 方案目录名；空字符串 = 旧版「运行数据」。 */
+            const val RIME_PROFILE = "profile_rime_profile"
         }
 
-        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.EXTERNAL_SYNC)
+        // 芝版同文：默认用应用专属存储。上游默认「从外部存储同步」，但新装时还没挑目录，
+        // 会让 isStorageAvailable() 返回 false、Rime 直接不启动，方案页无限转圈。
+        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.APP_STORAGE)
+        val rimeProfile = string(RIME_PROFILE, "")
         val externalRimeTreeUri = string(EXTERNAL_RIME_TREE_URI, "")
         val periodicBackgroundSync = bool(PERIODIC_BACKGROUND_SYNC, false)
         val periodicBackgroundSyncInterval = int(PERIODIC_BACKGROUND_SYNC_INTERVAL, 30)
@@ -431,6 +443,87 @@ class AppPrefs(
             CLIPBOARD_RETURN_AFTER_PASTE,
             true,
         ) { clipboardListening.getValue() }
+    }
+
+    /**
+     * 芝版同文：跨设备剪贴板同步（SyncClipboard 协议，移植自中州鹅 clipboardsync）。
+     * 服务器地址按 SyncClipboard 惯例填到能拼出 `<base>/SyncClipboard.json` 为止。
+     */
+    class ClipSync(
+        shared: SharedPreferences,
+    ) : PreferenceDelegateOwner(shared, R.string.clip_sync) {
+        companion object {
+            const val ENABLED = "clip_sync_enabled"
+            const val SERVER_TYPE = "clip_sync_server_type"
+            const val SERVER_ADDRESS = "clip_sync_server_address"
+            const val USERNAME = "clip_sync_username"
+            const val PASSWORD = "clip_sync_password"
+            const val INTERVAL = "clip_sync_interval"
+            const val FILTER_ENABLED = "clip_sync_filter_enabled"
+            const val FILTER_EXTENSIONS = "clip_sync_filter_extensions"
+            const val FILTER_MAX_FILE_MB = "clip_sync_filter_max_file_mb"
+            const val SCREENSHOT_SYNC = "clip_sync_screenshot"
+            const val STORAGE_URI = "clip_sync_storage_uri"
+            const val HANDLED_SCREENSHOTS = "clip_sync_handled_screenshots"
+        }
+
+        val enabled = switch(R.string.clip_sync_enabled, ENABLED, false, R.string.clip_sync_enabled_hint)
+        val serverType =
+            list(
+                R.string.clip_sync_server,
+                SERVER_TYPE,
+                "syncclipboard",
+                { listOf("syncclipboard") },
+                { ctx -> listOf<CharSequence>("SyncClipboard") },
+            ) { enabled.getValue() }
+        val serverAddress = editText(
+            R.string.clip_sync_server_address,
+            SERVER_ADDRESS,
+            "",
+            R.string.clip_sync_server_address_hint,
+        ) { enabled.getValue() }
+        val username = editText(R.string.clip_sync_username, USERNAME, "") { enabled.getValue() }
+        val password = editText(R.string.clip_sync_password, PASSWORD, "") { enabled.getValue() }
+        val interval = int(
+            R.string.clip_sync_interval,
+            INTERVAL,
+            3,
+            min = 1,
+            max = 60,
+            unit = "s",
+        ) { enabled.getValue() }
+
+        /** 接收过滤：屏蔽扩展名 + 文件大小上限；都不配 = 不过滤任何接收内容。 */
+        val filterEnabled = switch(
+            R.string.clip_sync_filter_enable,
+            FILTER_ENABLED,
+            false,
+        ) { enabled.getValue() }
+        val filterExtensions = editText(
+            R.string.clip_sync_filter_extensions,
+            FILTER_EXTENSIONS,
+            "",
+            R.string.clip_sync_filter_extensions_hint,
+        ) { enabled.getValue() && filterEnabled.getValue() }
+        val filterMaxFileMb = int(
+            R.string.clip_sync_filter_max_file,
+            FILTER_MAX_FILE_MB,
+            0,
+            min = 0,
+            max = 4096,
+            unit = "MB",
+        ) { enabled.getValue() && filterEnabled.getValue() }
+
+        /** 截屏保存后自动把图片放进系统剪贴板并上传（需要图片读取权限）。 */
+        val screenshotSync = switch(
+            R.string.clip_sync_screenshot,
+            SCREENSHOT_SYNC,
+            false,
+            R.string.clip_sync_screenshot_hint,
+        ) { enabled.getValue() }
+
+        /** 存储位置：拉下来的文件/图片放哪（SAF 目录；空 = 应用内目录）。 */
+        val storageUri = string(STORAGE_URI, "")
     }
 
     class Advanced(

@@ -7,11 +7,66 @@ SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 <resources>
-    <style name="Theme.TrimeAppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="Theme.TrimeAppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">@color/settings_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/settings_on_primary_container</item>
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorOnSecondary">#0F1A13</item>
+        <item name="colorSecondaryContainer">@color/settings_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/settings_on_secondary_container</item>
+        <item name="colorTertiary">@color/colorAccentDark</item>
+        <item name="colorSurface">@color/settings_surface</item>
+        <item name="colorOnSurface">@color/settings_on_surface</item>
+        <item name="colorSurfaceVariant">@color/settings_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/settings_on_surface_variant</item>
+        <item name="colorOutline">@color/settings_outline</item>
+        <item name="colorOutlineVariant">@color/settings_outline_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/settings_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/settings_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/settings_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/settings_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/settings_surface_container_highest</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:colorAccent" >@color/colorAccent</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/settings_surface</item>
+        <item name="android:statusBarColor">@color/settings_surface</item>
+        <item name="android:navigationBarColor">@color/settings_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="preferenceTheme">@style/ThemeOverlay.Trime.Preference</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Trime.AlertDialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Trime.AlertDialog</item>
+    </style>
+
+    <style name="Theme.Trime.Stats" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorAccent</item>
+        <item name="colorOnPrimary">#0F1A13</item>
+        <item name="colorPrimaryContainer">@color/stats_primary_container</item>
+        <item name="colorOnPrimaryContainer">#D7E6DC</item>
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorSecondaryContainer">@color/stats_secondary_container</item>
+        <item name="colorOnSecondaryContainer">#D7E6DC</item>
+        <item name="colorTertiary">@color/colorAccentDark</item>
+        <item name="colorSurface">@color/stats_surface</item>
+        <item name="colorOnSurface">#E6EDE8</item>
+        <item name="colorSurfaceVariant">@color/stats_surface_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/stats_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/stats_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/stats_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/stats_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/stats_surface_container_highest</item>
+        <item name="colorOnSurfaceVariant">#B6C1B8</item>
+        <item name="colorOutline">#7A857C</item>
+        <item name="colorOutlineVariant">#3A443D</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorAccent">@color/colorAccent</item>
+        <item name="android:statusBarColor">@color/stats_surface</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/stats_surface</item>
     </style>
 
     <style name="Theme.DialogTheme" parent="@android:style/Theme.DeviceDefault.Dialog" />

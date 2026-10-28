@@ -4,7 +4,8 @@
 
 package com.osfans.trime.ui.main.settings
 
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.LifecycleCoroutineScope
@@ -28,8 +29,7 @@ object ThemePickerDialog {
             }
         val selectedTheme by ThemeManager.prefs.selectedTheme
         val selectedIndex = allThemes.indexOfFirst { it.configId == selectedTheme }
-        return AlertDialog
-            .Builder(context)
+        return MaterialAlertDialogBuilder(context)
             .apply {
                 setTitle(R.string.selected_theme)
                 if (allThemes.isEmpty()) {

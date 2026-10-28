@@ -221,12 +221,12 @@ object ColorManager {
         scope: ThemeScope,
         value: String,
     ): String {
-        val default = DataManager.userDataDir.resolve("backgrounds/${backgroundFolder(scope)}/$value")
-        if (!default.exists()) {
-            val fallback = DataManager.userDataDir.resolve("backgrounds/$value")
-            if (fallback.exists()) return fallback.absolutePath
-        }
-        return default.absolutePath
+        val folder = backgroundFolder(scope)
+        val withFolder = if (folder.isEmpty()) "backgrounds/$value" else "backgrounds/$folder/$value"
+        // 皮肤包里的 backgrounds 直读，其次才是「运行数据」和 shared。
+        ThemeAssets.resolve(withFolder)?.let { return it.absolutePath }
+        ThemeAssets.resolve("backgrounds/$value")?.let { return it.absolutePath }
+        return DataManager.userDataDir.resolve(withFolder).absolutePath
     }
 
     @ColorInt

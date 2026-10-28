@@ -132,6 +132,9 @@ object ThemeManager {
         // The findings describe the file this load read; they are not tied to the
         // views, so they are refreshed even when the theme itself is unchanged.
         _activeFindings = resolvedTheme.findings
+        // 皮肤资源（backgrounds/fonts）从「皮肤/<包>/」直读；必须在
+        // ColorManager.attachTheme 之前切好，否则第一帧会去找旧目录。
+        ThemeAssets.select(resolvedTheme.configId)
         // A structurally equal theme suppresses the change notification below, so the
         // UI tree keeps its views and their injected scope. Replace neither the
         // caches nor the scope in that case, or later scheme changes would update

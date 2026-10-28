@@ -6,13 +6,18 @@
 package com.osfans.trime.ui.setup
 
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.core.app.NotificationCompat
+import androidx.core.content.edit
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -23,7 +28,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.osfans.trime.R
+import com.osfans.trime.core.data.DataManager
+import com.osfans.trime.core.data.RimeDataLayout
 import com.osfans.trime.core.data.UserDataManager
+import com.osfans.trime.daemon.RimeDaemon
+import com.osfans.trime.data.importer.RimeResourceImporter
+import com.osfans.trime.data.theme.ThemeFilesManager
+import com.osfans.trime.data.theme.ThemeManager
 import com.osfans.trime.databinding.ActivitySetupBinding
 import com.osfans.trime.ui.main.MainActivity
 import com.osfans.trime.ui.setup.SetupPage.Companion.firstUndonePage
@@ -34,6 +45,7 @@ import com.osfans.trime.util.startActivity
 import com.osfans.trime.util.toast
 import io.github.whiredplanck.storageaccess.StorageAccess
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import splitties.systemservices.notificationManager
@@ -41,11 +53,99 @@ import splitties.systemservices.notificationManager
 class SetupActivity : FragmentActivity() {
     private lateinit var viewPager: ViewPager2
 
+    private lateinit var stepLabel: android.widget.TextView
+    private lateinit var stepBar: android.widget.ProgressBar
     private lateinit var skipButton: Button
     private lateinit var prevButton: Button
     private lateinit var nextButton: Button
 
     private val storageAccess = StorageAccess(this)
+
+    /** 只在真正需要部署时才拉起 Rime，避免进向导就吃掉一份内存。 */
+    private val rime by lazy { RimeDaemon.createSession(javaClass.name) }
+
+    /** 部署可能跑很久（大词库要编几分钟），放到 Rime 自己的 scope 里，别跟着 Activity 死。 */
+    private var deployJob: Job? = null
+
+    /** 记录是哪个页面触发的文件选择：方案要部署，皮肤不用。 */
+    private var importingPage: SetupPage? = null
+
+    private val resourcePicker =
+        registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+            handlePickedResources(uris)
+        }
+
+    /** 由 [SetupPage.Schema] / [SetupPage.Skin] 的按钮调用。 */
+    fun pickRimeResources() {
+        importingPage = SetupPage.entries.getOrNull(viewPager.currentItem)
+        // 不限定 MIME：方案包是 zip，皮肤是 yaml，各家文件管理器给的类型也不一致
+        runCatching { resourcePicker.launch(arrayOf("*/*")) }
+            .onFailure { toast(R.string.setup__import_no_picker) }
+    }
+
+    private fun handlePickedResources(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        val page = importingPage
+        lifecycleScope.launch {
+            toast(R.string.setup__import_busy)
+            val dest =
+                if (page == SetupPage.Schema) {
+                    RimeDataLayout.schemaDir
+                } else {
+                    RimeDataLayout.themeDir
+                }
+            val result =
+                runCatching {
+                    RimeResourceImporter.import(this@SetupActivity, uris, dest)
+                }.getOrElse {
+                    toast(R.string.setup__import_failed)
+                    return@launch
+                }
+
+            if (result.isEmpty) {
+                toast(R.string.setup__import_empty)
+                return@launch
+            }
+
+            // 摊平到「运行数据」，Rime 与主题扫描才看得见
+            RimeDataLayout.mirror()
+            // 方案：按需重建 default.custom.yaml（包自带的不动）
+            UserDataManager.refreshSchemaListAfterImport()
+            // 皮肤：直接切过去。一个包里常带多个变体，取名字最短的当基础款
+            if (page == SetupPage.Skin) {
+                ThemeFilesManager
+                    .listThemes(DataManager.userDataDir)
+                    .minByOrNull { it.configId.length }
+                    ?.let { ThemeManager.prefs.selectedTheme.setValue(it.configId) }
+            }
+
+            // 先刷新界面：大词库部署要几分钟，不能让用户干等着没反应
+            refreshCurrentFragment()
+            updateButtons()
+
+            when {
+                result.skipped > 0 ->
+                    toast(getString(R.string.setup__import_partial, result.files, result.skipped))
+                else -> toast(getString(R.string.setup__import_ok, result.files))
+            }
+
+            if (page == SetupPage.Schema) {
+                startDeploy()
+            }
+        }
+    }
+
+    /** 后台部署，完成后单独提示；不阻塞向导，也不随 Activity 销毁而中断。 */
+    private fun startDeploy() {
+        if (deployJob?.isActive == true) return
+        deployJob =
+            rime.lifecycleScope.launch {
+                val ok = runCatching { rime.runOnReady { deploy() } }.isSuccess
+                withContext(Dispatchers.Main) {
+                    toast(if (ok) R.string.setup__deploy_ok else R.string.setup__deploy_failed)
+                }
+            }
+    }
 
     fun pickDataPath() {
         lifecycleScope.launch {
@@ -82,7 +182,28 @@ class SetupActivity : FragmentActivity() {
         private const val CHANNEL_ID = "setup"
         private const val NOTIFY_ID = 87463
 
-        fun shouldShowUp() = !shown && SetupPage.hasUndonePage()
+        fun shouldShowUp() = !shown && !isSkipped() && SetupPage.hasUndonePage()
+
+        private const val SETUP_PREFS = "zhi_setup"
+        private const val KEY_SKIPPED = "skipped"
+
+        /**
+         * 芝版同文：用户点过「跳过」就不再每次冷启动都弹向导。
+         *
+         * 上游的逻辑是「必填页没完成就重新弹」，而必填页里有「启用输入法」「设为默认」，
+         * 用户当时不启用就会一直弹，非常烦。方案页现在有空状态和导入入口，不怕用户找不到。
+         */
+        fun isSkipped(): Boolean =
+            appContext
+                .getSharedPreferences(SETUP_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_SKIPPED, false)
+
+        fun markSkipped() {
+            appContext
+                .getSharedPreferences(SETUP_PREFS, Context.MODE_PRIVATE)
+                .edit { putBoolean(KEY_SKIPPED, true) }
+        }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,13 +221,15 @@ class SetupActivity : FragmentActivity() {
             windowInsets
         }
         setContentView(binding.root)
+        stepLabel = binding.setupStepLabel
+        stepBar = binding.setupStepBar
         skipButton = binding.skipButton.apply {
             text = getString(R.string.setup__skip)
             setOnClickListener {
-                AlertDialog
-                    .Builder(this@SetupActivity)
+                MaterialAlertDialogBuilder(this@SetupActivity)
                     .setMessage(R.string.setup__skip_hint)
                     .setPositiveButton(R.string.setup__skip_hint_yes) { _, _ ->
+                        markSkipped()
                         completeSetup()
                     }.setNegativeButton(R.string.setup__skip_hint_no, null)
                     .show()
@@ -155,6 +278,10 @@ class SetupActivity : FragmentActivity() {
         prevButton.isGone = isFirstPage
         skipButton.isGone = !modeSetupDone || allDone
         nextButton.text = getString(if (isLastPage) R.string.done else R.string.setup__next)
+        val step = viewPager.currentItem + 1
+        val total = SetupPage.entries.size
+        stepLabel.text = getString(R.string.setup__step_progress, step, total)
+        stepBar.progress = step * 100 / total
         nextButton.isGone = isLastPage && !allDone
         nextButton.isEnabled = modeSetupDone
     }
@@ -193,6 +320,14 @@ class SetupActivity : FragmentActivity() {
     override fun onResume() {
         notificationManager.cancel(NOTIFY_ID)
         super.onResume()
+    }
+
+    override fun onDestroy() {
+        // 部署还没跑完就销毁会话会把 Rime 掐在半路，交给 IME 接手即可
+        if (deployJob?.isActive != true) {
+            RimeDaemon.destroySession(javaClass.name)
+        }
+        super.onDestroy()
     }
 
     private inner class Adapter : FragmentStateAdapter(this) {

@@ -330,6 +330,48 @@ class Key(
         else -> if (isPressed) hlKeyBackground else keyBackground
     }
 
+    /**
+     * 是否属于「打字键」（参与热力统计）：切换键盘/输入法、命令功能键
+     * （菜单、剪贴板、隐藏符号层……）都只操作系统行为，不计入。
+     */
+    fun isStatsKey(): Boolean {
+        val click = keyActions[KeyBehavior.CLICK] ?: return false
+        if (click.isFunctional) return false
+        if (click.select.isNotEmpty()) return false
+        if (click.code == KeyEvent.KEYCODE_LANGUAGE_SWITCH ||
+            click.code == KeyEvent.KEYCODE_SETTINGS ||
+            click.code == KeyEvent.KEYCODE_EISU
+        ) {
+            return false
+        }
+        return true
+    }
+
+    /**
+     * 热力统计用的语义标签：主题里功能键的 label 常是私有区图标字符或
+     * "enter_labels" 占位符，这里换成可读的名字，其余按键保持原 label。
+     */
+    fun heatLabel(): String {
+        val label = (this.label.ifEmpty { click?.getLabel(parent).orEmpty() }).trim { it.isWhitespace() || Character.isSpaceChar(it) }
+        if (code == KeyEvent.KEYCODE_SPACE) return "空格"
+        if (label == "enter_labels") return "回车"
+        if (label.isBlank()) {
+            return label
+        }
+        val hasPua = label.any { it in '\ue000'..'\uf8ff' }
+        if (!hasPua) return label.lowercase()
+        return when (code) {
+            KeyEvent.KEYCODE_DEL, 0xFF08 -> "退格" // XK_BackSpace
+            KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER, 0xFF0D, 0xFF8D -> "回车" // XK_Return / XK_KP_Enter
+            KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT, 0xFFE1, 0xFFE2 -> "Shift"
+            KeyEvent.KEYCODE_SPACE, 0x0020 -> "空格"
+            KeyEvent.KEYCODE_TAB, 0xFF09 -> "Tab"
+            KeyEvent.KEYCODE_ESCAPE, 0xFF1B -> "Esc"
+            0xFF51, 0xFF52, 0xFF53, 0xFF54 -> "光标"
+            else -> label
+        }
+    }
+
     fun getBorderColor(): Int = when (appearanceType) {
         2 -> if (isPressed) hlOnKeyBorderColor else onKeyBorderColor
         1 -> if (isPressed) hlOffKeyBorderColor else getColor(keyDef?.keyBorderColor ?: "", offKeyBorderColor)

@@ -384,9 +384,11 @@ class AppPrefs(
             const val RIME_PROFILE = "profile_rime_profile"
         }
 
-        // 芝版同文：默认用应用专属存储。上游默认「从外部存储同步」，但新装时还没挑目录，
-        // 会让 isStorageAvailable() 返回 false、Rime 直接不启动，方案页无限转圈。
-        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.APP_STORAGE)
+        // 芝版同文（2026-10-29 改）：默认「从外部存储同步」，与元书输入法一致，
+        // 用户选一个目录当 Rime 数据根，方便备份和跨应用查看。
+        // 注意：新装还没挑目录时 isStorageAvailable() 返回 false、Rime 不启动；
+        // 向导第一页和主页状态卡都会引导选目录，选完即恢复。
+        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.EXTERNAL_SYNC)
         val rimeProfile = string(RIME_PROFILE, "")
         val externalRimeTreeUri = string(EXTERNAL_RIME_TREE_URI, "")
         val periodicBackgroundSync = bool(PERIODIC_BACKGROUND_SYNC, false)

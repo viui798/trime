@@ -17,7 +17,6 @@ import com.osfans.trime.ui.main.settings.ClipSyncSettingsFragment
 import com.osfans.trime.ui.main.settings.GeneralSettingsFragment
 import com.osfans.trime.ui.main.settings.KeyboardSettingsFragment
 import com.osfans.trime.ui.main.settings.ProfileSettingsFragment
-import com.osfans.trime.ui.main.settings.hub.AppearanceFragment
 import com.osfans.trime.ui.main.settings.hub.DataBackupFragment
 import com.osfans.trime.ui.main.settings.hub.InputCandidatesFragment
 import com.osfans.trime.ui.main.settings.hub.UtilitiesFragment
@@ -65,9 +64,6 @@ sealed class NavigationRoute : Parcelable {
     data object CandidatesWindow : NavigationRoute()
 
     @Serializable
-    data object Theme : NavigationRoute()
-
-    @Serializable
     data object Clipboard : NavigationRoute()
 
     @Serializable
@@ -109,7 +105,8 @@ sealed class NavigationRoute : Parcelable {
             fragment<InputCandidatesFragment, InputCandidates> {
                 label = ctx.getString(R.string.input_and_candidates)
             }
-            fragment<AppearanceFragment, Appearance> {
+            fragment<ThemeSettingsFragment, Appearance> {
+                // 芝版同文：外观入口直达主题/配色，不再套一层「键盘样式」汇总页
                 label = ctx.getString(R.string.appearance)
             }
             fragment<UtilitiesFragment, Utilities> {
@@ -127,9 +124,6 @@ sealed class NavigationRoute : Parcelable {
             }
             fragment<CandidatesSettingsFragment, CandidatesWindow> {
                 label = ctx.getString(R.string.candidates_window)
-            }
-            fragment<ThemeSettingsFragment, Theme> {
-                label = ctx.getString(R.string.theme)
             }
             fragment<ClipboardSettingsFragment, Clipboard> {
                 label = ctx.getString(R.string.clipboard)

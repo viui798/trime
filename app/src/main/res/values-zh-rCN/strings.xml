@@ -506,4 +506,18 @@
     <string name="setup__title_skin">选择键盘皮肤</string>
     <string name="setup__title_enable">启用输入法</string>
     <string name="setup__title_select">选择输入法</string>
+
+    <!-- 主页键盘状态卡（芝版同文） -->
+    <string name="home_status_storage_title">尚未选择数据目录</string>
+    <string name="home_status_storage_summary">选择一个文件夹存放方案与学习数据</string>
+    <string name="home_status_storage_action">选择数据目录</string>
+    <string name="home_status_not_added_title">尚未添加芝士键盘</string>
+    <string name="home_status_not_added_summary">前往系统设置启用同文输入法芝士</string>
+    <string name="home_status_not_added_action">前往系统设置</string>
+    <string name="home_status_not_current_title">同文输入法芝士不是当前输入法</string>
+    <string name="home_status_not_current_summary">点击切换输入法</string>
+    <string name="home_status_not_current_action">切换输入法</string>
+    <string name="home_status_added_title">芝士键盘已添加</string>
+    <string name="home_status_added_dismiss">不再显示</string>
+    <string name="setup__skip_hint_never">不再显示</string>
 </resources>

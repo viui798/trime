@@ -228,8 +228,12 @@ class SetupActivity : FragmentActivity() {
             setOnClickListener {
                 MaterialAlertDialogBuilder(this@SetupActivity)
                     .setMessage(R.string.setup__skip_hint)
-                    .setPositiveButton(R.string.setup__skip_hint_yes) { _, _ ->
+                    // 芝版同文：「不再显示」= 永久关掉向导；「好的，谢谢」只跳过这一次，
+                    // 下次冷启动若还有未完成步骤会再次出现。
+                    .setNeutralButton(R.string.setup__skip_hint_never) { _, _ ->
                         markSkipped()
+                        completeSetup()
+                    }.setPositiveButton(R.string.setup__skip_hint_yes) { _, _ ->
                         completeSetup()
                     }.setNegativeButton(R.string.setup__skip_hint_no, null)
                     .show()

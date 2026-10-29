@@ -507,4 +507,19 @@
     <string name="setup__title_skin">Pick a keyboard skin</string>
     <string name="setup__title_enable">Enable the IME</string>
     <string name="setup__title_select">Select the IME</string>
+
+    <!-- Home keyboard status card (Zhi) -->
+    <string name="home_status_storage_title">Data folder not chosen</string>
+    <string name="home_status_storage_summary">Pick a folder to store schemas and learned data</string>
+    <string name="home_status_storage_action">Choose a folder</string>
+    <string name="home_status_not_added_title">Trime Cheese keyboard not added</string>
+    <string name="home_status_not_added_summary">Enable it in system settings first</string>
+    <string name="home_status_not_added_action">Open system settings</string>
+    <string name="home_status_not_current_title">Trime Cheese is not the active keyboard</string>
+    <string name="home_status_not_current_summary">Tap to switch input method</string>
+    <string name="home_status_not_current_action">Switch keyboard</string>
+    <string name="home_status_added_title">Trime Cheese keyboard added</string>
+    <string name="home_status_added_dismiss">Dismiss</string>
+    <!-- Setup: never show the wizard again -->
+    <string name="setup__skip_hint_never">Never show again</string>
 </resources>

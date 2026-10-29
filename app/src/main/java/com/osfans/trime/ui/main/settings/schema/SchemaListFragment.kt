@@ -60,7 +60,9 @@ class SchemaListFragment :
                 ctx.toast(R.string.setup__import_empty)
                 return@launch
             }
-            RimeDataLayout.mirror()
+            // prepare() 而不是 mirror()：还要把包内 build/*.bin 救成 .prebuilt 再装进「部署」，
+            // 否则只有预编译词典、没有 .dict.yaml 源的方案（芝鹤这类）一部署就失败。
+            RimeDataLayout.prepare()
             UserDataManager.refreshSchemaListAfterImport()
             ctx.toast(
                 if (result.skipped > 0) {

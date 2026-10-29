@@ -107,8 +107,9 @@ class SetupActivity : FragmentActivity() {
                 return@launch
             }
 
-            // 摊平到「运行数据」，Rime 与主题扫描才看得见
-            RimeDataLayout.mirror()
+            // 摊平到「运行数据」，Rime 与主题扫描才看得见；
+            // 顺带把包内预编译词典装进「部署」（只有 .bin 没有 .dict.yaml 源的方案靠它）
+            RimeDataLayout.prepare()
             // 方案：按需重建 default.custom.yaml（包自带的不动）
             UserDataManager.refreshSchemaListAfterImport()
             // 皮肤：直接切过去。一个包里常带多个变体，取名字最短的当基础款

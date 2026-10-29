@@ -329,6 +329,10 @@ object RimeDataLayout {
         pkgRoot: File,
         targetDir: File,
     ) {
+        // 直连方案包不走 sanitizePackage，包里的 `build/` 不会被收成 `.prebuilt`。
+        // 不在这里补一次，只有 `.bin`、没有 `.dict.yaml` 源的包（芝鹤这类）就会
+        // 部署失败：neither flypy.dict.yaml nor flypy.table.bin。
+        if (!File(pkgRoot, PREBUILT_DIR).isDirectory) rescuePrebuiltBins(pkgRoot)
         val prebuilt = File(pkgRoot, PREBUILT_DIR)
         if (!prebuilt.isDirectory) return
         targetDir.mkdirs()

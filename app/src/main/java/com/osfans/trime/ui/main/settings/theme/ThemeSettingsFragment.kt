@@ -85,7 +85,8 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
                 ctx.toast(R.string.setup__import_empty)
                 return@launch
             }
-            RimeDataLayout.mirror()
+            // 与方案导入一致：走完整 prepare()，顺带把方案包的预编译词典对齐到「部署」。
+            RimeDataLayout.prepare()
             // 一个皮肤包常带多个变体，取名字最短的当基础款并直接切换
             ThemeFilesManager
                 .listThemes(DataManager.userDataDir)

@@ -148,10 +148,10 @@ object RimeDataLayout {
             val profile = RimeProfileManager.currentDir()
             val staging = RimeProfileManager.stagingDir()
             installPrebuiltBins(profile, staging)
-            // 皮肤包不参与摊平（摊平目标是「运行数据」），主题 yaml 得让 Rime 在
-            // user_data_dir 里看得到，它才会把规范化后的产物部署到 staging，
-            // 否则 ThemeLoader 找不到已部署主题，外观里会报「主题不可用」。
-            installThemeConfigs(profile)
+            // 直连模式不摊平，Rime 在 user_data_dir 里看不到皮肤，没法部署主题。
+            // 源放到 shared_data_dir（应用私有，不是用户的「方案/皮肤」目录）：
+            // 既能被 Rime 读到并部署成规范化产物，又不会污染方案包。
+            installThemeConfigs(DataManager.sharedDataDir)
             ensureSyncDirConfigured(profile)
             return
         }
@@ -357,12 +357,16 @@ object RimeDataLayout {
     }
 
     /**
-     * 把「皮肤」里的主题 yaml 放进 [targetDir]（staging）。
+     * 把「皮肤」里的主题 yaml 放进 [targetDir]（shared_data_dir）。
      *
-     * 默认模式靠 `mirror()` 摊平到「运行数据」，再由 Rime 部署产出到「部署」；
-     * 直连方案包 / 方案库模式不摊平，user_data_dir 里根本没有主题，
-     * 于是 `ThemeLoader` 说找不到已部署的主题文件 → 外观里报「主题不可用，已切换为…」。
-     * 这里直接放进 staging，它本来就在 rime 的 config 搜索路径里。
+     * 默认模式靠 `mirror()` 把皮肤摊平到「运行数据」，Rime 从那里读源、部署到 staging；
+     * 直连方案包 / 方案库模式不摊平，user_data_dir 是方案包本身，Rime 看不到皮肤，
+     * 于是 `ThemeLoader` 报「主题不可用」并回落默认主题。
+     *
+     * 源**不能**放进方案包（会破坏「方案/皮肤」分开），也不能只放 staging
+     * （原始 yaml 有重复 key，会被严格解析器拒绝，必须让 Rime 部署一遍产出规范化版本）。
+     * shared_data_dir 是应用私有区域，既是 Rime 的 config 搜索路径之一，
+     * 又不属于用户目录，正好。
      *
      * 只复制 yaml（字体、背景图由 ThemeAssets 直读皮肤包目录，不需要来这里）。
      */

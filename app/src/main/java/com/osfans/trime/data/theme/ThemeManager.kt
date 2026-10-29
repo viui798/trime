@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.osfans.trime.core.data.DataManager
+import com.osfans.trime.core.data.RimeProfileManager
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.util.WeakHashSet
 import com.osfans.trime.util.appContext
@@ -25,8 +26,12 @@ object ThemeManager {
 
     fun getAllThemes(): List<ThemeItem> {
         val sharedThemes = ThemeFilesManager.listThemes(DataManager.sharedDataDir)
-        val userThemes = ThemeFilesManager.listThemes(DataManager.userDataDir)
-        return sharedThemes + userThemes
+        val dirs = linkedSetOf(DataManager.userDataDir)
+        // 直连方案包 / 方案库模式下，皮肤被摊平进当前方案目录而不是「运行数据」，
+        // 只扫「运行数据」会漏掉全部皮肤（新装后直接进直连时列表里只剩内置主题）。
+        if (RimeProfileManager.isProfile()) dirs += RimeProfileManager.currentDir()
+        val userThemes = dirs.flatMap { ThemeFilesManager.listThemes(it) }
+        return (sharedThemes + userThemes).distinctBy { it.configId }
     }
 
     private lateinit var _activeTheme: Theme

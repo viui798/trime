@@ -145,7 +145,12 @@ object RimeDataLayout {
             // 直连/方案目录模式下也展开用户丢进来的 zip，随后 listPackages 就能看到新包
             expandUserZips()
             val profile = RimeProfileManager.currentDir()
-            installPrebuiltBins(profile, RimeProfileManager.stagingDir())
+            val staging = RimeProfileManager.stagingDir()
+            installPrebuiltBins(profile, staging)
+            // 皮肤包不参与摊平（摊平目标是「运行数据」），主题 yaml 得让 Rime 在
+            // user_data_dir 里看得到，它才会把规范化后的产物部署到 staging，
+            // 否则 ThemeLoader 找不到已部署主题，外观里会报「主题不可用」。
+            installThemeConfigs(profile)
             ensureSyncDirConfigured(profile)
             return
         }
@@ -347,6 +352,39 @@ object RimeDataLayout {
                 bin.copyTo(target, overwrite = true)
                 target.setLastModified(bin.lastModified())
             }.onFailure { Timber.w(it, "安装预编译词典失败: %s", bin.name) }
+        }
+    }
+
+    /**
+     * 把「皮肤」里的主题 yaml 放进 [targetDir]（staging）。
+     *
+     * 默认模式靠 `mirror()` 摊平到「运行数据」，再由 Rime 部署产出到「部署」；
+     * 直连方案包 / 方案库模式不摊平，user_data_dir 里根本没有主题，
+     * 于是 `ThemeLoader` 说找不到已部署的主题文件 → 外观里报「主题不可用，已切换为…」。
+     * 这里直接放进 staging，它本来就在 rime 的 config 搜索路径里。
+     *
+     * 只复制 yaml（字体、背景图由 ThemeAssets 直读皮肤包目录，不需要来这里）。
+     */
+    private fun installThemeConfigs(targetDir: File) {
+        val yamls =
+            themeDir
+                .walkTopDown()
+                .filter { it.isFile && it.name.endsWith(".yaml", ignoreCase = true) }
+                .filterNot { isJunkPath(it.toRelativeString(themeDir)) }
+                .toList()
+        if (yamls.isEmpty()) return
+        targetDir.mkdirs()
+        yamls.forEach { file ->
+            val target = File(targetDir, file.name)
+            val unchanged =
+                target.isFile &&
+                    target.length() == file.length() &&
+                    target.lastModified() == file.lastModified()
+            if (unchanged) return@forEach
+            runCatching {
+                file.copyTo(target, overwrite = true)
+                target.setLastModified(file.lastModified())
+            }.onFailure { Timber.w(it, "安装主题配置失败: %s", file.name) }
         }
     }
 

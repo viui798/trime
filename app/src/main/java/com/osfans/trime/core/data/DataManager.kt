@@ -91,9 +91,19 @@ object DataManager {
      * @param resourceId usually equals the config file name without the extension
      * @return the absolute path of the compiled config file
      */
+    /**
+     * 已部署资源（主题等 config）所在目录。
+     *
+     * 默认模式下就是「部署」；直连方案包 / 方案库模式下 Rime 会把产物写到
+     * `部署/<方案目录名>/`，此时由 [com.osfans.trime.core.Rime] 在启动时指过去，
+     * 否则 ThemeLoader 会去「部署」根找文件、找不到就回落默认主题。
+     */
+    @Volatile
+    var deployedResourceDir: File? = null
+
     @JvmStatic
     fun resolveDeployedResourcePath(resourceId: String): String {
-        val defaultPath = File(stagingDir, "$resourceId.yaml")
+        val defaultPath = File(deployedResourceDir ?: stagingDir, "$resourceId.yaml")
         if (!defaultPath.exists()) {
             val fallbackPath = File(prebuiltDataDir, "$resourceId.yaml")
             if (fallbackPath.exists()) return fallbackPath.absolutePath

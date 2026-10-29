@@ -17,6 +17,7 @@ import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.ime.core.InlinePreeditMode
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -293,6 +294,9 @@ class Rime :
         val sharedDataDir = DataManager.sharedDataDir.absolutePath
         val userDataDir = RimeProfileManager.currentDir().absolutePath
         val stagingDir = RimeProfileManager.stagingDir().absolutePath
+        // 主题等已部署资源要跟着 staging 走：直连方案包时产物落在 部署/<方案目录>/，
+        // 若仍按「部署」根去找，外观里会报「主题不可用」并回落默认主题。
+        DataManager.deployedResourceDir = if (RimeProfileManager.isProfile()) File(stagingDir) else null
         // 部署产物与学习数据各走各的目录；JNI 从环境变量读进 RimeTraits。
         // 必须放在 startupRime 之前，setup() 只在第一次读这些值。
         runCatching {

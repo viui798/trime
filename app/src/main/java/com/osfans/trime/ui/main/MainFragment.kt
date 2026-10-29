@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -68,6 +69,28 @@ class MainFragment : PaddingPreferenceFragment() {
     override fun onResume() {
         super.onResume()
         refreshStatusBar()
+    }
+
+    /**
+     * 系统输入法选择器是 overlay，切完输入法回来**不会**走 onResume，
+     * 状态卡就会一直停在「不是当前输入法」。窗口重新拿到焦点时补刷一次。
+     */
+    private val windowFocusListener =
+        ViewTreeObserver.OnWindowFocusChangeListener {
+            if (isAdded && view != null) refreshStatusBar()
+        }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        view.viewTreeObserver.addOnWindowFocusChangeListener(windowFocusListener)
+    }
+
+    override fun onDestroyView() {
+        view?.viewTreeObserver?.removeOnWindowFocusChangeListener(windowFocusListener)
+        super.onDestroyView()
     }
 
     private fun PreferenceGroup.addDestination(

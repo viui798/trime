@@ -26,6 +26,7 @@ import com.osfans.trime.ime.keyboard.KeyboardWindow
 import com.osfans.trime.ime.segments.SegmentsWindow
 import com.osfans.trime.ime.window.BoardWindow
 import com.osfans.trime.ime.window.BoardWindowManager
+import com.osfans.trime.util.withMaterialDialogTheme
 import com.osfans.trime.ui.main.ClipEditActivity
 import com.osfans.trime.util.AppUtils
 import kotlinx.coroutines.Job
@@ -196,7 +197,7 @@ class ClipboardWindow(di: DI, private val initialTab: Int = 0) : BoardWindow.Bar
     }
 
     private fun promptDeleteAll(action: suspend () -> Unit) {
-        val dialog = MaterialAlertDialogBuilder(context)
+        val dialog = MaterialAlertDialogBuilder(context.withMaterialDialogTheme())
             .setTitle(R.string.delete_all)
             .setMessage(R.string.ask_to_delete_all)
             .setPositiveButton(R.string.ok) { _, _ ->

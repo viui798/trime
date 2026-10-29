@@ -11,6 +11,7 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import com.osfans.trime.R
 import com.osfans.trime.data.theme.ColorManager
 import com.osfans.trime.data.theme.ThemeManager
+import com.osfans.trime.util.withMaterialDialogTheme
 import kotlinx.coroutines.launch
 
 object ColorPickerDialog {
@@ -22,7 +23,7 @@ object ColorPickerDialog {
         val presetSchemes = ThemeManager.activeTheme.presetColorSchemes.entries.toList()
         val currentScheme = ColorManager.activeColorScheme
         val currentIndex = presetSchemes.indexOfFirst { it.value == currentScheme }
-        return MaterialAlertDialogBuilder(context)
+        return MaterialAlertDialogBuilder(context.withMaterialDialogTheme())
             .apply {
                 setTitle(R.string.normal_mode_color)
                 if (presetSchemes.isEmpty()) {

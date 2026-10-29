@@ -10,6 +10,7 @@ import android.content.Context
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.osfans.trime.R
 import com.osfans.trime.core.RimeApi
+import com.osfans.trime.util.withMaterialDialogTheme
 import kotlinx.coroutines.launch
 import splitties.systemservices.inputMethodManager
 
@@ -25,7 +26,7 @@ object EnabledSchemaPickerDialog {
         val selectedIds = selecteds.map { it.id }
         val selectedSchemaId = rime.selectedSchemaId()
         val selectedIndex = selecteds.indexOfFirst { it.id == selectedSchemaId }
-        return MaterialAlertDialogBuilder(context)
+        return MaterialAlertDialogBuilder(context.withMaterialDialogTheme())
             .apply {
                 setTitle(R.string.select_current_schema)
                 if (rime.isEmpty()) {

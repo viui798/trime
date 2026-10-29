@@ -10,6 +10,7 @@ import android.content.Context
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.osfans.trime.R
 import com.osfans.trime.data.soundeffect.SoundEffectManager
+import com.osfans.trime.util.withMaterialDialogTheme
 import kotlinx.coroutines.launch
 
 object SoundEffectPickerDialog {
@@ -20,7 +21,7 @@ object SoundEffectPickerDialog {
         val all = SoundEffectManager.getAllSoundEffects().map { it.name }
         val current = SoundEffectManager.activeSoundEffect?.name ?: ""
         val currentIndex = all.indexOfFirst { it == current }
-        return MaterialAlertDialogBuilder(context)
+        return MaterialAlertDialogBuilder(context.withMaterialDialogTheme())
             .apply {
                 setTitle(R.string.custom_sound_effect_name)
                 if (all.isEmpty()) {

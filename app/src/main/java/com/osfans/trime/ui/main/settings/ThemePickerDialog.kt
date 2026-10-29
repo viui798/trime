@@ -12,6 +12,7 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import com.osfans.trime.R
 import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.data.theme.ThemeManager
+import com.osfans.trime.util.withMaterialDialogTheme
 import com.osfans.trime.util.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,7 +30,7 @@ object ThemePickerDialog {
             }
         val selectedTheme by ThemeManager.prefs.selectedTheme
         val selectedIndex = allThemes.indexOfFirst { it.configId == selectedTheme }
-        return MaterialAlertDialogBuilder(context)
+        return MaterialAlertDialogBuilder(context.withMaterialDialogTheme())
             .apply {
                 setTitle(R.string.selected_theme)
                 if (allThemes.isEmpty()) {

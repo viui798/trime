@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 
 suspend fun Context.importErrorDialog(message: String) {
     withContext(Dispatchers.Main.immediate) {
-        MaterialAlertDialogBuilder(this@importErrorDialog)
+        MaterialAlertDialogBuilder(this@importErrorDialog.withMaterialDialogTheme())
             .setTitle(R.string.import_error)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null)

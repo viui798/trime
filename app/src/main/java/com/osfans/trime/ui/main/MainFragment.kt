@@ -320,8 +320,10 @@ class MainFragment : PaddingPreferenceFragment() {
             }
         icon.setImageResource(iconRes)
         icon.imageTintList = ColorStateList.valueOf(if (warning) onError else Color.WHITE)
-        title.setTextColor(if (warning) onError else attrColor(android.R.attr.textColorPrimary))
-        summary.setTextColor(if (warning) onError else attrColor(android.R.attr.textColorSecondary))
+        // 实测教训：errorContainer 是浅红底，onError 是白字，几乎看不清；
+        // 文字用 colorError（深红）才符合「元书输入法」那种警示卡样式。
+        title.setTextColor(if (warning) error else attrColor(android.R.attr.textColorPrimary))
+        summary.setTextColor(if (warning) error else attrColor(android.R.attr.textColorSecondary))
 
         title.setText(titleRes)
         summary.setText(if (summaryRes == 0) R.string.trime_app_slogan else summaryRes)

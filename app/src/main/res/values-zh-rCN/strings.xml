@@ -65,8 +65,8 @@
     <string name="custom_sound_effect_name">自定义按键音效</string>
     <string name="setup__next">下一步</string>
     <string name="done">完成</string>
-    <string name="setup__enable_ime_hint">在语言和输入设置中启用<b>芝版同文</b></string>
-    <string name="setup__select_ime_hint">选择<b>芝版同文</b>作为默认输入法</string>
+    <string name="setup__enable_ime_hint">在语言和输入设置中启用<b>同文输入法芝士</b></string>
+    <string name="setup__select_ime_hint">选择<b>同文输入法芝士</b>作为默认输入法</string>
     <string name="setup__enable_ime">启用输入法</string>
     <string name="setup__select_ime">选择输入法</string>
     <string name="setup__prev">上一步</string>
@@ -151,7 +151,7 @@
     <string name="enable_landscape_mode">启用横屏模式</string>
     <string name="split_space_percent">自动分割键盘比例</string>
     <string name="setup__step_three">第 3 步</string>
-    <string name="setup__select_data_path_hint">选择<b>芝版同文</b>如何存储 Rime 数据</string>
+    <string name="setup__select_data_path_hint">选择<b>同文输入法芝士</b>如何存储 Rime 数据</string>
     <string name="setup__select_data_path">选择外部数据目录…</string>
     <string name="setup__data_path_imported">数据文件夹导入成功</string>
     <string name="setup__data_path_import_failed">数据文件夹导入失败</string>
@@ -302,7 +302,7 @@
     <string name="clip_sync_test_no_address">请先填入服务器地址</string>
     <string name="clip_sync_test_push">测试推送</string>
     <string name="clip_sync_test_push_hint">手动推送一段测试文本到当前服务端</string>
-    <string name="clip_sync_test_push_payload">芝版同文剪贴板同步测试推送</string>
+    <string name="clip_sync_test_push_payload">同文输入法芝士剪贴板同步测试推送</string>
     <string name="clip_sync_test_push_ok">测试文本已推送</string>
     <string name="clip_sync_permission_needed">需要图片读取权限才能同步截屏</string>
     <string name="clip_sync_server_address">服务器地址</string>
@@ -507,7 +507,7 @@
     <string name="setup__title_enable">启用输入法</string>
     <string name="setup__title_select">选择输入法</string>
 
-    <!-- 主页键盘状态卡（芝版同文） -->
+    <!-- 主页键盘状态卡（同文输入法芝士） -->
     <string name="home_status_storage_title">尚未选择数据目录</string>
     <string name="home_status_storage_summary">选择一个文件夹存放方案与学习数据</string>
     <string name="home_status_storage_action">选择数据目录</string>

@@ -119,7 +119,12 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
             runCatching { skinImportPicker.launch(arrayOf("*/*")) }
                 .onFailure { requireContext().toast(R.string.setup__import_no_picker) }
         }
-        (view as ViewGroup).addView(
+        // 芝版同文：FAB 要挂在 RecyclerView 的容器（FrameLayout #list_container）里才能
+        // 悬浮在右下角；PreferenceFragment 的根是 LinearLayout，直接 addView 会被排到末尾。
+        val container: ViewGroup =
+            view.findViewById(android.R.id.list_container)
+                ?: (view as ViewGroup).getChildAt(0) as ViewGroup
+        container.addView(
             fab,
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,

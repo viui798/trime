@@ -13,6 +13,7 @@ import com.osfans.trime.R
 import com.osfans.trime.ui.main.settings.AdvancedSettingsFragment
 import com.osfans.trime.ui.main.settings.CandidatesSettingsFragment
 import com.osfans.trime.ui.main.settings.ClipboardSettingsFragment
+import com.osfans.trime.ui.main.settings.ClipSyncFilterFragment
 import com.osfans.trime.ui.main.settings.ClipSyncSettingsFragment
 import com.osfans.trime.ui.main.settings.GeneralSettingsFragment
 import com.osfans.trime.ui.main.settings.KeyboardSettingsFragment
@@ -68,6 +69,9 @@ sealed class NavigationRoute : Parcelable {
 
     @Serializable
     data object ClipSync : NavigationRoute()
+
+    @Serializable
+    data object ClipSyncFilter : NavigationRoute()
 
     @Serializable
     data object Phrase : NavigationRoute()
@@ -130,6 +134,9 @@ sealed class NavigationRoute : Parcelable {
             }
             fragment<ClipSyncSettingsFragment, ClipSync> {
                 label = ctx.getString(R.string.clip_sync)
+            }
+            fragment<ClipSyncFilterFragment, ClipSyncFilter> {
+                label = ctx.getString(R.string.clip_sync_filter_title)
             }
             fragment<PhraseFragment, Phrase> {
                 label = ctx.getString(R.string.phrase_title)

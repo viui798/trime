@@ -56,6 +56,29 @@ SPDX-License-Identifier: GPL-3.0-or-later
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <!--
+          dataSync, not remoteMessaging: this service polls a clipboard server and uploads local
+          changes. Android 14+ requires the declared type to match actual use (see C21).
+        -->
+        <service
+            android:name=".data.clipsync.service.QuickSyncTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_clipboard_24"
+            android:label="@string/clip_sync_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- 剪贴板同步：通知栏「抓取并同步」的一次性前台抓取入口（透明、即开即关） -->
+        <activity
+            android:name=".ui.clipsync.ClipboardCaptureActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:finishOnTaskLaunch="true"
+            android:theme="@style/Theme.Trime.Transparent" />
+
         <service
             android:name=".ime.core.TrimeInputMethodService"
             android:directBootAware="true"

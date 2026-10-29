@@ -597,6 +597,8 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     override fun onFinishInputView(finishingInput: Boolean) {
         Timber.d("onFinishInputView: finishingInput=$finishingInput")
         VoiceInputManager.cancel()
+        // 剪贴板同步：清除「输入法在前台」标记，让后台同步进入低频轮询
+        com.osfans.trime.data.clipsync.ClipSync.onInputViewFinished(this)
         decorLocationUpdated = false
         inputView?.dismissCandidateActionMenu()
         candidatesView?.dismissCandidateActionMenu()

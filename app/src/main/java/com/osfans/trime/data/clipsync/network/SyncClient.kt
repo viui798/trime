@@ -933,12 +933,12 @@ object SyncClient {
                                     cursor.getString(0) == DocumentsContract.Document.MIME_TYPE_DIR
                             } == true
                     }.getOrDefault(false)
-            if (isDirectory) {
+            if (isDirectory && parent != null) {
                 val targetFile =
                     resolveWritableTargetFile(
                         context = context,
                         treeUri = dirUri,
-                        parentUri = parent!!,
+                        parentUri = parent,
                         fileName = fileName,
                         bytes = bytes,
                         mimeType = mimeType,

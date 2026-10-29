@@ -20,9 +20,24 @@ internal object SyncServerPreferences {
     const val USERNAME_KEY = "clip_sync_username"
     const val PASSWORD_KEY = "clip_sync_password"
     const val QUICK_SYNC_KEY = "clip_sync_enabled"
+    private const val DOWNLOAD_PATH_KEY = "clip_sync_download_path"
+    private const val DOWNLOAD_PATH_URI_KEY = "clip_sync_download_path_uri"
+    private const val LEGACY_STORAGE_URI_KEY = "clip_sync_storage_uri"
 
     @Synchronized
     fun migrate(prefs: SharedPreferences) {
+        // 旧版基础移植只有「应用内目录 / clip_sync_storage_uri」，迁到上游的
+        // download_path（显示名）+ download_path_uri（可持久化 SAF tree URI）模型。
+        if (runCatching { prefs.getString(DOWNLOAD_PATH_URI_KEY, null) }.getOrNull().isNullOrBlank()) {
+            val legacy = runCatching { prefs.getString(LEGACY_STORAGE_URI_KEY, null) }.getOrNull()
+            if (!legacy.isNullOrBlank()) {
+                prefs
+                    .edit()
+                    .putString(DOWNLOAD_PATH_URI_KEY, legacy)
+                    .putString(DOWNLOAD_PATH_KEY, legacy)
+                    .apply()
+            }
+        }
         if (runCatching { prefs.getInt(VERSION, 0) }.getOrDefault(0) >= 1) return
         val snapshot = prefs.all
         val hadConfiguration =

@@ -471,84 +471,64 @@ class AppPrefs(
     }
 
     /**
-     * 芝版同文：跨设备剪贴板同步（SyncClipboard 协议，移植自中州鹅 clipboardsync）。
-     * 服务器地址按 SyncClipboard 惯例填到能拼出 `<base>/SyncClipboard.json` 为止。
+     * 芝版同文：跨设备剪贴板同步（SyncClipboard / OneClip / ClipCascade 三协议，
+     * 完整移植自中州鹅 clipboardsync）。这里只注册偏好委托、不注册 UI——设置页
+     * [com.osfans.trime.ui.main.settings.ClipSyncSettingsFragment] 按上游
+     * preferences_local.xml 的行序自绘（服务端配置、账户、过滤等是对话框行）。
      */
     class ClipSync(
         shared: SharedPreferences,
     ) : PreferenceDelegateOwner(shared, R.string.clip_sync) {
         companion object {
             const val ENABLED = "clip_sync_enabled"
-            const val SERVER_TYPE = "clip_sync_server_type"
+            const val SERVER_PROFILE_TYPE = "clip_sync_server_profile_type"
+            const val SERVER_PROFILE_CUSTOM_ALIAS = "clip_sync_server_profile_custom_alias"
             const val SERVER_ADDRESS = "clip_sync_server_address"
+            const val SERVER_ADDRESS_SYNCCLIPBOARD = "clip_sync_server_address_syncclipboard"
+            const val SERVER_ADDRESS_ONECLIP = "clip_sync_server_address_oneclip"
+            const val SERVER_ADDRESS_CLIPCASCADE = "clip_sync_server_address_clipcascade"
+            const val SERVER_ADDRESS_CUSTOM = "clip_sync_server_address_custom"
             const val USERNAME = "clip_sync_username"
             const val PASSWORD = "clip_sync_password"
+            const val USERNAME_SYNCCLIPBOARD = "clip_sync_username_syncclipboard"
+            const val USERNAME_ONECLIP = "clip_sync_username_oneclip"
+            const val USERNAME_CLIPCASCADE = "clip_sync_username_clipcascade"
+            const val USERNAME_CUSTOM = "clip_sync_username_custom"
+            const val PASSWORD_SYNCCLIPBOARD = "clip_sync_password_syncclipboard"
+            const val PASSWORD_ONECLIP = "clip_sync_password_oneclip"
+            const val PASSWORD_CLIPCASCADE = "clip_sync_password_clipcascade"
+            const val PASSWORD_CUSTOM = "clip_sync_password_custom"
             const val INTERVAL = "clip_sync_interval"
-            const val FILTER_ENABLED = "clip_sync_filter_enabled"
-            const val FILTER_EXTENSIONS = "clip_sync_filter_extensions"
-            const val FILTER_MAX_FILE_MB = "clip_sync_filter_max_file_mb"
+            const val UNREACHABLE = "clip_sync_unreachable"
             const val SCREENSHOT_SYNC = "clip_sync_screenshot"
-            const val STORAGE_URI = "clip_sync_storage_uri"
-            const val HANDLED_SCREENSHOTS = "clip_sync_handled_screenshots"
+            const val DOWNLOAD_PATH = "clip_sync_download_path"
+            const val DOWNLOAD_PATH_URI = "clip_sync_download_path_uri"
+            const val LEGACY_STORAGE_URI = "clip_sync_storage_uri"
         }
 
-        val enabled = switch(R.string.clip_sync_enabled, ENABLED, false, R.string.clip_sync_enabled_hint)
-        val serverType =
-            list(
-                R.string.clip_sync_server,
-                SERVER_TYPE,
-                "syncclipboard",
-                { listOf("syncclipboard") },
-                { ctx -> listOf<CharSequence>("SyncClipboard") },
-            ) { enabled.getValue() }
-        val serverAddress = editText(
-            R.string.clip_sync_server_address,
-            SERVER_ADDRESS,
-            "",
-            R.string.clip_sync_server_address_hint,
-        ) { enabled.getValue() }
-        val username = editText(R.string.clip_sync_username, USERNAME, "") { enabled.getValue() }
-        val password = editText(R.string.clip_sync_password, PASSWORD, "") { enabled.getValue() }
-        val interval = int(
-            R.string.clip_sync_interval,
-            INTERVAL,
-            3,
-            min = 1,
-            max = 60,
-            unit = "s",
-        ) { enabled.getValue() }
-
-        /** 接收过滤：屏蔽扩展名 + 文件大小上限；都不配 = 不过滤任何接收内容。 */
-        val filterEnabled = switch(
-            R.string.clip_sync_filter_enable,
-            FILTER_ENABLED,
-            false,
-        ) { enabled.getValue() }
-        val filterExtensions = editText(
-            R.string.clip_sync_filter_extensions,
-            FILTER_EXTENSIONS,
-            "",
-            R.string.clip_sync_filter_extensions_hint,
-        ) { enabled.getValue() && filterEnabled.getValue() }
-        val filterMaxFileMb = int(
-            R.string.clip_sync_filter_max_file,
-            FILTER_MAX_FILE_MB,
-            0,
-            min = 0,
-            max = 4096,
-            unit = "MB",
-        ) { enabled.getValue() && filterEnabled.getValue() }
-
-        /** 截屏保存后自动把图片放进系统剪贴板并上传（需要图片读取权限）。 */
-        val screenshotSync = switch(
-            R.string.clip_sync_screenshot,
-            SCREENSHOT_SYNC,
-            false,
-            R.string.clip_sync_screenshot_hint,
-        ) { enabled.getValue() }
-
-        /** 存储位置：拉下来的文件/图片放哪（SAF 目录；空 = 应用内目录）。 */
-        val storageUri = string(STORAGE_URI, "")
+        val enabled = bool(ENABLED, false)
+        val serverProfileType = string(SERVER_PROFILE_TYPE, "syncclipboard")
+        val serverProfileCustomAlias = string(SERVER_PROFILE_CUSTOM_ALIAS, "")
+        val serverAddress = string(SERVER_ADDRESS, "")
+        val serverAddressSyncClipboard = string(SERVER_ADDRESS_SYNCCLIPBOARD, "")
+        val serverAddressOneClip = string(SERVER_ADDRESS_ONECLIP, "")
+        val serverAddressClipCascade = string(SERVER_ADDRESS_CLIPCASCADE, "")
+        val serverAddressCustom = string(SERVER_ADDRESS_CUSTOM, "")
+        val username = string(USERNAME, "")
+        val password = string(PASSWORD, "")
+        val usernameSyncClipboard = string(USERNAME_SYNCCLIPBOARD, "")
+        val usernameOneClip = string(USERNAME_ONECLIP, "")
+        val usernameClipCascade = string(USERNAME_CLIPCASCADE, "")
+        val usernameCustom = string(USERNAME_CUSTOM, "")
+        val passwordSyncClipboard = string(PASSWORD_SYNCCLIPBOARD, "")
+        val passwordOneClip = string(PASSWORD_ONECLIP, "")
+        val passwordClipCascade = string(PASSWORD_CLIPCASCADE, "")
+        val passwordCustom = string(PASSWORD_CUSTOM, "")
+        val interval = int(INTERVAL, 3)
+        val unreachable = bool(UNREACHABLE, false)
+        val screenshotSync = bool(SCREENSHOT_SYNC, false)
+        val downloadPath = string(DOWNLOAD_PATH, "")
+        val downloadPathUri = string(DOWNLOAD_PATH_URI, "")
     }
 
     class Advanced(

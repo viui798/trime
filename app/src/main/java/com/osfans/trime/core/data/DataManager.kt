@@ -70,8 +70,26 @@ object DataManager {
     /** 用户放皮肤的目录，一包一个文件夹。 */
     val themeRootDir = File(rimeRootDir, "皮肤").also { it.mkdirs() }
 
-    /** Rime 的编译产物（相当于 user_data_dir/build，但独立出来可单独清理）。 */
-    val deployDir = File(rimeRootDir, "部署").also { it.mkdirs() }
+    /**
+     * 「部署」的**根**。直连方案包 / 方案库模式下真正的 staging 是它下面的
+     * `部署/<方案目录名>/`，所以不要拿它去读已部署文件——用 [stagingDir]。
+     *
+     * 故意设为 private：路径只有一个出口，外部拿不到这个目录就没法写错。
+     * 需要 `部署/<名>/` 时用 [stagingDirFor]。
+     */
+    private val deployDir = File(rimeRootDir, "部署").also { it.mkdirs() }
+
+    /** `部署/<方案目录名>/`：直连方案包 / 方案库模式的 staging，同时用于该模式的 [stagingDir]。 */
+    fun stagingDirFor(name: String): File = File(deployDir, name).also { it.mkdirs() }
+
+    /**
+     * 默认模式（没有方案目录）的 staging，就是「部署」根。
+     *
+     * 只给 [RimeProfileManager] 推算 staging 用——业务代码读已部署文件请用 [stagingDir]，
+     * 它会自动跟随当前模式。返回「部署」根而不是 [stagingDir]，是为了避免
+     * 推算时读到上一轮残留的 override。
+     */
+    internal fun defaultStagingRoot(): File = deployDir
 
     /** 学习数据：用户词典（*.userdb）与同步快照。 */
     val learnDir = File(rimeRootDir, "学习").also { it.mkdirs() }
@@ -81,8 +99,23 @@ object DataManager {
 
     val prebuiltDataDir = File(sharedDataDir, "build")
 
-    /** 与 librime 的 staging_dir 对齐；不要再用 `运行数据/build`。 */
-    val stagingDir = deployDir
+    /**
+     * 与 librime 的 staging_dir 对齐；不要再用 `运行数据/build`。
+     *
+     * **读「已部署文件」（主题、配色等）一律走这里**，不要直接拼 [deployDir]：
+     * 直连方案包 / 方案库模式下 Rime 的 staging 是 `部署/<方案目录名>/`，
+     * 由 [com.osfans.trime.core.Rime] 在启动时通过 [setStagingDir] 指过去。
+     * 写死 [deployDir] 的代码在该模式下会找不到文件、静默回落默认值。
+     */
+    val stagingDir: File get() = stagingDirOverride ?: deployDir
+
+    @Volatile
+    private var stagingDirOverride: File? = null
+
+    /** 由 Rime 启动时调用：profile 模式传 `部署/<方案目录>`，默认模式传 null。 */
+    fun setStagingDir(dir: File?) {
+        stagingDirOverride = dir
+    }
 
     /**
      * Return the absolute path of the compiled config file
@@ -91,19 +124,9 @@ object DataManager {
      * @param resourceId usually equals the config file name without the extension
      * @return the absolute path of the compiled config file
      */
-    /**
-     * 已部署资源（主题等 config）所在目录。
-     *
-     * 默认模式下就是「部署」；直连方案包 / 方案库模式下 Rime 会把产物写到
-     * `部署/<方案目录名>/`，此时由 [com.osfans.trime.core.Rime] 在启动时指过去，
-     * 否则 ThemeLoader 会去「部署」根找文件、找不到就回落默认主题。
-     */
-    @Volatile
-    var deployedResourceDir: File? = null
-
     @JvmStatic
     fun resolveDeployedResourcePath(resourceId: String): String {
-        val defaultPath = File(deployedResourceDir ?: stagingDir, "$resourceId.yaml")
+        val defaultPath = File(stagingDir, "$resourceId.yaml")
         if (!defaultPath.exists()) {
             val fallbackPath = File(prebuiltDataDir, "$resourceId.yaml")
             if (fallbackPath.exists()) return fallbackPath.absolutePath

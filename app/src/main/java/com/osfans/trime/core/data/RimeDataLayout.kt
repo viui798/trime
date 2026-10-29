@@ -102,7 +102,8 @@ object RimeDataLayout {
     val schemaDir: File get() = DataManager.schemaRootDir
     val themeDir: File get() = DataManager.themeRootDir
     val runtimeDir: File get() = DataManager.userDataDir
-    val deployDir: File get() = DataManager.deployDir
+    /** 默认模式的 staging（「部署」根）；方案模式下真正的 staging 见 RimeProfileManager。 */
+    val deployDir: File get() = DataManager.defaultStagingRoot()
     val learnDir: File get() = DataManager.learnDir
     val syncDir: File get() = File(learnDir, SYNC_DIR_NAME)
 

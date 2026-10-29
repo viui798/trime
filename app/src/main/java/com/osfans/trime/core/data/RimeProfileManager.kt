@@ -79,7 +79,7 @@ object RimeProfileManager {
         if (!File(DataManager.schemaRootDir, name).isDirectory) return
         runCatching {
             val oldBuild = File(copy, "build")
-            val target = File(DataManager.deployDir, name)
+            val target = DataManager.stagingDirFor(name)
             if (oldBuild.isDirectory && !target.isDirectory) {
                 oldBuild.renameTo(target)
             }
@@ -105,9 +105,8 @@ object RimeProfileManager {
     fun stagingDir(): File =
         when {
             manualProfileDir() != null -> File(currentDir(), "build").also { it.mkdirs() }
-            linkedPackageDir() != null ->
-                File(DataManager.deployDir, currentName()).also { it.mkdirs() }
-            else -> DataManager.deployDir
+            linkedPackageDir() != null -> DataManager.stagingDirFor(currentName())
+            else -> DataManager.defaultStagingRoot()
         }
 
     /** `方案库` 下的手工方案目录，按名字排序。 */

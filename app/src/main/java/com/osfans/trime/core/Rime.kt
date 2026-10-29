@@ -294,9 +294,9 @@ class Rime :
         val sharedDataDir = DataManager.sharedDataDir.absolutePath
         val userDataDir = RimeProfileManager.currentDir().absolutePath
         val stagingDir = RimeProfileManager.stagingDir().absolutePath
-        // 主题等已部署资源要跟着 staging 走：直连方案包时产物落在 部署/<方案目录>/，
-        // 若仍按「部署」根去找，外观里会报「主题不可用」并回落默认主题。
-        DataManager.deployedResourceDir = if (RimeProfileManager.isProfile()) File(stagingDir) else null
+        // 统一 staging 入口：直连方案包 / 方案库模式的产物落在 部署/<方案目录>/，
+        // 交给 DataManager 记住，凡是读「已部署文件」的代码都自动跟随，不必各自判断模式。
+        DataManager.setStagingDir(if (RimeProfileManager.isProfile()) File(stagingDir) else null)
         // 部署产物与学习数据各走各的目录；JNI 从环境变量读进 RimeTraits。
         // 必须放在 startupRime 之前，setup() 只在第一次读这些值。
         runCatching {

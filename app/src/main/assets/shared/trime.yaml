@@ -6,8 +6,8 @@
 # encoding: utf-8
 
 config_version: "3.0"
-name: 芝版同文 #主题名称
-author: Zhi Trime #作者
+name: 同文输入法芝士 #主题名称
+author: Trime Cheese #作者
 
 style:
   auto_caps: false #自動句首大寫:true|false

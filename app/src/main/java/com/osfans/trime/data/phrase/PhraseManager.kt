@@ -22,7 +22,7 @@ object PhraseManager {
     const val FILE_NAME = "custom_phrase.txt"
 
     private const val HEADER = """# Rime table
-# 芝版同文 · 快捷短语
+# 同文输入法芝士 · 快捷短语
 # 格式：词语<TAB>编码<TAB>权重（编码可留空）
 """
 

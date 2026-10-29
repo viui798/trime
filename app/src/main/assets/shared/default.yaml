@@ -1,5 +1,5 @@
 # Rime default settings
-# 芝版同文：不预置任何输入方案，方案由引导页或「方案管理」导入
+# 同文输入法芝士：不预置任何输入方案，方案由引导页或「方案管理」导入
 # encoding: utf-8
 
 config_version: '0.40'

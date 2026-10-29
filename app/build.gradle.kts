@@ -25,8 +25,8 @@ android {
         applicationId = "com.viui.zhitr"
         minSdk = 21
         targetSdk = 37
-        versionCode = 20261105
-        versionName = "3.3.13-zhi.5"
+        versionCode = 20261106
+        versionName = "3.3.13-zhi.6"
 
         multiDexEnabled = true
         buildConfigField("String", "BUILDER", "\"${project.builder}\"")

@@ -183,6 +183,7 @@
     <string name="schema_action_directory">Directory</string>
     <string name="schema_action_deploy">Deploy</string>
     <string name="schema_list_import">Import schemas…</string>
+    <string name="keyboard__no_schema">No schema</string>
     <string name="schema_list_enabled_title">Enabled schemas (%1$d)</string>
     <string name="schema_list_enabled_hint">Check to enable; use + to add or import.</string>
     <string name="schema_list_deploying_title">Deploying…</string>

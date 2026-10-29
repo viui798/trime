@@ -183,6 +183,7 @@
     <string name="schema_action_directory">目錄</string>
     <string name="schema_action_deploy">部署</string>
     <string name="schema_list_import">匯入方案…</string>
+    <string name="keyboard__no_schema">未匯入方案</string>
     <string name="schema_list_enabled_title">啟用的輸入方案（%1$d）</string>
     <string name="schema_list_enabled_hint">勾選啟用；右下角 + 新增或匯入方案。</string>
     <string name="schema_list_deploying_title">正在部署…</string>

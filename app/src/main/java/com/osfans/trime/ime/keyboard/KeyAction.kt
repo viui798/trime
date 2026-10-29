@@ -5,11 +5,13 @@
 package com.osfans.trime.ime.keyboard
 
 import android.view.KeyEvent
+import com.osfans.trime.R
 import com.osfans.trime.daemon.RimeDaemon
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.data.prefs.LazyPreferenceDelegate
 import com.osfans.trime.data.theme.model.KeyActionToken
 import com.osfans.trime.data.theme.model.PresetKey
+import com.osfans.trime.util.appContext
 import com.osfans.trime.util.virtualKeyCharacterMap
 import timber.log.Timber
 
@@ -88,12 +90,19 @@ class KeyAction(
 
     private val rime get() = RimeDaemon.getFirstSessionOrNull()!!
 
-    // 获取空格键的schemaName，处理初始化时可能为空的情况
-    private fun getSpaceKeySchemaName(): String = rime.run {
-        statusCached.schemaName.ifEmpty {
-            // 如果schemaName为空，尝试使用schemaId作为显示名称
-            schemaCached.schemaId.takeIf { it.isNotEmpty() && it != ".default" } ?: ""
-        }
+    // 获取空格键的schemaName，处理初始化时可能为空的情况。
+    // 芝版同文：内置方案已全部移除，零方案时 Rime 会给一个 `.default` 占位方案（见 Rime.isEmpty()）。
+    // 这时空格键如果照常显示 `.default`，用户只会觉得「键盘坏了」，所以换成一句人话。
+    private fun getSpaceKeySchemaName(): String {
+        val name =
+            rime.run {
+                statusCached.schemaName.ifEmpty {
+                    // 如果schemaName为空，尝试使用schemaId作为显示名称
+                    schemaCached.schemaId.takeIf { it.isNotEmpty() && it != ".default" } ?: ""
+                }
+            }
+        val hasSchema = name.isNotEmpty() && !name.startsWith('.')
+        return if (hasSchema) name else appContext.getString(R.string.keyboard__no_schema)
     }
 
     /**

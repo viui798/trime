@@ -18,6 +18,7 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceScreen
 import com.osfans.trime.R
 import com.osfans.trime.data.prefs.AppPrefs
+import com.osfans.trime.data.voice.JsVoiceHostPermissions
 import com.osfans.trime.data.voice.JsVoiceImportResult
 import com.osfans.trime.data.voice.JsVoiceImporter
 import com.osfans.trime.data.voice.JsVoicePluginRecord
@@ -68,6 +69,28 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
                 setSummary(R.string.voice_import_summary)
                 setOnPreferenceClickListener {
                     importLauncher.launch(arrayOf("*/*"))
+                    true
+                }
+            },
+        )
+
+        // 键盘上长按空格现在直接是「按住说话」，首选引擎的快捷切换入口收进设置页
+        screen.addPreference(
+            Preference(ctx).apply {
+                key = "voice_choose_engine"
+                isPersistent = false
+                isIconSpaceReserved = false
+                isSingleLineTitle = false
+                setTitle(R.string.voice_choose_engine)
+                setSummary(R.string.voice_choose_engine_summary)
+                setOnPreferenceClickListener {
+                    com.osfans.trime.ime.dialog.VoiceInputPickerDialog.build(requireContext()) { selected ->
+                        if (com.osfans.trime.ime.voice.VoiceInputManager.state().active) {
+                            com.osfans.trime.ime.voice.VoiceInputManager.cancel()
+                        }
+                        AppPrefs.defaultInstance().voice.preferredVoiceInput.setValue(selected)
+                        rebuild()
+                    }.show()
                     true
                 }
             },
@@ -178,7 +201,7 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
                     R.string.voice_import_dialog_body,
                     meta.providerId,
                     meta.version.ifBlank { "-" },
-                    meta.hosts.joinToString(", "),
+                    meta.hosts.joinToString("\n"),
                     result.fieldCount,
                 ),
             )
@@ -192,7 +215,7 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.voice_import_dialog_title, meta.displayName))
             .setMessage(body)
-            .setPositiveButton(R.string.voice_import_confirm) { _, _ ->
+            .setPositiveButton(R.string.voice_network_install_approve) { _, _ ->
                 saveImport(result, sourceName, script)
             }.setNegativeButton(R.string.voice_import_cancel, null)
             .show()
@@ -212,6 +235,8 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
             toast(getString(R.string.voice_import_failed_read, sourceName))
             return
         }
+        // 确认对话框里展示的完整主机列表就是用户批准的范围；升级插件新增主机须重新批准。
+        JsVoiceHostPermissions.approve(result.meta.providerId, result.meta.hosts.toSet())
         JsVoiceProviders.reload()
         rebuild()
         toast(getString(R.string.voice_import_success, result.meta.displayName))

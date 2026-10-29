@@ -213,4 +213,41 @@ object ClipboardHelper :
             clbDao.deletedUnpinnedEarlierThan(outdated?.time ?: System.currentTimeMillis())
         }
     }
+
+    /**
+     * 芝版同文：剪贴板同步把远端历史条目直接写进本地历史（不经系统剪贴板）。
+     *
+     * 与 [onPrimaryClipChanged] 相同的去重语义：已存在的文本只刷新时间戳，不重复插入。
+     * 不套用 compareRules/outputRules——那些是针对「用户复制行为」的过滤，远端同步的
+     * 内容已经经过同步接收过滤。
+     */
+    suspend fun insertFromSync(
+        text: String,
+        time: Long = System.currentTimeMillis(),
+    ): DatabaseBean? {
+        if (text.isBlank()) return null
+        return mutex.withLock {
+            try {
+                clbDao.find(text)?.let {
+                    updateLastBean(it.copy(time = time))
+                    clbDao.updateTime(it.id, time)
+                    return@withLock it.copy(time = time)
+                }
+                val bean = DatabaseBean(text = text, time = time)
+                val insertedBean =
+                    clbDb.withTransaction {
+                        val rowId = clbDao.insert(bean)
+                        removeOutdated()
+                        updateItemCount()
+                        clbDao.get(rowId) ?: bean
+                    }
+                updateLastBean(insertedBean)
+                updateItemCount()
+                insertedBean
+            } catch (exception: Exception) {
+                Timber.w("Failed to insert remote clipboard entry: $exception")
+                null
+            }
+        }
+    }
 }

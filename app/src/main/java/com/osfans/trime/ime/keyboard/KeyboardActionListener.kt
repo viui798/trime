@@ -18,6 +18,22 @@ interface KeyboardActionListener {
     fun onAction(action: KeyAction)
 
     /**
+     * 带 [behavior] 的动作分发，让监听方能区分单击与长按（例如语音键长按弹引擎选择框
+     * 而不触发录音）。默认回落到 [onAction]，与旧行为一致。
+     */
+    fun onAction(
+        action: KeyAction,
+        behavior: KeyBehavior,
+    ) {
+        onAction(action)
+    }
+
+    /**
+     * 长按后的手指抬起。普通键无语义；按住说话（长按空格触发录音）靠它收尾。
+     */
+    fun onLongPressReleased() {}
+
+    /**
      * Send a key press to the listener.
      *
      * @param keyEventCode this is the key that was pressed

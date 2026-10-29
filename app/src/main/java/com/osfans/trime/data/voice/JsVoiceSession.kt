@@ -111,11 +111,14 @@ internal class JsVoiceSession(
         rx: Channel<JsVoiceCommand>,
     ) {
         var notifyEnded = true
-        val net = JsVoiceNet(http, declaredHosts, rx) { field ->
+        val policy = JsVoiceNetworkPolicy(pluginId, declaredHosts)
+        val net = JsVoiceNet(http, policy, rx) { field ->
             JsVoiceSettingsStore.secret(pluginId, field)
         }
         val js = QuickJs.create(Dispatchers.IO)
         try {
+            // 导入的脚本可能在 register()/start() 之前就在顶层调用 native。
+            policy.requireApproval()
             net.install(js, locale)
             js.evaluate<Any?>(JsVoicePrelude.SOURCE + "\n" + scriptSource())
             val undeclared = undeclaredHosts(js)

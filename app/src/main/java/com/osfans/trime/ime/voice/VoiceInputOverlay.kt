@@ -114,7 +114,15 @@ class VoiceInputOverlay(
         VoiceInputManager.removeListener(this)
     }
 
-    override fun onVoiceState(state: VoiceInputManager.State) {
+    override fun onVoiceState(
+        state: VoiceInputManager.State,
+        previous: VoiceInputManager.State,
+    ) {
+        // 咩版式按住说话：不显示状态条，键盘保持原样
+        if (state.hold) {
+            hide()
+            return
+        }
         wave.level = state.level / 32767f
         if (!state.active) {
             hide()

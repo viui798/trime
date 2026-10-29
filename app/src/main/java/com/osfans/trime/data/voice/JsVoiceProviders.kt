@@ -24,6 +24,8 @@ internal object JsVoiceProviders {
 
     const val QWEN_ASR_ID = "js:qwen-asr"
     const val DOUBAO_ASR_ID = "js:doubao-asr"
+    const val TENCENT_ASR_ID = "js:tencent-asr"
+    const val TENCENT_TRANSLATE_ID = "js:tencent-translate"
 
     /** 脚本正文的来源。内置读 asset，用户导入的读私有目录文件。 */
     internal sealed interface Source {
@@ -50,6 +52,7 @@ internal object JsVoiceProviders {
     private val http: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .followRedirects(false)
+            .followSslRedirects(false)
             // flash 模式把整段音频 POST 上去等文本，默认 10s 读超时会在云端慢的时候先失败，
             // 而 Foxy 给 stop 回调的预算是 35s。
             .readTimeout(40, TimeUnit.SECONDS)
@@ -63,7 +66,7 @@ internal object JsVoiceProviders {
         Spec(
             id = QWEN_ASR_ID,
             label = appContext.getString(R.string.voice_provider_qwen),
-            version = "1.6.2",
+            version = "1.6.3",
             hosts = setOf(
                 "dashscope.aliyuncs.com",
                 "maas.qianwenaiapi.com",
@@ -77,13 +80,33 @@ internal object JsVoiceProviders {
         Spec(
             id = DOUBAO_ASR_ID,
             label = appContext.getString(R.string.voice_provider_doubao),
-            version = "1.1.0",
+            version = "1.2.0",
             // 火山引擎语音识别只开这两个口子：bigmodel_async（流式）与 bigmodel_nostream（单次）。
             hosts = setOf("openspeech.bytedance.com"),
             sampleRate = 16000,
             source = Source.Asset("voice/doubao-asr.js"),
             builtIn = true,
             originName = "doubao-asr.js",
+        ),
+        Spec(
+            id = TENCENT_ASR_ID,
+            label = appContext.getString(R.string.voice_provider_tencent_asr),
+            version = "1.0.7",
+            hosts = setOf("asr.cloud.tencent.com"),
+            sampleRate = 16000,
+            source = Source.Asset("voice/tencent-asr.js"),
+            builtIn = true,
+            originName = "tencent-asr.js",
+        ),
+        Spec(
+            id = TENCENT_TRANSLATE_ID,
+            label = appContext.getString(R.string.voice_provider_tencent_translate),
+            version = "1.0.0",
+            hosts = setOf("asr.cloud.tencent.com"),
+            sampleRate = 16000,
+            source = Source.Asset("voice/tencent-translate.js"),
+            builtIn = true,
+            originName = "tencent-translate.js",
         ),
     )
 
@@ -100,7 +123,9 @@ internal object JsVoiceProviders {
         )
     }
 
-    private fun buildSpecs(): List<Spec> = builtInSpecs() + importedSpecs()
+    // 用户早先导入的插件可能已被收录为内置。优先用内置实现，
+    // 保留导入文件与同一 provider id 下的设置与密钥。
+    private fun buildSpecs(): List<Spec> = (builtInSpecs() + importedSpecs()).distinctBy { it.id }
 
     fun all(): List<Spec> = synchronized(lock) { cached ?: buildSpecs().also { cached = it } }
 

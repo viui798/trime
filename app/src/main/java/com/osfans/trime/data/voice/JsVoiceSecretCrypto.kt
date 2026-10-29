@@ -8,8 +8,10 @@ import android.util.Base64
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
+import javax.crypto.Mac
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 /**
  * 插件密钥的落盘加密。
@@ -20,6 +22,9 @@ import javax.crypto.spec.GCMParameterSpec
  *
  * 不引入第三方加密库：AES/GCM 在 API 23 起就是平台能力。芝版 minSdk 是 21，
  * 21/22 上退化为带固定混淆的 Base64（只能防肩窥，不具备 Keystore 的硬件保护）。
+ *
+ * [hmacSha1] 是给插件签名用的：腾讯云等服务的请求签名要求 HMAC-SHA1，
+ * 签名在宿主内完成，脚本只拿到签名结果，永远拿不到密钥本身。
  */
 internal object JsVoiceSecretCrypto {
 
@@ -30,6 +35,19 @@ internal object JsVoiceSecretCrypto {
     private const val TAG_LENGTH_BITS = 128
     private const val LEGACY_PREFIX = "plain:"
     private val LEGACY_KEY = "zhi-trime-voice".toByteArray(Charsets.UTF_8)
+
+    /** 在宿主内解析密钥并签名；脚本只收到签名，收不到密钥。 */
+    fun hmacSha1(
+        secretField: String,
+        text: String,
+        secretFor: (String) -> String?,
+    ): ByteArray {
+        val secret = secretFor(secretField)?.takeIf { it.isNotBlank() }
+            ?: throw JsVoiceSecretMissingException(secretField)
+        val mac = Mac.getInstance("HmacSHA1")
+        mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), "HmacSHA1"))
+        return mac.doFinal(text.toByteArray(Charsets.UTF_8))
+    }
 
     fun encrypt(plaintext: String): String? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {

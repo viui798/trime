@@ -12,11 +12,16 @@ import android.os.Looper
 import android.widget.Toast
 import com.osfans.trime.R
 import com.osfans.trime.data.voice.JsVoiceCallbacks
+import com.osfans.trime.data.voice.JsVoiceHostPermissions
 import com.osfans.trime.data.voice.JsVoiceProviders
 import com.osfans.trime.data.voice.JsVoiceSession
 import com.osfans.trime.data.voice.VoiceAudioCapture
 import com.osfans.trime.ime.core.TrimeInputMethodService
+import com.osfans.trime.ui.voice.VoiceHostPermissionDialog
 import com.osfans.trime.util.appContext
+import com.osfans.trime.util.toast
+import com.osfans.trime.util.withMaterialDialogTheme
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.Locale
@@ -41,12 +46,17 @@ object VoiceInputManager {
         val pluginId: String? = null,
         val partial: String = "",
         val level: Int = 0,
+        /** 咩版式按住说话：全程不显示覆盖层，键盘保持原样。 */
+        val hold: Boolean = false,
     ) {
         val active: Boolean get() = phase != Phase.IDLE
     }
 
     interface Listener {
-        fun onVoiceState(state: State)
+        fun onVoiceState(
+            state: State,
+            previous: State,
+        )
 
         fun onVoiceError(message: String)
     }
@@ -62,13 +72,17 @@ object VoiceInputManager {
     private var watchdog: Runnable? = null
     private var pendingStart: Pair<WeakReference<TrimeInputMethodService>, String>? = null
 
+    /** 当前会话是否为咩版式按住说话（松手自动收尾、无覆盖层）。 */
+    @Volatile
+    private var holdMode = false
+
     fun state(): State = current
 
     fun isBuiltIn(pluginId: String): Boolean = pluginId.startsWith("js:")
 
     fun addListener(listener: Listener) {
         listeners += listener
-        main.post { listener.onVoiceState(current) }
+        main.post { listener.onVoiceState(current, current) }
     }
 
     fun removeListener(listener: Listener) {
@@ -84,6 +98,26 @@ object VoiceInputManager {
         } else {
             start(service, pluginId)
         }
+    }
+
+    /**
+     * 咩版式按住说话：按下（长按触发）即开始录音，全程不显示覆盖层；
+     * 手指抬起时由 [releaseHold] 收尾进识别。选择引擎、权限弹窗复用 [start] 的路径。
+     */
+    fun startHold(
+        service: TrimeInputMethodService,
+        pluginId: String,
+    ) {
+        if (current.active) return
+        holdMode = true
+        start(service, pluginId)
+    }
+
+    /** 按住的语音键抬起：停止录音，进入等待识别结果。 */
+    fun releaseHold() {
+        if (!holdMode) return
+        holdMode = false
+        if (current.phase == Phase.LISTENING || current.phase == Phase.CONNECTING) stop()
     }
 
     fun start(
@@ -107,6 +141,27 @@ object VoiceInputManager {
             toast(appContext.getString(R.string.voice_error_plugin_missing, pluginId))
             return
         }
+        if (!JsVoiceHostPermissions.isApproved(pluginId, spec.hosts)) {
+            // 征求同意不启动录音。弹窗开着时按住键可能已经松开，
+            // 下一次显式按语音键再真正开始会话。
+            val dialog = MaterialAlertDialogBuilder(service.withMaterialDialogTheme())
+                .setTitle(R.string.voice_network_title)
+                .setMessage(
+                    service.getString(
+                        R.string.voice_network_message,
+                        spec.label,
+                        spec.hosts.sorted().joinToString("\n"),
+                    ),
+                )
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.voice_network_approve) { _, _ ->
+                    JsVoiceHostPermissions.approve(pluginId, spec.hosts)
+                    service.toast(R.string.voice_network_approved_hint)
+                }
+                .create()
+            service.showDialog(dialog)
+            return
+        }
         val script = runCatching { JsVoiceProviders.readScript(spec) }.getOrElse {
             Timber.w(it, "failed to read voice plugin script")
             toast(appContext.getString(R.string.voice_error_plugin_load_failed, spec.label))
@@ -114,7 +169,7 @@ object VoiceInputManager {
         }
         serviceRef = WeakReference(service)
         val gen = ++generation
-        setState(State(Phase.CONNECTING, pluginId))
+        setState(State(Phase.CONNECTING, pluginId, hold = holdMode))
         val next = JsVoiceSession(
             pluginId = pluginId,
             scriptSource = { script },
@@ -223,8 +278,9 @@ object VoiceInputManager {
     }
 
     private fun setState(next: State) {
+        val previous = current
         current = next
-        listeners.forEach { it.onVoiceState(next) }
+        listeners.forEach { it.onVoiceState(next, previous) }
     }
 
     private fun postIfCurrent(

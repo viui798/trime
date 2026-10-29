@@ -25,6 +25,7 @@ import com.osfans.trime.data.theme.model.LiquidKeyboard
 import com.osfans.trime.ime.clipboard.ClipboardWindow
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ime.dialog.EnabledSchemaPickerDialog
+import com.osfans.trime.ime.voice.VoiceFeedback
 import com.osfans.trime.ime.switches.SwitchOptionWindow
 import com.osfans.trime.ime.voice.VoiceInputManager
 import com.osfans.trime.ime.symbol.LiquidWindow
@@ -148,6 +149,24 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                         else -> handleDefaultKeyAction(action)
                     }
                 }
+            }
+
+            override fun onAction(
+                action: KeyAction,
+                behavior: KeyBehavior,
+            ) {
+                // 长按语音键（空格）= 咩版式按住说话：按下即录音，全程无覆盖层，
+                // 键盘保持原样；松手由 onLongPressReleased 收尾。其余按键与单击同路。
+                if (behavior == KeyBehavior.LONG_CLICK && action.code == KeyEvent.KEYCODE_VOICE_ASSIST) {
+                    VoiceFeedback.init(context)
+                    VoiceInputManager.startHold(service, prefs.voice.preferredVoiceInput.getValue())
+                    return
+                }
+                onAction(action)
+            }
+
+            override fun onLongPressReleased() {
+                VoiceInputManager.releaseHold()
             }
 
             private fun handleSwitchCharset(action: KeyAction) {

@@ -92,6 +92,7 @@ class KeyView(
         onRelease = { behavior, isFromLongPress ->
             Timber.d("KeyView release: label=${key.getLabel()}, behavior=$behavior, fromLongPress=$isFromLongPress")
             if (isFromLongPress) {
+                keyboardActionListener.onLongPressReleased()
                 if (hasPopup) {
                     val triggerAction = PopupAction.TriggerAction(id)
                     popup.listener.onPopupAction(triggerAction)
@@ -206,7 +207,7 @@ class KeyView(
             return
         }
 
-        keyboardActionListener.onAction(action)
+        keyboardActionListener.onAction(action, behavior)
 
         val hookArrow = if (keyboardView.hookShiftArrow) {
             when (action.code) {

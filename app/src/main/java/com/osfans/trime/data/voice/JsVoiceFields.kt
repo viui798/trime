@@ -4,6 +4,7 @@ package com.osfans.trime.data.voice
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
@@ -26,6 +27,8 @@ internal data class JsVoiceField(
     val options: List<JsVoiceFieldOption> = emptyList(),
     val allowCustom: Boolean = false,
     val visibleWhen: JsonObject? = null,
+    /** 由另一项普通设置决定默认值：`{key: "authMode", values: {apiKey: "..."}}`。 */
+    val defaultWhen: JsonObject? = null,
 ) {
     val isSecret: Boolean get() = kind == KIND_SECRET
 
@@ -74,6 +77,7 @@ internal object JsVoiceFields {
             options = options,
             allowCustom = obj["allowCustom"]?.jsonPrimitive?.booleanOrNull == true,
             visibleWhen = obj["visibleWhen"] as? JsonObject,
+            defaultWhen = obj["defaultWhen"] as? JsonObject,
         )
     }
 
@@ -108,6 +112,32 @@ internal object JsVoiceFields {
             if (field.isSecret) return@forEach
             values[field.key] = stored[field.key] ?: field.defaultValue
         }
+        // 等全部控件的值收齐后再解析依赖默认值，与声明顺序无关。
+        // 用户显式保存过的值在打开设置页或启动会话时仍然优先。
+        fields.filterNot { it.isSecret || stored.containsKey(it.key) }.forEach { field ->
+            dependentDefault(field, values)?.let { values[field.key] = it }
+        }
         return values
+    }
+
+    /** 只有用户显式改了控制项时才重置依赖默认值。 */
+    fun defaultsAfterChange(
+        fields: List<JsVoiceField>,
+        changedKey: String,
+        values: Map<String, String>,
+    ): Map<String, String> =
+        buildMap {
+            fields.filterNot { it.isSecret }.forEach { field ->
+                val control = (field.defaultWhen?.get("key") as? JsonPrimitive)?.contentOrNull
+                if (control == changedKey) dependentDefault(field, values)?.let { put(field.key, it) }
+            }
+        }
+
+    private fun dependentDefault(field: JsVoiceField, values: Map<String, String>): String? {
+        val condition = field.defaultWhen ?: return null
+        val key = (condition["key"] as? JsonPrimitive)?.contentOrNull ?: return null
+        val options = condition["values"] as? JsonObject ?: return null
+        val selected = values[key] ?: return null
+        return (options[selected] as? JsonPrimitive)?.contentOrNull
     }
 }

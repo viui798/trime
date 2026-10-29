@@ -22,6 +22,7 @@ import com.osfans.trime.R
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.data.voice.JsVoiceField
 import com.osfans.trime.data.voice.JsVoiceFields
+import com.osfans.trime.data.voice.JsVoiceHostPermissions
 import com.osfans.trime.data.voice.JsVoicePluginStore
 import com.osfans.trime.data.voice.JsVoiceProviders
 import com.osfans.trime.data.voice.JsVoiceSettingsStore
@@ -108,6 +109,8 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
         }
         screen.addPreference(actions)
 
+        appendHostPermissionEntry(actions)
+
         val current = AppPrefs.defaultInstance().voice.preferredVoiceInput.getValue()
         if (current == pluginId) {
             actions.addPreference(
@@ -156,6 +159,33 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
         )
     }
 
+    /** 逐插件网络主机授权：显示当前批准状态，点按确认批准或撤销。 */
+    private fun appendHostPermissionEntry(actions: PreferenceCategory) {
+        val spec = JsVoiceProviders.specOf(pluginId) ?: return
+        val preference = Preference(requireContext()).apply {
+            isIconSpaceReserved = false
+            isSingleLineTitle = false
+            isPersistent = false
+            setTitle(R.string.voice_network_entry)
+        }
+        fun refresh() {
+            preference.summary = getString(
+                if (JsVoiceHostPermissions.isApproved(spec.id, spec.hosts)) {
+                    R.string.voice_network_granted
+                } else {
+                    R.string.voice_network_pending
+                },
+                spec.hosts.sorted().joinToString("\n"),
+            )
+        }
+        refresh()
+        preference.setOnPreferenceClickListener {
+            VoiceHostPermissionDialog.build(requireContext(), spec) { refresh() }.show()
+            true
+        }
+        actions.addPreference(preference)
+    }
+
     private fun renderError(error: Throwable) {
         val screen = preferenceScreen ?: return
         val ctx = requireContext()
@@ -202,6 +232,7 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
                 isChecked = value == "true"
                 setOnPreferenceChangeListener { _, newValue ->
                     JsVoiceSettingsStore.setValue(pluginId, field.key, newValue?.toString().orEmpty())
+                    applyDependentDefaults(field.key)
                     rerender()
                     true
                 }
@@ -236,6 +267,7 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
                 }
                 setOnPreferenceChangeListener { _, newValue ->
                     JsVoiceSettingsStore.setValue(pluginId, field.key, newValue?.toString().orEmpty())
+                    applyDependentDefaults(field.key)
                     rerender()
                     true
                 }
@@ -285,6 +317,7 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
                 dialog.dismiss()
                 if (which in options.indices) {
                     JsVoiceSettingsStore.setValue(pluginId, field.key, options[which].value)
+                    applyDependentDefaults(field.key)
                     render()
                 } else {
                     showCustomInput(field, current)
@@ -331,6 +364,14 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
                 requireActivity().finish()
             }.setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    /** 用户显式改了控制项（如豆包 authMode）时，重置依赖它的字段默认值并写盘。 */
+    private fun applyDependentDefaults(changedKey: String) {
+        val values = JsVoiceFields.currentValues(fields, JsVoiceSettingsStore.values(pluginId))
+        JsVoiceFields.defaultsAfterChange(fields, changedKey, values).forEach { (key, value) ->
+            JsVoiceSettingsStore.setValue(pluginId, key, value)
+        }
     }
 
     private fun rerender() {

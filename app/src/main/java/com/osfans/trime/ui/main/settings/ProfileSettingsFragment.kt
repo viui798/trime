@@ -22,6 +22,7 @@ import androidx.preference.SwitchPreferenceCompat
 import com.osfans.trime.R
 import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.core.data.DataStorageMode
+import com.osfans.trime.core.data.RimeDataLayout
 import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.data.prefs.AppPrefs
 import com.osfans.trime.data.prefs.PreferenceDelegate
@@ -39,6 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.Locale
 
 class ProfileSettingsFragment : PaddingPreferenceFragment() {
     private val viewModel: MainViewModel by activityViewModels()
@@ -75,6 +77,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
     private lateinit var dataStorageModePreference: ListPreference
     private lateinit var dataPathPreference: Preference
     private lateinit var engineRootPreference: Preference
+    private lateinit var deployCachePreference: Preference
 
     private lateinit var editSyncIntervalPreference: EditTextIntPreference
 
@@ -109,6 +112,36 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
     }
 
     // -------------------------------------------------- 外部引擎数据目录
+
+    private fun provideDeployCacheSummary(): String =
+        getString(R.string.deploy_cache_summary, formatSize(RimeDataLayout.deployBytes()))
+
+    private fun formatSize(bytes: Long): String =
+        when {
+            bytes >= 1024L * 1024 * 1024 -> String.format(Locale.US, "%.1f GB", bytes / 1024.0 / 1024 / 1024)
+            bytes >= 1024L * 1024 -> String.format(Locale.US, "%.0f MB", bytes / 1024.0 / 1024)
+            else -> String.format(Locale.US, "%d KB", bytes / 1024)
+        }
+
+    private fun confirmClearDeployCache() {
+        val ctx = requireContext()
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.deploy_cache_title)
+            .setMessage(R.string.deploy_cache_confirm)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                lifecycleScope.launch {
+                    var ok = false
+                    withLoadingDialog(ctx, R.string.deploy_cache_title) {
+                        withContext(Dispatchers.IO) { ok = RimeDataLayout.clearDeployCache() }
+                    }
+                    ctx.toast(if (ok) R.string.deploy_cache_done else R.string.deploy_cache_failed)
+                    if (::deployCachePreference.isInitialized) {
+                        deployCachePreference.summary = provideDeployCacheSummary()
+                    }
+                }
+            }.setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
 
     private fun provideEngineRootSummary(): String =
         if (DataManager.isUsingExternalRoot()) {
@@ -348,6 +381,19 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                         summary = provideEngineRootSummary()
                         setOnPreferenceClickListener {
                             onEngineRootClicked()
+                            true
+                        }
+                    },
+                )
+                addPreference(
+                    Preference(ctx).apply {
+                        deployCachePreference = this
+                        key = "clear_deploy_cache"
+                        isIconSpaceReserved = false
+                        setTitle(R.string.deploy_cache_title)
+                        summary = provideDeployCacheSummary()
+                        setOnPreferenceClickListener {
+                            confirmClearDeployCache()
                             true
                         }
                     },

@@ -529,4 +529,11 @@
     <string name="engine_root_permission_needed">Turn on “All files access” for this app first</string>
     <string name="engine_root_switched">Switched. Restart the keyboard to take effect.</string>
     <string name="engine_root_migrating">Moving schemas and skins…</string>
+
+    <!-- Deploy cache (compiled dictionaries) -->
+    <string name="deploy_cache_title">Clear deploy cache</string>
+    <string name="deploy_cache_summary">Currently %1$s · recompiled on next start</string>
+    <string name="deploy_cache_confirm">The first start after clearing will recompile dictionaries (may take a minute). Schemas and skins are not affected. Continue?</string>
+    <string name="deploy_cache_done">Deploy cache cleared</string>
+    <string name="deploy_cache_failed">Could not clear cache, some files may be in use</string>
 </resources>

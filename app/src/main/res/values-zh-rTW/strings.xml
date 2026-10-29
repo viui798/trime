@@ -526,4 +526,10 @@
     <string name="engine_root_permission_needed">請先在系統設定中開啟本應用程式的「所有檔案存取」</string>
     <string name="engine_root_switched">已切換，重啟輸入法後生效</string>
     <string name="engine_root_migrating">正在遷移方案與面板…</string>
+
+    <string name="deploy_cache_title">清理部署快取</string>
+    <string name="deploy_cache_summary">目前佔用 %1$s，下次啟動會重新編譯</string>
+    <string name="deploy_cache_confirm">清理後首次啟動需要重新編譯詞典，可能耗時一分鐘。方案與面板不受影響。要繼續嗎？</string>
+    <string name="deploy_cache_done">部署快取已清理</string>
+    <string name="deploy_cache_failed">清理失敗，可能有檔案正在使用</string>
 </resources>

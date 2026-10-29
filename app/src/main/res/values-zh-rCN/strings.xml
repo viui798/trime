@@ -527,4 +527,11 @@
     <string name="engine_root_permission_needed">请先在系统设置中开启本应用的「所有文件访问」</string>
     <string name="engine_root_switched">已切换，重启输入法后生效</string>
     <string name="engine_root_migrating">正在迁移方案与皮肤…</string>
+
+    <!-- 部署缓存（编译后的词典） -->
+    <string name="deploy_cache_title">清理部署缓存</string>
+    <string name="deploy_cache_summary">当前占用 %1$s，下次启动会重新编译</string>
+    <string name="deploy_cache_confirm">清理后首次启动需要重新编译词典，可能耗时一分钟。方案和皮肤不受影响。要继续吗？</string>
+    <string name="deploy_cache_done">部署缓存已清理</string>
+    <string name="deploy_cache_failed">清理失败，可能有文件正在使用</string>
 </resources>

@@ -153,6 +153,7 @@ object RimeDataLayout {
             // 源放到 shared_data_dir（应用私有，不是用户的「方案/皮肤」目录）：
             // 既能被 Rime 读到并部署成规范化产物，又不会污染方案包。
             installThemeConfigs(DataManager.sharedDataDir)
+            sanitizeDeployDir()
             ensureSyncDirConfigured(profile)
             return
         }
@@ -395,16 +396,41 @@ object RimeDataLayout {
     }
 
     /**
-     * 老布局的 `运行数据/build` 是从方案包原样搬过来的，里面常混着别的平台的
-     * `weasel.yaml`、`hamster.plist` 之类。它们留在「部署」里只会让目录变脏，
-     * Rime 也用不到，直接清掉。
+     * 清理「部署」里的垃圾：
+     *
+     * 1. 老布局从方案包原样搬来的 `weasel.yaml`、`hamster.plist` 之类，Rime 用不到；
+     * 2. **失效的包产物**——`部署/<名>/` 只在 `方案/<名>` 或 `方案库/<名>` 还存在时有意义，
+     *    用户删掉方案包或换过几轮包之后，这些目录会一直留着，越攒越大（每个包几百 MB）。
      */
     private fun sanitizeDeployDir() {
+        val liveNames =
+            buildSet {
+                schemaDir.listFiles { f -> f.isDirectory }?.forEach { add(it.name) }
+                RimeProfileManager.listProfiles().forEach { add(it.name) }
+                RimeProfileManager.currentName().takeIf { it.isNotBlank() }?.let { add(it) }
+            }
         deployDir.listFiles()?.forEach { child ->
-            if (child.isFile && isJunk(child.name)) {
-                FileUtils.delete(child)
+            when {
+                child.isFile && isJunk(child.name) -> FileUtils.delete(child)
+                child.isDirectory && child.name !in liveNames -> {
+                    Timber.i("清理失效的部署产物: %s", child.name)
+                    FileUtils.delete(child)
+                }
             }
         }
+    }
+
+    /** 「部署」当前占用（字节）。 */
+    fun deployBytes(): Long = sizeOf(deployDir)
+
+    /**
+     * 清空「部署」里的编译产物。
+     *
+     * 不影响方案、皮肤、学习数据；下次启动 Rime 会重新编译词典（大方案约一分钟）。
+     */
+    fun clearDeployCache(): Boolean {
+        deployDir.listFiles()?.forEach { FileUtils.delete(it) }
+        return deployDir.listFiles()?.isEmpty() != false
     }
 
     // ------------------------------------------------------------ 摊平
@@ -550,9 +576,6 @@ object RimeDataLayout {
             ?.map { it.name.removeSuffix(".userdb") }
             ?.sorted()
             .orEmpty()
-
-    /** 「部署」目录占用的字节数。 */
-    fun deployBytes(): Long = sizeOf(deployDir)
 
     /** 「学习」目录占用的字节数。 */
     fun learnBytes(): Long = sizeOf(learnDir)

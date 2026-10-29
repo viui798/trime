@@ -49,6 +49,15 @@ data class LiquidKeyboard(
         SYMBOL,
         TABS,
         HISTORY,
+
+        /**
+         * 兄弟分支（同文/仓鼠系）的「变长」液体键盘类型，语义上就是一张普通的键位表，
+         * 只是每行键数不固定。这里按 [SYMBOL] 处理即可正常显示。
+         *
+         * 不能直接删掉这个枚举值：皮肤是第三方作者按别的分支写的，缺了它整份主题 yaml
+         * 反序列化会抛 DuplicateKeyException，外观里「主题不可用」然后回落内置主题。
+         */
+        VAR_LENGTH,
     }
 
     data class Tag(val label: String = "", val type: DataType)

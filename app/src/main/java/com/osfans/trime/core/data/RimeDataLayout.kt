@@ -126,8 +126,9 @@ object RimeDataLayout {
         deployDir.mkdirs()
         learnDir.mkdirs()
         syncDir.mkdirs()
-        // 方案库：每套方案一个完整的 Rime user_data_dir。
-        RimeProfileManager.root.mkdirs()
+        // 「方案库」不在这里创建：它是可选能力，不用就让它不存在，
+        // 免得用户打开数据目录时看到一个永远空着的文件夹。
+        // 真正用到时 RimeProfileManager.root 会自己建。
         migrateIfNeeded()
     }
 

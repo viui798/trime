@@ -30,9 +30,14 @@ object RimeProfileManager {
 
     private val prefs get() = AppPrefs.defaultInstance().profile
 
-    /** `rime/方案库`，不存在时创建。 */
+    /**
+     * `rime/方案库`，**不主动创建**。
+     *
+     * 它是可选能力，绝大多数用户不会用；每次启动都建一个空目录只会让数据目录看起来更乱。
+     * 真正要往里放东西的地方自己 `mkdirs()`。
+     */
     val root: File
-        get() = File(DataManager.rimeRootDir, PROFILE_ROOT_NAME).also { it.mkdirs() }
+        get() = File(DataManager.rimeRootDir, PROFILE_ROOT_NAME)
 
     /** 旧版默认目录，`rime/运行数据`。 */
     val legacyDir: File get() = DataManager.userDataDir

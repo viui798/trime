@@ -22,11 +22,11 @@ android {
     buildToolsVersion = "37.0.0"
 
     defaultConfig {
-        applicationId = "com.viui.zhitr"
+        applicationId = "com.viui.trime.cheese"
         minSdk = 21
         targetSdk = 37
-        versionCode = 20261108
-        versionName = "3.3.13-zhi.8"
+        versionCode = 1
+        versionName = "1.0.0-cheese"
 
         multiDexEnabled = true
         buildConfigField("String", "BUILDER", "\"${project.builder}\"")

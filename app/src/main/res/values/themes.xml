@@ -137,7 +137,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <item name="android:windowBackground">@color/stats_surface</item>
     </style>
 
-    <style name="Theme.DialogTheme" parent="@android:style/Theme.DeviceDefault.Light.Dialog" />
+    <!-- 剪贴板编辑页的悬浮窗主题。必须基于 AppCompat：全局大量使用
+         MaterialAlertDialogBuilder / Material 组件，它们会硬性检查 AppCompat 主题，
+         挂在 DeviceDefault 下时抛 IllegalArgumentException（实机已踩过，见 PROJECT.md 坑） -->
+    <style name="Theme.DialogTheme" parent="Theme.AppCompat.DayNight.Dialog" />
 
     <!-- 录音权限代理页：界面全透明，只负责弹系统授权框 -->
     <style name="Theme.Trime.Transparent" parent="Theme.AppCompat.DayNight.NoActionBar">

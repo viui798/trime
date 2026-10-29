@@ -69,5 +69,5 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <item name="android:windowBackground">@color/stats_surface</item>
     </style>
 
-    <style name="Theme.DialogTheme" parent="@android:style/Theme.DeviceDefault.Dialog" />
+    <style name="Theme.DialogTheme" parent="Theme.AppCompat.DayNight.Dialog" />
 </resources>

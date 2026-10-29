@@ -56,7 +56,13 @@ object StatsImageShare {
         } catch (failure: Throwable) { withContext(Dispatchers.IO) { file.delete() }; throw failure }
     }
     fun share(activity: FragmentActivity, content: View) {
-        activity.lifecycleScope.launch {
+        // 实机教训：协程里任何异常（包括 UI 组件抛的主题错误）一旦漏出 launch 就直接杀进程。
+        // 这里兜底兜两层：runCatching 管 render/分享本体，handler 管其余一切。
+        val handler =
+            kotlinx.coroutines.CoroutineExceptionHandler { _, e ->
+                Toast.makeText(activity, e.message ?: "图片分享失败", Toast.LENGTH_LONG).show()
+            }
+        activity.lifecycleScope.launch(handler) {
             runCatching {
                 val file = render(activity, content)
                 val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.fileprovider", file)

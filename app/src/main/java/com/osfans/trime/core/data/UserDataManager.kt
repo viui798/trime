@@ -114,7 +114,15 @@ object UserDataManager {
         it.uri == externalRimeDir && it.read && it.write
     }
 
-    fun isStorageAvailable(): Boolean = !useExternalSync() || hasExternalAccess()
+    /**
+     * 引擎能否启动。
+     *
+     * 三种情况可用：数据根目录已经在外部（「所有文件访问」）、不启用外部同步、
+     * 或者外部同步目录已授权。第一种与 SAF 同步无关，要单独放行，
+     * 否则切到外部根目录后仍会被判成「存储不可用」。
+     */
+    fun isStorageAvailable(): Boolean =
+        DataManager.isUsingExternalRoot() || !useExternalSync() || hasExternalAccess()
 
     fun isStorageChoiceDone(): Boolean = when (dataStorageMode) {
         DataStorageMode.APP_STORAGE -> true

@@ -382,6 +382,14 @@ class AppPrefs(
 
             /** 芝版同文：当前 Rime 方案目录名；空字符串 = 旧版「运行数据」。 */
             const val RIME_PROFILE = "profile_rime_profile"
+
+            /**
+             * 芝版同文：外部引擎根目录（绝对路径）。空字符串 = 用应用私有目录。
+             *
+             * 需要在系统设置里开启「所有文件访问」权限才生效；没权限时自动回落私有目录，
+             * 所以这个值可以保留在磁盘上而不影响使用。
+             */
+            const val EXTERNAL_ENGINE_ROOT = "profile_external_engine_root"
         }
 
         // 芝版同文（2026-10-29 改）：默认「从外部存储同步」，与元书输入法一致，
@@ -390,6 +398,7 @@ class AppPrefs(
         // 向导第一页和主页状态卡都会引导选目录，选完即恢复。
         val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.EXTERNAL_SYNC)
         val rimeProfile = string(RIME_PROFILE, "")
+        val externalEngineRoot = string(EXTERNAL_ENGINE_ROOT, "")
         val externalRimeTreeUri = string(EXTERNAL_RIME_TREE_URI, "")
         val periodicBackgroundSync = bool(PERIODIC_BACKGROUND_SYNC, false)
         val periodicBackgroundSyncInterval = int(PERIODIC_BACKGROUND_SYNC_INTERVAL, 30)

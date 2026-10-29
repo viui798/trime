@@ -5,9 +5,13 @@
 
 package com.osfans.trime.ui.main.settings
 
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.DocumentsContract
+import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.fragment.app.activityViewModels
@@ -34,6 +38,7 @@ import io.github.whiredplanck.storageaccess.StorageAccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class ProfileSettingsFragment : PaddingPreferenceFragment() {
     private val viewModel: MainViewModel by activityViewModels()
@@ -69,6 +74,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
 
     private lateinit var dataStorageModePreference: ListPreference
     private lateinit var dataPathPreference: Preference
+    private lateinit var engineRootPreference: Preference
 
     private lateinit var editSyncIntervalPreference: EditTextIntPreference
 
@@ -100,6 +106,96 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
 
     private fun updateDataPathSummary() {
         dataPathPreference.summary = provideDataPathSummary()
+    }
+
+    // -------------------------------------------------- 外部引擎数据目录
+
+    private fun provideEngineRootSummary(): String =
+        if (DataManager.isUsingExternalRoot()) {
+            DataManager.rimeRootDir.absolutePath
+        } else {
+            getString(R.string.engine_root_summary_internal)
+        }
+
+    /**
+     * 把引擎数据目录指到外部存储。
+     *
+     * 必须先拿到「所有文件访问」：librime 是原生命令层，只认真实文件路径，
+     * SAF 给的 content:// URI 它读不了，所以这件事没法用普通存储授权替代。
+     * 切换时把 方案/皮肤/学习 复制过去；部署产物与运行数据会由引擎重建。
+     */
+    private fun onEngineRootClicked() {
+        val ctx = requireContext()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            ctx.toast(R.string.engine_root_permission_needed)
+            val intent =
+                Intent(
+                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                    Uri.parse("package:${ctx.packageName}"),
+                )
+            runCatching { startActivity(intent) }
+                .onFailure {
+                    runCatching { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
+                }
+            return
+        }
+        lifecycleScope.launch {
+            val picked = storageAccess.pickDirectory() ?: return@launch
+            val target = absolutePathOf(picked.uri)
+            if (target == null) {
+                ctx.toast(R.string.setup__data_path_import_failed)
+                return@launch
+            }
+            val oldRoot = DataManager.rimeRootDir
+            withLoadingDialog(ctx, R.string.engine_root_migrating) {
+                withContext(Dispatchers.IO) {
+                    val newRoot = File(target)
+                    newRoot.mkdirs()
+                    MIGRATED_DIRS.forEach { name ->
+                        val src = File(oldRoot, name)
+                        val dst = File(newRoot, name)
+                        if (src.isDirectory && runCatching { src.canonicalPath != dst.canonicalPath }.getOrDefault(true)) {
+                            copyDirectory(src, dst)
+                        }
+                    }
+                }
+                prefs.externalEngineRoot.setValue(target)
+                // 引擎目录已经在外部了，就不需要再走「从外部存储同步」那条 SAF 通道，
+                // 两者叠加会互相覆盖；统一用应用存储模式，避免 isStorageAvailable 误判。
+                prefs.dataStorageMode.setValue(DataStorageMode.APP_STORAGE)
+                DataManager.invalidateRimeRootCache()
+            }
+            engineRootPreference.summary = provideEngineRootSummary()
+            ctx.toast(R.string.engine_root_switched)
+        }
+    }
+
+    /** SAF 的 tree uri → 绝对路径（只处理本机 primary / 其它卷）。 */
+    private fun absolutePathOf(uri: Uri): String? =
+        runCatching {
+            val docId = DocumentsContract.getTreeDocumentId(uri)
+            if (!docId.contains(':')) return@runCatching null
+            val (volume, rel) = docId.split(':', limit = 2)
+            when (volume) {
+                "raw" -> rel
+                "primary" -> "/storage/emulated/0/$rel"
+                else -> "/storage/$volume/$rel"
+            }
+        }.getOrNull()
+
+    private fun copyDirectory(
+        src: File,
+        dst: File,
+    ) {
+        dst.mkdirs()
+        src.listFiles()?.forEach { child ->
+            val out = File(dst, child.name)
+            if (child.isDirectory) {
+                copyDirectory(child, out)
+            } else {
+                runCatching { child.copyTo(out, overwrite = true) }
+            }
+        }
     }
 
     private fun updateStorageModeUi() {
@@ -243,6 +339,19 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                         }
                     },
                 )
+                addPreference(
+                    Preference(ctx).apply {
+                        engineRootPreference = this
+                        key = AppPrefs.Profile.EXTERNAL_ENGINE_ROOT
+                        isIconSpaceReserved = false
+                        setTitle(R.string.engine_root_title)
+                        summary = provideEngineRootSummary()
+                        setOnPreferenceClickListener {
+                            onEngineRootClicked()
+                            true
+                        }
+                    },
+                )
             }
             addCategory(R.string.synchronization) {
                 isIconSpaceReserved = false
@@ -371,5 +480,10 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
         if (UserDataManager.useExternalSync() && !UserDataManager.hasExternalAccess()) {
             ctx.toast(R.string.data_path_permission_revoked)
         }
+    }
+
+    companion object {
+        /** 切换引擎目录时搬过去的东西：用户自己的内容。部署产物与运行数据由引擎重建。 */
+        private val MIGRATED_DIRS = listOf("方案", "皮肤", "学习")
     }
 }

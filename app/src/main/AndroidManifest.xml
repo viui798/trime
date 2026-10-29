@@ -26,6 +26,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <!--
+      引擎数据目录直接放到用户可见的外部存储时，原生层（librime）需要真实文件路径，
+      SAF 的 content:// URI 它读不了，只能申请「所有文件访问」。
+      未获授权时仍回落到应用私有目录，不影响安装。
+    -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <queries>
         <intent>

@@ -522,4 +522,11 @@
     <string name="home_status_added_dismiss">Dismiss</string>
     <!-- Setup: never show the wizard again -->
     <string name="setup__skip_hint_never">Never show again</string>
+
+    <!-- Engine data folder on external storage (needs All files access) -->
+    <string name="engine_root_title">Engine data folder</string>
+    <string name="engine_root_summary_internal">Using app-private storage</string>
+    <string name="engine_root_permission_needed">Turn on “All files access” for this app first</string>
+    <string name="engine_root_switched">Switched. Restart the keyboard to take effect.</string>
+    <string name="engine_root_migrating">Moving schemas and skins…</string>
 </resources>

@@ -9,10 +9,7 @@ import android.content.Context
 import android.view.View
 import android.view.ViewGroup
 import splitties.dimensions.dp
-import splitties.resources.resolveThemeAttribute
 import splitties.resources.styledColor
-import splitties.resources.styledDimenPxSize
-import splitties.views.backgroundColor
 import splitties.views.dsl.constraintlayout.after
 import splitties.views.dsl.constraintlayout.centerVertically
 import splitties.views.dsl.constraintlayout.constraintLayout
@@ -28,7 +25,6 @@ import splitties.views.dsl.core.matchParent
 import splitties.views.dsl.core.textView
 import splitties.views.dsl.core.wrapContent
 import splitties.views.setPaddingDp
-import splitties.views.textAppearance
 
 class SchemaListEntryUi(
     override val ctx: Context,
@@ -38,30 +34,30 @@ class SchemaListEntryUi(
     val nameText =
         textView {
             setPaddingDp(0, 12, 0, 0)
-            textAppearance = ctx.resolveThemeAttribute(android.R.attr.textAppearanceListItem)
+            textSize = 17f
+            setTextColor(styledColor(com.google.android.material.R.attr.colorOnSurface))
         }
 
     val subtitleText =
         textView {
             setPaddingDp(0, 0, 0, 12)
-            textSize = 12f
-            alpha = 0.6f
+            textSize = 13f
+            setTextColor(styledColor(com.google.android.material.R.attr.colorOnSurfaceVariant))
+            alpha = 0.8f
         }
 
     override val root: View =
         constraintLayout {
             layoutParams = ViewGroup.LayoutParams(matchParent, wrapContent)
-            backgroundColor = styledColor(com.google.android.material.R.attr.colorSurface)
-            minHeight = styledDimenPxSize(android.R.attr.listPreferredItemHeightSmall)
+            minHeight = dp(64)
 
-            val paddingStart = styledDimenPxSize(android.R.attr.listPreferredItemPaddingStart)
             add(
                 checkBox,
                 lParams {
                     width = dp(30)
                     height = matchConstraints
                     centerVertically()
-                    startOfParent(paddingStart)
+                    startOfParent(dp(36))
                 },
             )
 
@@ -76,7 +72,7 @@ class SchemaListEntryUi(
                     width = matchConstraints
                     height = wrapContent
                     centerVertically()
-                    after(checkBox, paddingStart)
+                    after(checkBox, dp(8))
                 },
             )
         }

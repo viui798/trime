@@ -10,19 +10,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingStart="16dp"
-    android:paddingTop="3dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="3dp">
+    android:paddingStart="20dp"
+    android:paddingTop="0dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="0dp">
 
     <LinearLayout
         android:id="@+id/settings_card"
+        android:duplicateParentState="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_settings_card"
+        android:background="@android:color/transparent"
         android:baselineAligned="false"
         android:gravity="center_vertical"
-        android:minHeight="68dp"
+        android:minHeight="64dp"
         android:orientation="horizontal"
         android:paddingStart="16dp"
         android:paddingTop="12dp"
@@ -31,17 +32,20 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
         <LinearLayout
             android:id="@+id/icon_frame"
-            android:layout_width="32dp"
+            android:layout_width="42dp"
             android:layout_height="wrap_content"
             android:gravity="start|center_vertical"
             android:orientation="horizontal">
 
             <androidx.preference.internal.PreferenceImageView
                 android:id="@android:id/icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                app:maxWidth="24dp"
-                app:maxHeight="24dp" />
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_settings_icon"
+                android:padding="5dp"
+                android:tint="@color/settings_icon_fg"
+                app:maxWidth="30dp"
+                app:maxHeight="30dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -57,15 +61,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 android:ellipsize="end"
                 android:maxLines="2"
                 android:textColor="@color/settings_on_surface"
-                android:textSize="16sp" />
+                android:textSize="17sp" />
 
             <TextView
                 android:id="@android:id/summary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:ellipsize="end"
-                android:maxLines="4"
+                android:maxLines="6"
                 android:textColor="@color/settings_on_surface_variant"
                 android:textSize="13sp" />
         </LinearLayout>

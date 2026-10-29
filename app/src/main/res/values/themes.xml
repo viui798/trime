@@ -10,6 +10,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <!-- 芝版全局界面：Material3 + 墨绿品牌色（设置页版式借鉴中州鹅） -->
     <style name="Theme.TrimeAppTheme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="materialButtonStyle">@style/Widget.Trime.Button</item>
+        <item name="elevationOverlayEnabled">false</item>
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="colorPrimaryContainer">@color/settings_primary_container</item>
         <item name="colorOnPrimaryContainer">@color/settings_on_primary_container</item>
@@ -57,6 +59,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <item name="preferenceCategoryTitleTextAppearance">@style/TextAppearance.Trime.CategoryTitle</item>
         <item name="preferenceCategoryTitleTextColor">@color/settings_category_title</item>
         <item name="preferenceFragmentCompatStyle">@style/PreferenceFragment.Trime</item>
+        <item name="preferenceCategoryStyle">@style/Preference.Trime.Category</item>
         <item name="preferenceStyle">@style/Preference.Trime.Row</item>
         <item name="switchPreferenceStyle">@style/Preference.Trime.Switch</item>
         <item name="switchPreferenceCompatStyle">@style/Preference.Trime.SwitchCompat</item>
@@ -66,7 +69,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </style>
 
     <style name="TextAppearance.Trime.ToolbarTitle" parent="TextAppearance.Material3.TitleLarge">
-        <item name="android:textSize">22sp</item>
+        <item name="android:textSize">19sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textColor">@color/settings_on_surface</item>
     </style>
@@ -75,7 +78,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <item name="android:textSize">13sp</item>
         <item name="android:textColor">@color/settings_category_title</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:letterSpacing">0.02</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <style name="PreferenceFragment.Trime" parent="PreferenceFragment.Material">
@@ -84,16 +87,28 @@ SPDX-License-Identifier: GPL-3.0-or-later
     </style>
 
     <!-- 设置行：64dp、24dp 图标、16sp 标题 / 13sp 摘要，行内 16dp 留白 -->
+    <style name="Preference.Trime.Category" parent="Preference.Category.Material">
+        <item name="android:layout">@layout/preference_settings_category</item>
+    </style>
+
+    <style name="Widget.Trime.Button" parent="Widget.Material3.Button">
+        <item name="cornerRadius">14dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
     <style name="Preference.Trime.Row" parent="Preference.Material">
         <item name="android:layout">@layout/preference_settings_row</item>
     </style>
 
     <style name="Preference.Trime.Switch" parent="Preference.SwitchPreference.Material">
         <item name="android:layout">@layout/preference_settings_row</item>
+        <item name="android:widgetLayout">@layout/preference_settings_switch</item>
     </style>
 
     <style name="Preference.Trime.SwitchCompat" parent="Preference.SwitchPreferenceCompat.Material">
         <item name="android:layout">@layout/preference_settings_row</item>
+        <item name="android:widgetLayout">@layout/preference_settings_switch_compat</item>
     </style>
 
     <style name="Preference.Trime.CheckBox" parent="Preference.CheckBoxPreference.Material">

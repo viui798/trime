@@ -44,6 +44,7 @@ import com.osfans.trime.databinding.ActivityMainBinding
 import com.osfans.trime.util.toast
 import com.osfans.trime.ui.setup.SetupActivity
 import com.osfans.trime.util.item
+import com.osfans.trime.util.isNightMode
 import com.osfans.trime.util.parcelable
 import com.osfans.trime.util.startActivity
 import com.osfans.trime.worker.BackgroundSyncWork
@@ -106,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         )
         WindowCompat
             .getInsetsController(window, window.decorView)
-            .isAppearanceLightStatusBars = true
+            .isAppearanceLightStatusBars = !resources.configuration.isNightMode()
 
         setContentView(binding.root)
         // always show toolbar back arrow icon
@@ -144,12 +145,9 @@ class MainActivity : AppCompatActivity() {
         }
         navController.addOnDestinationChangedListener { _, dest, _ ->
             dest.label?.let { viewModel.setToolbarTitle(it.toString()) }
-            binding.mainToolbar.toolbar.subtitle =
-                if (dest.hasRoute<NavigationRoute.Main>()) {
-                    getString(R.string.trime_app_slogan)
-                } else {
-                    ""
-                }
+            // 芝版同文：主页顶部已经有搜索框 + 键盘状态卡，再加上口号副标题会挤成一团，
+            // 所以工具栏只留标题。
+            binding.mainToolbar.toolbar.subtitle = ""
         }
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

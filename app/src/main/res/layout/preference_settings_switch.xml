@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Switch xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@android:id/switch_widget"
+    android:layout_width="wrap_content" android:layout_height="48dp"
+    android:background="@null" android:focusable="false" android:clickable="false"
+    android:showText="false" android:splitTrack="false"
+    android:switchMinWidth="50dp" android:thumb="@drawable/settings_switch_thumb"
+    android:track="@drawable/settings_switch_track"
+    tools:ignore="NewApi,UseSwitchCompatOrMaterialXml" />

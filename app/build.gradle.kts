@@ -25,8 +25,8 @@ android {
         applicationId = "com.viui.trime.cheese"
         minSdk = 21
         targetSdk = 37
-        versionCode = 14
-        versionName = "1.2.4-cheese"
+        versionCode = 15
+        versionName = "1.2.5-cheese"
 
         multiDexEnabled = true
         buildConfigField("String", "BUILDER", "\"${project.builder}\"")

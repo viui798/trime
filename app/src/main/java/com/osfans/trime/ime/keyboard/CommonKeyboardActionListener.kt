@@ -322,7 +322,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
             }
 
             private fun switchToVoiceInputMethod() {
-                val pkgName = prefs.general.preferredVoiceInput.getValue()
+                val pkgName = prefs.voice.preferredVoiceInput.getValue()
                 // 内置 JS 语音插件与外部语音输入法共用同一个「首选语音输入」设置，
                 // 用 js: 前缀区分：命中就走进程内识别，否则保持原来的切换输入法行为。
                 if (VoiceInputManager.isBuiltIn(pkgName)) {

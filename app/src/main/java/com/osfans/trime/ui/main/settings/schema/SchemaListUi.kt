@@ -34,6 +34,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.osfans.trime.R
+import com.osfans.trime.ui.common.ImportFab
 import com.osfans.trime.core.SchemaItem
 import com.osfans.trime.ui.common.OnItemChangedListener
 import splitties.dimensions.dp
@@ -69,12 +70,10 @@ class SchemaListUi(
 ) : Ui {
     private var shouldShowFab = false
 
+    // 芝版同文：与外观页共用同一套 FAB 样式，见 ImportFab。
     private val fab =
         view(::FloatingActionButton) {
-            imageDrawable =
-                drawable(R.drawable.ic_baseline_add_24)!!.apply {
-                    setTint(styledColor(android.R.attr.colorForegroundInverse))
-                }
+            ImportFab.decorate(this)
         }
 
     private var suspendUndo = false
@@ -279,26 +278,28 @@ class SchemaListUi(
             layoutManager = verticalLayoutManager()
             adapter = this@SchemaListUi.adapter
             clipToPadding = false
+            setPaddingDp(0, 12, 0, 16)
+            addItemDecoration(SchemaListDecoration(ctx))
         }
 
     private val headerTitle =
         textView {
-            setPaddingDp(16, 16, 16, 2)
-            textSize = 17f
+            setPaddingDp(20, 16, 20, 2)
+            textSize = 20f
             setTypeface(typeface, Typeface.BOLD)
+            setTextColor(styledColor(com.google.android.material.R.attr.colorOnSurface))
         }
 
     private val headerHint =
         textView {
-            setPaddingDp(16, 0, 16, 8)
-            textSize = 12f
-            alpha = 0.6f
+            setPaddingDp(20, 0, 20, 10)
+            textSize = 13f
+            setTextColor(styledColor(com.google.android.material.R.attr.colorOnSurfaceVariant))
             text = ctx.getString(R.string.schema_list_enabled_hint)
         }
 
     private val header =
         verticalLayout {
-            backgroundColor = styledColor(com.google.android.material.R.attr.colorSurface)
             add(headerTitle, coreLParams(matchParent, wrapContent))
             add(headerHint, coreLParams(matchParent, wrapContent))
         }
@@ -350,7 +351,7 @@ class SchemaListUi(
         val windowInsets = (insets ?: ViewCompat.getRootWindowInsets(root)) ?: return
         val navBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars())
         fab.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            bottomMargin = navBars.bottom + ctx.dp(16)
+            bottomMargin = navBars.bottom + ctx.dp(ImportFab.MARGIN_DP)
         }
         list.bottomPadding = navBars.bottom
     }
@@ -376,7 +377,7 @@ class SchemaListUi(
                 fab,
                 defaultLParams {
                     gravity = gravityEndBottom
-                    margin = dp(16)
+                    margin = dp(ImportFab.MARGIN_DP)
                     behavior =
                         object : HideBottomViewOnScrollBehavior<FloatingActionButton>() {
                             @SuppressLint("RestrictedApi")

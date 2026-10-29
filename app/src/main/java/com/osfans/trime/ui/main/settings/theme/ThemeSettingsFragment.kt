@@ -6,7 +6,6 @@
 
 package com.osfans.trime.ui.main.settings.theme
 
-import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -15,12 +14,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceScreen
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.osfans.trime.R
+import com.osfans.trime.ui.common.ImportFab
 import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.core.data.RimeDataLayout
 import com.osfans.trime.data.importer.RimeResourceImporter
@@ -108,14 +107,9 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
     ) {
         super.onViewCreated(view, savedInstanceState)
         val density = resources.displayMetrics.density
+        // 芝版同文：样式与方案页的加号完全一致，见 ImportFab。
         val fab =
-            FloatingActionButton(requireContext()).apply {
-                setImageResource(R.drawable.ic_baseline_add_24)
-                imageTintList =
-                    ColorStateList.valueOf(
-                        ContextCompat.getColor(requireContext(), android.R.color.white),
-                    )
-            }
+            FloatingActionButton(requireContext()).also { ImportFab.decorate(it) }
         fab.setOnClickListener {
             runCatching { skinImportPicker.launch(arrayOf("*/*")) }
                 .onFailure { requireContext().toast(R.string.setup__import_no_picker) }
@@ -132,8 +126,8 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.END or Gravity.BOTTOM,
             ).apply {
-                marginEnd = (16 * density).toInt()
-                bottomMargin = (16 * density).toInt()
+                marginEnd = (ImportFab.MARGIN_DP * density).toInt()
+                bottomMargin = (ImportFab.MARGIN_DP * density).toInt()
             },
         )
     }

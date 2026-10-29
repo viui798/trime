@@ -51,6 +51,7 @@ class AppPrefs(
     val candidates = Candidates(shared).register()
     val clipboard = Clipboard(shared).register()
     val clipSync = ClipSync(shared).register()
+    val voice = Voice(shared).register()
     val advanced = Advanced(shared).register()
 
     @Keep
@@ -100,12 +101,25 @@ class AppPrefs(
             const val INLINE_PREEDIT_MODE = "inline_preedit_mode"
             const val ASCII_SWITCH_TIPS = "ascii_switch_tips"
             const val INLINE_SUGGESTIONS = "inline_suggestions"
-            const val PREFERRED_VOICE_INPUT = "preferred_voice_input"
         }
 
         val inlinePreeditMode = enum(R.string.inline_preedit_mode, INLINE_PREEDIT_MODE, InlinePreeditMode.DISABLE)
         val asciiSwitchTips = switch(R.string.ascii_switch_tips, ASCII_SWITCH_TIPS, true)
         val inlineSuggestions = switch(R.string.inline_suggestions, INLINE_SUGGESTIONS, true)
+    }
+
+    /**
+     * 语音输入相关设置。
+     *
+     * 「首选语音输入法」原先挂在「常规」里，用户要在两个不相关的页面之间来回跳，
+     * 现在收进语音输入页统一管理。
+     */
+    class Voice(
+        shared: SharedPreferences,
+    ) : PreferenceDelegateOwner(shared, R.string.voice_input) {
+        companion object {
+            const val PREFERRED_VOICE_INPUT = "preferred_voice_input"
+        }
 
         val preferredVoiceInput = list(
             R.string.preferred_voice_input,

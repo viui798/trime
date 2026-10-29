@@ -26,32 +26,35 @@ SPDX-License-Identifier: GPL-3.0-or-later
     <color name="stats_hero_start">#2F4238</color>
     <color name="stats_hero_end">#6FA88A</color>
     <!-- 输入统计页的 Material3 表面色，跟芝版的暖白/墨绿统一 -->
-    <color name="stats_surface">#FBFAF7</color>
-    <color name="stats_surface_variant">#EDEAE3</color>
-    <color name="stats_primary_container">#D9E8DE</color>
-    <color name="stats_secondary_container">#E6EDE7</color>
-    <color name="stats_surface_container_lowest">#FFFFFF</color>
-    <color name="stats_surface_container_low">#F7F5EF</color>
-    <color name="stats_surface_container">#F2EFE7</color>
-    <color name="stats_surface_container_high">#EDEAE1</color>
-    <color name="stats_surface_container_highest">#E7E3D9</color>
+    <color name="stats_surface">@color/settings_surface</color>
+    <color name="stats_surface_variant">@color/settings_surface_variant</color>
+    <color name="stats_primary_container">@color/settings_primary_container</color>
+    <color name="stats_secondary_container">@color/settings_secondary_container</color>
+    <color name="stats_surface_container_lowest">@color/settings_surface_container_lowest</color>
+    <color name="stats_surface_container_low">@color/settings_surface_container_low</color>
+    <color name="stats_surface_container">@color/settings_surface_container</color>
+    <color name="stats_surface_container_high">@color/settings_surface_container_high</color>
+    <color name="stats_surface_container_highest">@color/settings_surface_container_highest</color>
 
-    <color name="settings_category_title">#4E7D66</color>
+    <color name="settings_category_title">#6C6C70</color>
 
     <!-- 设置页 Material3 表面色（芝版墨绿） -->
-    <color name="settings_surface">#F7F9F7</color>
-    <color name="settings_surface_variant">#E6EDE7</color>
-    <color name="settings_on_surface">#1A211D</color>
-    <color name="settings_on_surface_variant">#4C5750</color>
-    <color name="settings_outline">#7C8780</color>
-    <color name="settings_outline_variant">#C9D3CB</color>
-    <color name="settings_primary_container">#D3E6D8</color>
-    <color name="settings_on_primary_container">#0F1F16</color>
-    <color name="settings_secondary_container">#DCE9E0</color>
-    <color name="settings_on_secondary_container">#14251B</color>
+    <color name="settings_surface">#F2F2F7</color>
+    <color name="settings_surface_variant">#E5E5EA</color>
+    <color name="settings_on_surface">#1C1C1E</color>
+    <color name="settings_on_surface_variant">#6C6C70</color>
+    <color name="settings_outline">#8E8E93</color>
+    <color name="settings_outline_variant">#D1D1D6</color>
+    <color name="settings_primary_container">#E0EDE5</color>
+    <color name="settings_on_primary_container">#254D39</color>
+    <color name="settings_secondary_container">#E7EEE9</color>
+    <color name="settings_on_secondary_container">#254D39</color>
     <color name="settings_surface_container_lowest">#FFFFFF</color>
-    <color name="settings_surface_container_low">#F1F5F1</color>
-    <color name="settings_surface_container">#EBF1EC</color>
-    <color name="settings_surface_container_high">#E4EBE5</color>
-    <color name="settings_surface_container_highest">#DDE5DE</color>
+    <color name="settings_surface_container_low">#FFFFFF</color>
+    <color name="settings_surface_container">#EBEBF0</color>
+    <color name="settings_surface_container_high">#E5E5EA</color>
+    <color name="settings_surface_container_highest">#DCDCE2</color>
+    <color name="settings_separator">#C6C6C8</color>
+    <color name="settings_icon_bg">#E4EEE8</color>
+    <color name="settings_icon_fg">#397252</color>
 </resources>

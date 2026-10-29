@@ -55,6 +55,9 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
         val ctx = requireContext()
         screen.removeAll()
 
+        // 芝版同文：「首选语音输入法」原先在「常规」里，现在归到语音输入页。
+        AppPrefs.defaultInstance().voice.createUi(screen)
+
         screen.addPreference(
             Preference(ctx).apply {
                 key = "voice_import"
@@ -70,7 +73,7 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
             },
         )
 
-        val current = AppPrefs.defaultInstance().general.preferredVoiceInput.getValue()
+        val current = AppPrefs.defaultInstance().voice.preferredVoiceInput.getValue()
         val all = JsVoiceProviders.all()
         addGroup(screen, R.string.voice_plugins_builtin, all.filter { it.builtIn }, current)
         addGroup(screen, R.string.voice_plugins_imported, all.filterNot { it.builtIn }, current)

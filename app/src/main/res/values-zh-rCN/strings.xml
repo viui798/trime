@@ -75,8 +75,8 @@
     <string name="setup__step_two">第 2 步</string>
     <string name="setup__skip">跳过</string>
     <string name="setup__skip_hint">您确定要跳过向导吗？</string>
-    <string name="setup__skip_hint_yes">好的，谢谢</string>
-    <string name="setup__skip_hint_no">不，我想留在这儿</string>
+    <string name="setup__skip_hint_yes">好的</string>
+    <string name="setup__skip_hint_no">留在这</string>
     <string name="follow_system_day_night_color">跟随系统夜间模式</string>
     <string name="hook_ctrl_a">拦截 Ctrl+A</string>
     <string name="hook_ctrl_cv">拦截 Ctrl+C/V/X</string>
@@ -334,7 +334,7 @@
     <string name="home_summary_user_dict">查看学习到的词并同步</string>
     <string name="home_summary_phrase">管理常用短语与模板</string>
     <string name="home_summary_profile">编辑 Rime 配置文件</string>
-    <string name="home_summary_general">输入习惯、语音与界面模式</string>
+    <string name="home_summary_general">输入习惯与界面模式</string>
     <string name="home_summary_keyboard">键位、布局与按键反馈</string>
     <string name="home_summary_candidates">候选栏样式与翻页</string>
     <string name="home_summary_theme">主题、配色与字体</string>

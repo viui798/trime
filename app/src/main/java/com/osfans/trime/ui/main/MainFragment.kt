@@ -120,6 +120,13 @@ class MainFragment : PaddingPreferenceFragment() {
         rootKey: String?,
     ) {
         preferenceScreen = preferenceManager.createPreferenceScreen(requireContext()).apply {
+            addPreference(
+                Preference(requireContext()).apply {
+                    isPersistent = false
+                    isSelectable = false
+                    layoutResource = R.layout.preference_settings_header
+                },
+            )
             statusBar = HomeStatusBar(requireContext())
             addPreference(statusBar!!)
             addPreference(SearchPreference(requireContext()) { filter(it) })
@@ -194,6 +201,7 @@ class MainFragment : PaddingPreferenceFragment() {
                     if (preference.isVisible) anyVisible = true
                 }
                 else -> {
+                    if (preference.layoutResource == R.layout.preference_settings_header) continue
                     preference.isVisible = matches(preference, query)
                     if (preference.isVisible) anyVisible = true
                 }
@@ -275,12 +283,16 @@ class MainFragment : PaddingPreferenceFragment() {
     private fun attrColor(attr: Int): Int {
         val tv = TypedValue()
         requireContext().theme.resolveAttribute(attr, tv, true)
-        return ContextCompat.getColor(requireContext(), tv.resourceId)
+        return if (tv.resourceId != 0) {
+            ContextCompat.getColor(requireContext(), tv.resourceId)
+        } else {
+            tv.data
+        }
     }
 
     private fun cardBackground(color: Int) =
         GradientDrawable().apply {
-            cornerRadius = 16 * resources.displayMetrics.density
+            cornerRadius = 18 * resources.displayMetrics.density
             setColor(color)
         }
 
@@ -299,7 +311,8 @@ class MainFragment : PaddingPreferenceFragment() {
         val onError = attrColor(com.google.android.material.R.attr.colorOnError)
         val errorContainer = attrColor(com.google.android.material.R.attr.colorErrorContainer)
         val primary = attrColor(androidx.appcompat.R.attr.colorPrimary)
-        val surface = attrColor(com.google.android.material.R.attr.colorSurfaceContainerHigh)
+        val onPrimary = attrColor(com.google.android.material.R.attr.colorOnPrimary)
+        val surface = attrColor(com.google.android.material.R.attr.colorSurfaceContainerLowest)
 
         @StringRes var titleRes: Int
         @StringRes var summaryRes: Int
@@ -333,7 +346,7 @@ class MainFragment : PaddingPreferenceFragment() {
             cardBackground(if (warning) errorContainer else surface)
         iconBadge.background =
             GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
+                cornerRadius = 12 * resources.displayMetrics.density
                 setColor(if (warning) error else primary)
             }
         val iconRes =
@@ -342,7 +355,7 @@ class MainFragment : PaddingPreferenceFragment() {
                 Status.OK -> R.drawable.ic_baseline_check_24
             }
         icon.setImageResource(iconRes)
-        icon.imageTintList = ColorStateList.valueOf(if (warning) onError else Color.WHITE)
+        icon.imageTintList = ColorStateList.valueOf(if (warning) onError else onPrimary)
         // 实测教训：errorContainer 是浅红底，onError 是白字，几乎看不清；
         // 文字用 colorError（深红）才符合「元书输入法」那种警示卡样式。
         title.setTextColor(if (warning) error else attrColor(android.R.attr.textColorPrimary))

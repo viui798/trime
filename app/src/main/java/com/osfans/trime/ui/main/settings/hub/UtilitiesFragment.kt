@@ -32,9 +32,7 @@ class UtilitiesFragment : PaddingPreferenceFragment() {
                 addPreference(R.string.clipboard, R.string.home_summary_clipboard, R.drawable.ic_clipboard_24) {
                     findNavController().navigateWithAnim(NavigationRoute.Clipboard)
                 }
-                addPreference(R.string.clip_sync, R.string.home_summary_clip_sync, R.drawable.ic_baseline_sync_24) {
-                    findNavController().navigateWithAnim(NavigationRoute.ClipSync)
-                }
+                // 芝版同文：「剪贴板同步」已挪进「剪贴板」页，这里不再单列。
                 addPreference(R.string.voice_input, R.string.voice_input_summary, R.drawable.ic_baseline_mic_24) {
                     startActivity(Intent(requireContext(), VoiceSettingsActivity::class.java))
                 }

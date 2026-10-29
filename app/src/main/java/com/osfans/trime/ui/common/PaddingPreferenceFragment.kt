@@ -23,6 +23,9 @@ abstract class PaddingPreferenceFragment : PreferenceFragmentCompat() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ) = super.onCreateView(inflater, container, savedInstanceState).apply {
+        setDivider(null)
+        listView.addItemDecoration(InsetPreferenceDecoration(requireContext()))
+        listView.clipToPadding = false
         listView.applyNavBarInsetsBottomPadding()
     }
 }

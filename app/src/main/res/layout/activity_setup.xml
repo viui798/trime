@@ -107,7 +107,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
         android:paddingStart="28dp"
         android:paddingEnd="28dp"
         android:text="@string/setup__next"
-        app:cornerRadius="26dp"
+        app:cornerRadius="14dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

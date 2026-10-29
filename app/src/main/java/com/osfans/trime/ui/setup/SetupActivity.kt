@@ -187,6 +187,7 @@ class SetupActivity : FragmentActivity() {
 
         private const val SETUP_PREFS = "zhi_setup"
         private const val KEY_SKIPPED = "skipped"
+        private const val KEY_SKIP_HINT_HIDDEN = "skip_hint_hidden"
 
         /**
          * 芝版同文：用户点过「跳过」就不再每次冷启动都弹向导。
@@ -205,6 +206,21 @@ class SetupActivity : FragmentActivity() {
                 .edit { putBoolean(KEY_SKIPPED, true) }
         }
 
+        /**
+         * 芝版同文：跳过确认弹窗是否已被「不再显示」关掉。
+         *
+         * 注意它**不等于跳过向导**——只是不再弹这个确认框。之后点「跳过」会直接完成向导。
+         */
+        private fun isSkipHintHidden(): Boolean =
+            appContext
+                .getSharedPreferences(SETUP_PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_SKIP_HINT_HIDDEN, false)
+
+        private fun hideSkipHint() {
+            appContext
+                .getSharedPreferences(SETUP_PREFS, Context.MODE_PRIVATE)
+                .edit { putBoolean(KEY_SKIP_HINT_HIDDEN, true) }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -227,17 +243,20 @@ class SetupActivity : FragmentActivity() {
         skipButton = binding.skipButton.apply {
             text = getString(R.string.setup__skip)
             setOnClickListener {
+                if (isSkipHintHidden()) {
+                    completeSetup()
+                    return@setOnClickListener
+                }
+                // 三个按钮并排（neutral | negative | positive），文案刻意压短才排得下。
+                // 「不再显示」只关掉这个确认框（留在向导里），「好的」才是跳过。
                 MaterialAlertDialogBuilder(this@SetupActivity)
                     .setMessage(R.string.setup__skip_hint)
-                    // 芝版同文：「不再显示」= 永久关掉向导；「好的，谢谢」只跳过这一次，
-                    // 下次冷启动若还有未完成步骤会再次出现。
-                    .setNeutralButton(R.string.setup__skip_hint_never) { _, _ ->
-                        markSkipped()
+                    .setNeutralButton(R.string.setup__skip_hint_no, null)
+                    .setNegativeButton(R.string.setup__skip_hint_yes) { _, _ ->
                         completeSetup()
-                    }.setPositiveButton(R.string.setup__skip_hint_yes) { _, _ ->
-                        completeSetup()
-                    }.setNegativeButton(R.string.setup__skip_hint_no, null)
-                    .show()
+                    }.setPositiveButton(R.string.setup__skip_hint_never) { _, _ ->
+                        hideSkipHint()
+                    }.show()
             }
         }
         prevButton =

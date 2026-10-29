@@ -20,6 +20,7 @@ import androidx.fragment.app.commit
 import com.osfans.trime.R
 import com.osfans.trime.data.voice.JsVoiceProviders
 import com.osfans.trime.databinding.ActivityVoiceSettingsBinding
+import com.osfans.trime.util.isNightMode
 
 /**
  * 语音设置的宿主：不带参数时展示插件清单，带 [EXTRA_PLUGIN_ID] 时展示该插件的设置。
@@ -45,7 +46,7 @@ class VoiceSettingsActivity : AppCompatActivity() {
         }
         WindowCompat
             .getInsetsController(window, window.decorView)
-            .isAppearanceLightStatusBars = false
+            .isAppearanceLightStatusBars = !resources.configuration.isNightMode()
         setContentView(binding.root)
         setSupportActionBar(binding.voiceToolbar.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

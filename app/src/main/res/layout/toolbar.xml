@@ -12,13 +12,16 @@ SPDX-License-Identifier: GPL-3.0-or-later
     android:id="@+id/appBar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/settings_surface">
+    android:background="@color/settings_surface"
+    android:elevation="0dp"
+    app:elevation="0dp">
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/settings_surface"
-        android:theme="@style/ThemeOverlay.AppCompat.Light"
+        android:minHeight="56dp"
+        app:contentInsetStartWithNavigation="0dp"
         app:navigationIconTint="@color/settings_on_surface"
         app:titleTextAppearance="@style/TextAppearance.Trime.ToolbarTitle"
         app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight"

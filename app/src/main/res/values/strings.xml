@@ -79,8 +79,8 @@
     <string name="setup__step_two">Step 2</string>
     <string name="setup__skip">Skip</string>
     <string name="setup__skip_hint">"Do you want to skip the setup wizard? "</string>
-    <string name="setup__skip_hint_yes">OK, thanks</string>
-    <string name="setup__skip_hint_no">No, please leave me here</string>
+    <string name="setup__skip_hint_yes">OK</string>
+    <string name="setup__skip_hint_no">Stay</string>
     <string name="follow_system_day_night_color">Follow system day/night color</string>
     <string name="hook_ctrl_a">Hook Ctrl+A</string>
     <string name="hook_ctrl_cv">Hook Ctrl+C/V/X</string>
@@ -335,7 +335,7 @@
     <string name="home_summary_user_dict">Review learned words and sync</string>
     <string name="home_summary_phrase">Manage phrases and templates</string>
     <string name="home_summary_profile">Edit Rime config files</string>
-    <string name="home_summary_general">Typing habits, voice and UI mode</string>
+    <string name="home_summary_general">Typing habits and UI mode</string>
     <string name="home_summary_keyboard">Keys, layouts and key feedback</string>
     <string name="home_summary_candidates">Candidate bar style and paging</string>
     <string name="home_summary_theme">Themes, colors and fonts</string>

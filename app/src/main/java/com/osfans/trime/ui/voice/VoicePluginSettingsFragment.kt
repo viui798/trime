@@ -108,7 +108,7 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
         }
         screen.addPreference(actions)
 
-        val current = AppPrefs.defaultInstance().general.preferredVoiceInput.getValue()
+        val current = AppPrefs.defaultInstance().voice.preferredVoiceInput.getValue()
         if (current == pluginId) {
             actions.addPreference(
                 Preference(ctx).apply {
@@ -125,7 +125,7 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
                     setTitle(R.string.voice_plugin_set_current)
                     summary = spec?.label.orEmpty()
                     setOnPreferenceClickListener {
-                        AppPrefs.defaultInstance().general.preferredVoiceInput.setValue(pluginId)
+                        AppPrefs.defaultInstance().voice.preferredVoiceInput.setValue(pluginId)
                         toast(getString(R.string.voice_plugin_set_current_done, spec?.label.orEmpty()))
                         render()
                         true
@@ -324,8 +324,8 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 JsVoicePluginStore.delete(pluginId.removePrefix(PLUGIN_ID_PREFIX))
                 JsVoiceProviders.reload()
-                if (AppPrefs.defaultInstance().general.preferredVoiceInput.getValue() == pluginId) {
-                    AppPrefs.defaultInstance().general.preferredVoiceInput.setValue(JsVoiceProviders.QWEN_ASR_ID)
+                if (AppPrefs.defaultInstance().voice.preferredVoiceInput.getValue() == pluginId) {
+                    AppPrefs.defaultInstance().voice.preferredVoiceInput.setValue(JsVoiceProviders.QWEN_ASR_ID)
                 }
                 toast(getString(R.string.voice_plugin_removed))
                 requireActivity().finish()

@@ -580,6 +580,12 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         val (useVirtualKeyboard, useCandidatesView) =
             inputDeviceManager.evaluateOnStartInputView(attribute, this)
         if (useVirtualKeyboard) {
+            if (inputView == null) {
+                // 兜底：首次显示早于主题加载完成时，onCreateInputView 推迟建视图，
+                // 而部署完成后的 selectTheme 会因「主题结构相同」早退、不再通知重建，
+                // 键盘会一直空白。这里在每次输入视图启动时补建一次。
+                themeScope?.let { replaceInputViews(it) }
+            }
             inputView?.startInput(attribute, restarting)
         }
         if (useCandidatesView) {

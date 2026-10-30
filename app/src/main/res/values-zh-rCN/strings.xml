@@ -456,6 +456,10 @@
     <string name="voice_done">完成</string>
     <string name="voice_error_requires_m23">内置语音识别需要 Android 6.0 及以上</string>
     <string name="voice_error_no_permission">没有录音权限</string>
+    <string name="voice_mic_permission_granted">麦克风权限已打开</string>
+    <string name="voice_mic_permission_granted_summary">语音输入可以正常使用麦克风</string>
+    <string name="voice_mic_permission_missing">麦克风权限未开启</string>
+    <string name="voice_mic_permission_missing_summary">点击授权麦克风，语音输入才能收音</string>
     <string name="voice_error_audio_minbuf">无法初始化录音缓冲区（%1$d）</string>
     <string name="voice_error_audio_construct">无法创建录音器：%1$s</string>
     <string name="voice_error_audio_not_init">录音器初始化失败</string>

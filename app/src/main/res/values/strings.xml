@@ -457,6 +457,10 @@
     <string name="voice_done">Done</string>
     <string name="voice_error_requires_m23">Built-in voice input requires Android 6.0 or newer</string>
     <string name="voice_error_no_permission">Microphone permission is missing</string>
+    <string name="voice_mic_permission_granted">Microphone permission granted</string>
+    <string name="voice_mic_permission_granted_summary">Voice input can use the microphone</string>
+    <string name="voice_mic_permission_missing">Microphone permission not granted</string>
+    <string name="voice_mic_permission_missing_summary">Tap to allow microphone access; voice input needs it to hear you</string>
     <string name="voice_error_audio_minbuf">Cannot allocate the audio buffer (%1$d)</string>
     <string name="voice_error_audio_construct">Cannot create the recorder: %1$s</string>
     <string name="voice_error_audio_not_init">The recorder failed to initialize</string>

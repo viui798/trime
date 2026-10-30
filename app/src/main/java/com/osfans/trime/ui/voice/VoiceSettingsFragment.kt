@@ -5,12 +5,19 @@
  */
 package com.osfans.trime.ui.voice
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.util.TypedValue
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
@@ -38,6 +45,12 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
             if (uri != null) startImport(uri)
         }
 
+    private val micPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (!granted) toast(getString(R.string.voice_error_no_permission))
+            rebuild()
+        }
+
     override fun onCreatePreferences(
         savedInstanceState: Bundle?,
         rootKey: String?,
@@ -55,6 +68,9 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
         val screen = preferenceScreen ?: return
         val ctx = requireContext()
         screen.removeAll()
+
+        // 麦克风权限置顶：没有权限时标红、点击授权；已打开则显示完成态。
+        addMicPermissionPreference(screen)
 
         // 芝版同文：「首选语音输入法」原先在「常规」里，现在归到语音输入页。
         AppPrefs.defaultInstance().voice.createUi(screen)
@@ -110,6 +126,56 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
                 setSummary(R.string.voice_security_note)
             },
         )
+    }
+
+    /** 主页状态卡同款语义：无权限标红可点，已授权显示完成态。 */
+    private fun addMicPermissionPreference(screen: PreferenceScreen) {
+        val ctx = requireContext()
+        val granted =
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+        val pref =
+            Preference(ctx).apply {
+                key = "voice_mic_permission"
+                isPersistent = false
+                isIconSpaceReserved = false
+                isSingleLineTitle = false
+                if (granted) {
+                    setTitle(R.string.voice_mic_permission_granted)
+                    setSummary(R.string.voice_mic_permission_granted_summary)
+                    isSelectable = false
+                } else {
+                    title =
+                        SpannableString(getString(R.string.voice_mic_permission_missing)).apply {
+                            setSpan(
+                                ForegroundColorSpan(themeErrorColor()),
+                                0,
+                                length,
+                                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                            )
+                        }
+                    setSummary(R.string.voice_mic_permission_missing_summary)
+                    setOnPreferenceClickListener {
+                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        true
+                    }
+                }
+            }
+        screen.addPreference(pref)
+    }
+
+    private fun themeErrorColor(): Int {
+        val tv = TypedValue()
+        requireContext().theme.resolveAttribute(
+            com.google.android.material.R.attr.colorError,
+            tv,
+            true,
+        )
+        return if (tv.resourceId != 0) {
+            ContextCompat.getColor(requireContext(), tv.resourceId)
+        } else {
+            tv.data
+        }
     }
 
     private fun addGroup(

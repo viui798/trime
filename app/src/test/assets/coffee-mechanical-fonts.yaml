@@ -1,0 +1,9 @@
+name: 咖啡机械键盘字体兼容回归
+style:
+  key_font: [hd.ttf]
+preset_color_schemes:
+  jixplv:
+    name: 咖啡·FLICO·奶酪绿
+    key_font: [hd.ttf]
+    key_back_color: kafei/lv03.9.png
+    key_symbol_color: 0xffACC9A1

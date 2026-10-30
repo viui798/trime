@@ -73,7 +73,12 @@ class BoardWindowManager(override val di: DI) : DIAware {
 
     fun attachWindow(window: BoardWindow) {
         if (window === currentWindow) {
+            // 已经是当前窗口就什么都不用做。少了这个 return，每次切换输入目标
+            // （切到别的 App 打字、收起再点输入框）都会把整个键盘 View 从容器里
+            // 摘下来再挂回去，连带 measure/layout/draw 一整屏按键和窗口切换动画，
+            // 表现就是「切应用后第一下打字明显延迟」。
             Timber.d("Skip attaching $window")
+            return
         }
         val newView =
             if (window is ResidentWindow) {

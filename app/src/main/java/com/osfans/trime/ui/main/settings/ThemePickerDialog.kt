@@ -27,7 +27,8 @@ object ThemePickerDialog {
     ): AlertDialog {
         val allThemes =
             withContext(Dispatchers.IO) {
-                ThemeManager.getAllThemes()
+                // 不列内置底座主题（「同文输入法芝士」那项），它只作兜底
+                ThemeManager.getAllThemes(includeBuiltin = false)
             }
         val selectedTheme by ThemeManager.prefs.selectedTheme
         val selectedIndex = allThemes.indexOfFirst { it.configId == selectedTheme }

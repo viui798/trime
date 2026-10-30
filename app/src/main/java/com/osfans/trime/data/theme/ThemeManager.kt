@@ -24,14 +24,33 @@ object ThemeManager {
         fun onThemeChange(theme: Theme)
     }
 
-    fun getAllThemes(): List<ThemeItem> {
+    /**
+     * 内置底座主题（`shared/trime.yaml`）：键盘布局、按键行为的最终兜底。
+     * 它不作为可选皮肤出现在主题列表里，但文件必须留着——所有主题都读不出来时靠它。
+     */
+    const val BUILTIN_THEME_ID = "trime"
+
+    /** 芝版同文默认外观：用户导入的「咖啡」皮肤 + 「咖啡·简•◎」（简白）配色。 */
+    const val DEFAULT_THEME_ID = "咖啡.trime"
+    const val DEFAULT_COLOR_ID = "kfa03"
+
+    private const val PREF_DEFAULT_THEME_MIGRATED = "default_theme_coffee_v1"
+
+    /**
+     * @param includeBuiltin 是否包含内置底座主题。
+     *   给用户挑主题的列表传 `false`（不显示「同文输入法芝士」那一项）；
+     *   兜底查找必须用 `true`，否则一个主题都读不出来时没有可回退的。
+     */
+    fun getAllThemes(includeBuiltin: Boolean = true): List<ThemeItem> {
         val sharedThemes = ThemeFilesManager.listThemes(DataManager.sharedDataDir)
         val dirs = linkedSetOf(DataManager.userDataDir)
         // 直连方案包 / 方案库模式下，皮肤被摊平进当前方案目录而不是「运行数据」，
         // 只扫「运行数据」会漏掉全部皮肤（新装后直接进直连时列表里只剩内置主题）。
         if (RimeProfileManager.isProfile()) dirs += RimeProfileManager.currentDir()
         val userThemes = dirs.flatMap { ThemeFilesManager.listThemes(it) }
-        return (sharedThemes + userThemes).distinctBy { it.configId }
+        return (sharedThemes + userThemes)
+            .distinctBy { it.configId }
+            .filter { includeBuiltin || it.configId != BUILTIN_THEME_ID }
     }
 
     private lateinit var _activeTheme: Theme
@@ -165,8 +184,34 @@ object ThemeManager {
     }
 
     fun init(configuration: Configuration) {
+        migrateDefaultThemeIfNeeded()
         ensureActiveTheme()
         ColorManager.init(configuration)
+    }
+
+    /**
+     * 一次性迁移：把默认主题从内置底座换成「咖啡」，配色换成「咖啡·简•◎」（简白）。
+     *
+     * 默认值只在首次读取 pref 时生效，已经装过并选过主题的设备不会自动变，
+     * 所以这里补一次迁移。只有设备上确实存在咖啡皮肤时才切——否则会把用户
+     * 锁在一个加载不出来的主题上。
+     */
+    private fun migrateDefaultThemeIfNeeded() {
+        val sp = prefs.selectedTheme.sharedPreferences
+        if (sp.getBoolean(PREF_DEFAULT_THEME_MIGRATED, false)) return
+        sp.edit { putBoolean(PREF_DEFAULT_THEME_MIGRATED, true) }
+        if (prefs.selectedTheme.getValue() != BUILTIN_THEME_ID) return
+        val hasCoffee =
+            runCatching {
+                getAllThemes(includeBuiltin = false).any { it.configId == DEFAULT_THEME_ID }
+            }.getOrDefault(false)
+        if (!hasCoffee) {
+            Timber.i("默认主题迁移：设备上还没有咖啡皮肤，保持内置主题")
+            return
+        }
+        Timber.i("默认主题迁移：内置主题 → %s，配色 → %s", DEFAULT_THEME_ID, DEFAULT_COLOR_ID)
+        prefs.selectedTheme.setValue(DEFAULT_THEME_ID)
+        prefs.normalModeColor.setValue(DEFAULT_COLOR_ID)
     }
 
     /**

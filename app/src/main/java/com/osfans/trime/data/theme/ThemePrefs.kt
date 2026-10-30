@@ -15,11 +15,13 @@ import com.osfans.trime.data.prefs.PreferenceDelegateOwner
 class ThemePrefs(
     sharedPrefs: SharedPreferences,
 ) : PreferenceDelegateOwner(sharedPrefs, R.string.theme) {
+    // 芝版同文：默认用「咖啡」主题 + 「咖啡·简•◎」（简白）配色。
+    // 咖啡皮肤是用户导入的，新装设备上还没有时会自动回落到内置底座主题。
     val selectedTheme =
         string(
             R.string.selected_theme,
             SELECTED_THEME,
-            "trime",
+            "咖啡.trime",
             R.string.selected_theme_summary,
         )
 
@@ -27,7 +29,7 @@ class ThemePrefs(
         string(
             R.string.normal_mode_color,
             NORMAL_MODE_COLOR,
-            "default",
+            "kfa03",
             R.string.normal_mode_color_summary,
         )
 

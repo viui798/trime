@@ -256,8 +256,8 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                     val themeId = ThemeManager.prefs.selectedTheme.getValue()
                     service.lifecycleScope.launch { ThemeManager.selectTheme(themeId) }
                 } else {
-                    // 通过主题名称查找对应的配置ID并切换主题
-                    ThemeManager.getAllThemes()
+                    // 通过主题名称查找对应的配置ID并切换主题（不含内置底座主题）
+                    ThemeManager.getAllThemes(includeBuiltin = false)
                         .find { it.name.equals(arg, ignoreCase = true) }?.let { item ->
                             service.lifecycleScope.launch { ThemeManager.selectTheme(item.configId) }
                         }

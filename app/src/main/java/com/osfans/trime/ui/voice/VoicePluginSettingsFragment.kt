@@ -224,6 +224,7 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
             }
 
             field.kind == JsVoiceField.KIND_SWITCH -> SwitchPreference(ctx).apply {
+                setKey(field.key)
                 isPersistent = false
                 isIconSpaceReserved = false
                 isSingleLineTitle = false
@@ -250,6 +251,9 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
             }
 
             else -> EditTextPreference(ctx).apply {
+                // AndroidX 的 EditTextPreference 弹对话框时会用 key 反查自身，
+                // key 为 null 会抛 "Key cannot be null" 崩溃（点文本字段即崩）。
+                setKey(field.key)
                 isPersistent = false
                 isIconSpaceReserved = false
                 isSingleLineTitle = false

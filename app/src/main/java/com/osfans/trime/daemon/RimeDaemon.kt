@@ -48,7 +48,15 @@ object RimeDaemon {
 
     private val realRime by lazy { Rime() }
 
-    private val rimeImpl by lazy { object : RimeApi by realRime {} }
+    private val rimeImpl by lazy {
+        object : RimeApi by realRime {
+            // 显式转发一次。Kotlin 的接口委托本应自动生成全部转发方法，但 R8 在
+            // 「接口新增方法 + 委托对象」这个组合上会漏掉生成，运行时直接抛
+            // AbstractMethodError（实测：键盘构建里取按键标签就炸，连带主题切换失败）。
+            // 这里显式实现一遍最稳妥。
+            override fun peekRuntimeOption(option: String): Boolean? = realRime.peekRuntimeOption(option)
+        }
+    }
 
     private val sessions = mutableMapOf<String, RimeSession>()
 

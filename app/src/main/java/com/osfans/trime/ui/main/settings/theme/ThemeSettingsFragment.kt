@@ -62,9 +62,29 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
         updateSummaries()
     }
 
+    /**
+     * 主题/配色的切换是在对话框里异步完成的，点完对话框立刻读 pref 还是旧值，
+     * 小字会一直停在旧名字上（看起来像「切换没生效」）。这里监听变化再刷新。
+     */
+    private val onThemeChanged = ThemeManager.OnThemeChangeListener {
+        view?.post { updateSummaries() }
+    }
+
+    private val onColorChanged = ColorManager.OnColorChangeListener {
+        view?.post { updateSummaries() }
+    }
+
     override fun onResume() {
         super.onResume()
+        ThemeManager.addOnChangedListener(onThemeChanged)
+        ColorManager.addOnChangedListener(onColorChanged)
         updateSummaries()
+    }
+
+    override fun onPause() {
+        ThemeManager.removeOnChangedListener(onThemeChanged)
+        ColorManager.removeOnChangedListener(onColorChanged)
+        super.onPause()
     }
 
     /** 芝版同文：「主题」「配色」下面的小字显示当前正在使用的主题/配色名（而非「选取主题/配色」占位）。 */

@@ -119,15 +119,8 @@ class SetupActivity : FragmentActivity() {
             RimeDataLayout.prepare()
             // 方案：按需重建 default.custom.yaml（包自带的不动）
             UserDataManager.refreshSchemaListAfterImport()
-            // 皮肤：直接切过去。一个包里常带多个变体，取名字最短的当基础款
-            if (page == SetupPage.Skin) {
-                ThemeFilesManager
-                    .listThemes(DataManager.userDataDir)
-                    .minByOrNull { it.configId.length }
-                    ?.let { ThemeManager.prefs.selectedTheme.setValue(it.configId) }
-            }
-
-            // 先刷新界面：大词库部署要几分钟，不能让用户干等着没反应
+            // 芝版同文：导入后不自动部署、不自动切皮肤，提示导入成功即可；
+            // 方案需手动「部署」、皮肤在「主题」里手动选用才生效（咩版同款）。
             refreshCurrentFragment()
             updateButtons()
 
@@ -135,10 +128,6 @@ class SetupActivity : FragmentActivity() {
                 result.skipped > 0 ->
                     toast(getString(R.string.setup__import_partial, result.files, result.skipped))
                 else -> toast(getString(R.string.setup__import_ok, result.files))
-            }
-
-            if (page == SetupPage.Schema) {
-                startDeploy()
             }
         }
     }

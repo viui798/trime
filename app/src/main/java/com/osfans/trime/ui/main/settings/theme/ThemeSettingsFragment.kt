@@ -6,6 +6,8 @@
 
 package com.osfans.trime.ui.main.settings.theme
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -13,10 +15,13 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.PopupWindow
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceScreen
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.osfans.trime.R
 import com.osfans.trime.ui.common.ImportFab
@@ -24,7 +29,7 @@ import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.core.data.RimeDataLayout
 import com.osfans.trime.data.importer.RimeResourceImporter
 import com.osfans.trime.data.prefs.PreferenceDelegateFragment
-import com.osfans.trime.data.theme.ThemeFilesManager
+import com.osfans.trime.data.theme.ColorManager
 import com.osfans.trime.data.theme.ThemeManager
 import com.osfans.trime.ui.main.settings.ColorPickerDialog
 import com.osfans.trime.ui.main.settings.ThemePickerDialog
@@ -32,6 +37,7 @@ import com.osfans.trime.util.addPreference
 import com.osfans.trime.util.startActivity
 import com.osfans.trime.util.toast
 import kotlinx.coroutines.launch
+import splitties.resources.styledColor
 
 class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
     override fun onCreatePreferences(
@@ -40,13 +46,46 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
     ) {
         super.onCreatePreferences(savedInstanceState, rootKey)
         findPreference<Preference>("selected_theme")?.setOnPreferenceClickListener {
-            lifecycleScope.launch { ThemePickerDialog.build(lifecycleScope, requireContext()).show() }
+            lifecycleScope.launch {
+                ThemePickerDialog.build(lifecycleScope, requireContext()).show()
+                updateSummaries()
+            }
             true
         }
         findPreference<Preference>("normal_mode_color")?.setOnPreferenceClickListener {
-            lifecycleScope.launch { ColorPickerDialog.build(lifecycleScope, requireContext()).show() }
+            lifecycleScope.launch {
+                ColorPickerDialog.build(lifecycleScope, requireContext()).show()
+                updateSummaries()
+            }
             true
         }
+        updateSummaries()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateSummaries()
+    }
+
+    /** 芝版同文：「主题」「配色」下面的小字显示当前正在使用的主题/配色名（而非「选取主题/配色」占位）。 */
+    private fun updateSummaries() {
+        val themeName = currentThemeName()
+        findPreference<Preference>("selected_theme")?.summary =
+            themeName ?: getString(R.string.selected_theme_summary)
+        val colorName =
+            runCatching {
+                ThemeManager.activeTheme.presetColorSchemes.entries
+                    .firstOrNull { it.value == ColorManager.activeColorScheme }
+                    ?.value?.get("name")
+                    ?: ColorManager.activeColorScheme["name"]
+            }.getOrNull()
+        findPreference<Preference>("normal_mode_color")?.summary =
+            colorName?.takeIf { it.isNotBlank() } ?: getString(R.string.normal_mode_color_summary)
+    }
+
+    private fun currentThemeName(): String? {
+        val id = ThemeManager.prefs.selectedTheme.getValue()
+        return runCatching { ThemeManager.getAllThemes().firstOrNull { it.configId == id }?.name }.getOrNull()
     }
 
     override fun onPreferenceUiCreated(screen: PreferenceScreen) {
@@ -58,15 +97,15 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
         }
     }
 
-    /** 芝版同文：外观页右下角「+」，直接选文件导入皮肤（与方案页的导入 FAB 同款交互）。 */
+    /** 外观页右下角「+」的导入入口（由快捷菜单的「导入」调用）。 */
     private val skinImportPicker =
         registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
             importSkins(uris)
         }
 
     /**
-     * 导入皮肤：zip/单文件落到「皮肤/<包名>/」→ 摊平到「运行数据」→ 自动切到新皮肤。
-     * 皮肤是应用层资源，不需要 Rime 部署。流程与向导的皮肤页一致。
+     * 导入皮肤：zip/单文件落到「皮肤/<包名>/」→ 摊平到「运行数据」。
+     * 芝版同文：导入后不自动切换主题，提示导入成功即可，需在「主题」里选用或「部署」才生效。
      */
     private fun importSkins(uris: List<Uri>) {
         if (uris.isEmpty()) return
@@ -86,11 +125,6 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
             }
             // 与方案导入一致：走完整 prepare()，顺带把方案包的预编译词典对齐到「部署」。
             RimeDataLayout.prepare()
-            // 一个皮肤包常带多个变体，取名字最短的当基础款并直接切换
-            ThemeFilesManager
-                .listThemes(DataManager.userDataDir)
-                .minByOrNull { it.configId.length }
-                ?.let { ThemeManager.prefs.selectedTheme.setValue(it.configId) }
             ctx.toast(
                 if (result.skipped > 0) {
                     ctx.getString(R.string.setup__import_partial, result.files, result.skipped)
@@ -98,6 +132,17 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
                     ctx.getString(R.string.setup__import_ok, result.files)
                 },
             )
+            updateSummaries()
+        }
+    }
+
+    /** 「部署」：重新应用当前主题，让导入/改动的皮肤与配色生效。 */
+    private fun deployTheme() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val id = ThemeManager.prefs.selectedTheme.getValue()
+            runCatching { ThemeManager.selectTheme(id) }
+            requireContext().toast(R.string.setup__deploy_ok)
+            updateSummaries()
         }
     }
 
@@ -110,10 +155,7 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
         // 芝版同文：样式与方案页的加号完全一致，见 ImportFab。
         val fab =
             FloatingActionButton(requireContext()).also { ImportFab.decorate(it) }
-        fab.setOnClickListener {
-            runCatching { skinImportPicker.launch(arrayOf("*/*")) }
-                .onFailure { requireContext().toast(R.string.setup__import_no_picker) }
-        }
+        fab.setOnClickListener { showQuickMenu(fab) }
         // 芝版同文：FAB 要挂在 RecyclerView 的容器（FrameLayout #list_container）里才能
         // 悬浮在右下角；PreferenceFragment 的根是 LinearLayout，直接 addView 会被排到末尾。
         val container: ViewGroup =
@@ -130,6 +172,79 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
                 bottomMargin = (ImportFab.MARGIN_DP * density).toInt()
             },
         )
+    }
+
+    /** 芝版同文：外观页右下角「+」弹出「导入 / 部署」快捷菜单（与方案页同款交互）。 */
+    private fun showQuickMenu(anchor: View) {
+        val ctx = requireContext()
+        val density = resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+        var popup: PopupWindow? = null
+        val menu =
+            LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.END
+                setPadding(dp(8), dp(8), dp(8), dp(8))
+                addView(
+                    quickButton(R.drawable.ic_baseline_add_24, R.string.schema_action_import) {
+                        popup?.dismiss()
+                        runCatching { skinImportPicker.launch(arrayOf("*/*")) }
+                            .onFailure { ctx.toast(R.string.setup__import_no_picker) }
+                    },
+                )
+                addView(
+                    quickButton(R.drawable.ic_baseline_refresh_reversed_24, R.string.schema_action_deploy) {
+                        popup?.dismiss()
+                        deployTheme()
+                    },
+                )
+            }
+        menu.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        popup =
+            PopupWindow(menu, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true).apply {
+                isOutsideTouchable = true
+                setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                elevation = dp(8).toFloat()
+            }
+        val location = IntArray(2)
+        anchor.getLocationOnScreen(location)
+        popup.showAtLocation(
+            anchor.rootView,
+            Gravity.NO_GRAVITY,
+            location[0] + anchor.width - menu.measuredWidth,
+            location[1] - menu.measuredHeight - dp(8),
+        )
+    }
+
+    private fun quickButton(
+        icon: Int,
+        label: Int,
+        onClick: () -> Unit,
+    ): MaterialButton {
+        val ctx = requireContext()
+        val density = resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
+        return MaterialButton(ctx).apply {
+            setIconResource(icon)
+            iconTint = android.content.res.ColorStateList.valueOf(styledColor(com.google.android.material.R.attr.colorOnSurface))
+            setText(label)
+            iconGravity = MaterialButton.ICON_GRAVITY_TOP
+            iconPadding = dp(2)
+            iconSize = dp(24)
+            cornerRadius = dp(18)
+            insetTop = dp(10)
+            insetBottom = dp(10)
+            minWidth = dp(76)
+            minHeight = dp(76)
+            isAllCaps = false
+            textSize = 12f
+            backgroundTintList =
+                android.content.res.ColorStateList.valueOf(
+                    styledColor(com.google.android.material.R.attr.colorSurfaceContainerHigh),
+                )
+            setTextColor(styledColor(com.google.android.material.R.attr.colorOnSurface))
+            setOnClickListener { onClick() }
+        }
     }
 
     override fun onStop() {

@@ -80,10 +80,8 @@ class SchemaListFragment :
                 }
                 return@launch
             }
-            if (::ui.isInitialized) ui.showDeploying()
-            val deployed = runCatching { rime.runOnReady { deploy() } }.isSuccess
-            ctx.toast(if (deployed) R.string.setup__deploy_ok else R.string.setup__deploy_failed)
-            // 部署完重跑一次 initialize()，重新向 Rime 取方案列表
+            // 芝版同文：导入后不自动部署，提示导入成功即可，需手动「部署」才生效（咩版同款）。
+            // 不再显示「正在部署…」遮罩；真正部署走 FAB 的「部署」。
             if (isAdded && view != null) reload()
         }
     }

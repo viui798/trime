@@ -139,6 +139,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
             android:exported="false" />
 
         <activity
+            android:name=".ui.main.ExternalRootActivity"
+            android:exported="false"
+            android:label="@string/external_root_title"
+            android:parentActivityName=".ui.main.MainActivity" />
+
+        <activity
             android:name=".ui.voice.VoiceSettingsActivity"
             android:exported="false"
             android:label="@string/voice_input"

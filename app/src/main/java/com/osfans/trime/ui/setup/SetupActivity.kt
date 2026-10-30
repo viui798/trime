@@ -75,6 +75,13 @@ class SetupActivity : FragmentActivity() {
             handlePickedResources(uris)
         }
 
+    /** 打开「直接使用外部目录」管理页，返回后刷新存储页状态。 */
+    private val externalRootLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            refreshCurrentFragment()
+            updateButtons()
+        }
+
     /** 由 [SetupPage.Schema] / [SetupPage.Skin] 的按钮调用。 */
     fun pickRimeResources() {
         importingPage = SetupPage.entries.getOrNull(viewPager.currentItem)
@@ -171,25 +178,11 @@ class SetupActivity : FragmentActivity() {
         }
     }
 
-    /** 存储页按钮：外部同步→选 SAF 目录；直接外部→授权后把引擎根激活到外部固定目录。 */
+    /** 存储页按钮：外部同步→选 SAF 目录；直接外部→打开「直接使用外部目录」管理页。 */
     fun pickOrActivateStorage() {
         val mode = com.osfans.trime.data.prefs.AppPrefs.defaultInstance().profile.dataStorageMode.getValue()
         if (mode == com.osfans.trime.core.data.DataStorageMode.DIRECT_EXTERNAL) {
-            if (!com.osfans.trime.core.data.ExternalRootAutoConfig.permissionReady()) {
-                com.osfans.trime.core.data.ExternalRootAutoConfig.openPermissionSettings(this)
-                return
-            }
-            lifecycleScope.launch {
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        com.osfans.trime.core.data.StorageLocation.switchTo(
-                            com.osfans.trime.core.data.DataStorageMode.DIRECT_EXTERNAL,
-                        )
-                    }
-                }.onFailure { toast(it.message ?: "切换目录失败") }
-                refreshCurrentFragment()
-                updateButtons()
-            }
+            externalRootLauncher.launch(android.content.Intent(this, com.osfans.trime.ui.main.ExternalRootActivity::class.java))
         } else {
             pickDataPath()
         }

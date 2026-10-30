@@ -11,6 +11,15 @@ object Const {
     const val VERSION_NAME = "${BuildConfig.BUILD_VERSION_NAME}-${BuildConfig.BUILD_TYPE}"
     const val LICENSE_SPDX_ID = "GPL-3.0-or-later"
     const val LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.html"
+
+    /** 芝版同文自己的仓库，拼链接时要的是不带 `.git` 的地址。 */
+    const val ZHI_REPO_URL = "https://github.com/viui798/trime"
+    const val ZHI_RELEASES_URL = "$ZHI_REPO_URL/releases"
+    const val ZHI_LATEST_RELEASE_URL = "$ZHI_REPO_URL/releases/latest"
+
+    /** 上游同文（GPL 来源）。 */
+    const val UPSTREAM_REPO_URL = "https://github.com/osfans/trime"
+
     const val PRIVACY_POLICY_URL = "https://github.com/osfans/trime/blob/develop/PRIVACY.md"
     const val LIBRIME_URL = "https://github.com/rime/librime"
     const val OPENCC_URL = "https://github.com/BYVoid/OpenCC"

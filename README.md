@@ -1,163 +1,149 @@
 <!--
 SPDX-FileCopyrightText: 2015 - 2024 Rime community
+SPDX-FileCopyrightText: 2026 Zhi Trime contributors
 
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
-# Trime
+# 同文输入法芝士 · Trime Cheese
 
-Rime IME for Android
+[同文输入法 Trime](https://github.com/osfans/trime) 的个人定制版，基于上游 `develop`（3.3.13）改造。
 
-![build](https://github.com/osfans/trime/actions/workflows/commit-ci.yml/badge.svg?branch=develop)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![GitHub release](https://img.shields.io/github/release/osfans/trime.svg)](https://github.com/osfans/trime/releases)
-[![F-Droid release](https://img.shields.io/f-droid/v/com.osfans.trime.svg)](https://f-droid.org/packages/com.osfans.trime)
-[![Latest build](https://img.shields.io/github/last-commit/osfans/trime.svg)](http://osfans.github.io/trime/)
+包名 `com.viui.trime.cheese`，**可以和官方同文同时安装**，互不影响。
 
-English | [简体中文](README_sc.md) | [繁體中文](README_tc.md)
+[**下载最新版**](https://github.com/viui798/trime/releases/latest) · [所有版本](https://github.com/viui798/trime/releases) · [问题反馈](https://github.com/viui798/trime/issues)
 
-## About
+---
 
-Trime is originally a frontend of open-source [Android Traditional Chinese IME], based on [RIME] input method framework and written in Java/Kotlin with JNI. It is designed to protect the native language of various local dialects of Chinese and is a universal shape-based and phonetic-based input method platform.
+## 这一版做了什么
 
-[Documentation](https://github.com/osfans/trime/wiki)
+### 装完是空的：方案和皮肤都由你自己导入
 
-## Download
+上游预置了一堆拼音方案和两套皮肤，这个版本**全部删掉**了（APK 从 8.8 MB 降到 5.3 MB）。
 
-- Stable Channel <br>
-  [<img alt='Get it on F-Droid' src='https://fdroid.gitlab.io/artwork/badge/get-it-on.png' height='80px'/>](https://f-droid.org/packages/com.osfans.trime)
-  [<img alt='Google Play Download Now' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' height='80px'/>](https://play.google.com/store/apps/details?id=com.osfans.trime)
+首次启动向导的第 2、3 步就是导入：支持打包好的 `.zip`，也支持散装的
+`.schema.yaml` / `.dict.yaml` / `.lua` / `.trime.yaml`。错过向导也没关系，
+「设置 → 方案」在没有方案时会直接给一个「导入方案…」按钮。
 
-- Nightly Channel [Download](https://github.com/osfans/trime/releases/tag/nightly)
+> 一个方案都不导入也能用键盘，但打不出字——空格键会明确显示「未导入方案」，
+> 不会让你对着一个没反应的键盘猜。
 
-- Canary Channel [Download](https://github.com/osfans/trime/actions)
+### 导入后不会自动部署，部署你说了算
 
-- Configurations [rimerc](https://github.com/Bambooin/rimerc)
+导入只做「把文件放到位 + 提示导入成功」，**要不要部署、什么时候部署由你决定**
+（与咩版一致）。这样导完一个大词库不会突然卡住几分钟。部署入口在方案页 /
+外观页右下角的 `+` 里。
 
-## History
+### 数据放哪，你选
 
-TRIME is the abbreviation of _Tongwen RIME_ or _ThaeRv Input Method_.
+向导里三种模式，互斥：
 
-From the beginning, TRIME was written for TaeRv Pinyin, and named _TaeRv Input Method (泰如输入法)_.
+| 模式 | 说明 |
+| --- | --- |
+| **直接使用外部目录**（旧版方式） | 数据放在共享存储（默认 `/storage/emulated/0/rime-cheese`），文件管理器直接改，需授予「所有文件访问」 |
+| **从外部存储同步** | 走 SAF 选一个目录，双向同步 |
+| **使用应用专属空间** | 放在应用私有目录，最省心 |
 
-Then, we created an input method platform with some code tables, such as Wu dialect (吴语). We renamed it to _Chinese Character Dialect Input Method (汉字方言输入法)_.
+选「直接使用外部目录」时还有一个独立的管理页：查看/授予权限、改路径、一键切换
+（切换时补齐旧目录的数据；目标目录已有的同名文件优先保留，旧目录不删）。
 
-Later, it supports Wubi and Liangbi and other shape-based input method, we branded it [_Tongwen Input Method Platform 2.0 (同文输入法平台 2.0)_](https://github.com/osfans/trime-legacy), which implies that the phonetic-based and shape-based input method on one platform, while dialects and Mandrain share one kind of characters.
+### 引擎会自己爬起来
 
-Benefit from the [librime](https://github.com/rime/librime) project by JNI, we are now in version 3.0 of TRIME aka _Tongwen Input Method (同文输入法)_.
+上游有个坑：外部目录权限被撤销（**卸载重装必然发生**）、或存储向导没走完时，
+引擎启动会被跳过，而会话还在——于是键盘能弹出来但**完全没反应**，只能靠手动部署救回来。
 
-Your are now welcome to [contribution](CONTRIBUTING.md) ~ !
+这个版本每次弹出输入法都会检查一次引擎状态，停摆了就重新启动。
+权限恢复后重新点一下输入框就能继续打字，不用重启应用。
 
-## Getting Started for developer
+### 键盘上的改动
 
-### Prepare
+- 底行把用处不大的 `'` 换成中文逗号 `，`，长按为句号 `。`
+- 功能键标签简繁统一（上游皮肤里「剪切/复制/粘贴/时间/隐藏」等 53 处是繁体）
+- 默认开启按键震动
+- 长按空格（或语音键）录音时，候选栏位置变成波形条，边说边把中间结果写进输入框
 
-#### Requirements:
+### 额外加的功能
 
-- Android SDK and Android NDK
-  * If you are new to Android development, please install [Android Studio](https://developer.android.com/studio).
+- **语音识别**：内置通义千问（阿里百炼）、豆包（火山引擎）、腾讯云（识别 / 翻译）
+  四个 JS 插件，填自己的 API Key 即可；也支持导入第三方 Foxy 语音插件。
+  录音只发往插件声明的域名，Key 用 Android Keystore 加密，不交给脚本。
+- **输入统计**：今日字数 / 上屏次数、累计、最近 7 天柱状图。
+- **快捷短语**：直接编辑 Rime 用户目录的 `custom_phrase.txt`。
+- **剪贴板同步**：多设备剪贴板互通（需自行配置服务端）。
 
-- JDK (OpenJDK) 17
-- Python 3 (required by OpenCC to generate dictionary text files)
+### 性能
 
-#### Prerequisites for Windows
+按实际测量调过几处，模拟器上连打 20 键的卡顿帧从 60% 降到 22%，90 分位帧耗时
+从 89 ms 降到 32 ms：
 
-Symbolic links will be created according to current build configurations, developers need:
+- 字体不再每帧重建（原实现每次都 stat 字体文件，且缓存容量按 KB 算，大字体条目当场被淘汰）
+- 绘制路径去掉了上百个 `runBlocking`（每个按键每帧会创建大量协程）
+- 切换应用时不再把整屏键盘拆掉重建（补上了上游缺失的一个 `return`）
 
-- Enable [Developer Mode](https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) so that symlinks can be created without administrator privilege.
+---
 
-- Enable symlink support for `git`:
+## 下载与安装
 
-  ```powershell
-  git config --global core.symlinks true
-  ```
+到 [Releases](https://github.com/viui798/trime/releases) 下载对应架构的 APK：
 
-If you cannot or wouldn't like to enable anything, it doesn't matter. Copying will be used instead when error on creating symbolic links.
+| 文件 | 适用 |
+| --- | --- |
+| `trime-cheese-arm64-v8a.apk` | **绝大多数手机**（2017 年后的机型基本都选这个） |
+| `trime-cheese-armeabi-v7a.apk` | 老的 32 位 ARM 机型 |
+| `trime-cheese-x86_64.apk` / `x86` | 模拟器 |
 
-### Build
+最低支持 Android 5.0（API 21）；语音识别需要 Android 6.0 以上（QuickJS 的限制）。
 
-#### 1. Clone this project and fetch all submodules:
+安装后到「设置 → 语言和输入法」启用「同文输入法芝士」，并设为默认输入法。
 
-```sh
-git clone git@github.com:osfans/trime.git
-git submodule update --init --recursive
-# use partial clone to save time
-git submodule update --init --recursive --filter=blob:none
+## 从源码构建
+
+需要 JDK 21、Android SDK（platform 37 / build-tools 37.0.0）、NDK 30、CMake 3.31.6。
+
+```bash
+git clone --recursive https://github.com/viui798/trime.git
+cd trime
+
+# 32 位 ARM 必须先打 lua 补丁，否则 lua 5.4 报 fseeko 未声明
+git apply --directory=app/src/main/jni/librime-lua-deps patches/lua.patch
+
+./gradlew app:assembleRelease     # 产物在 app/build/outputs/apk/release/
 ```
 
-#### 2. Debug version without signature:
+首次构建会下载 Boost 并现场编译 librime，比较慢；之后改 Kotlin / 资源都是增量。
 
-```sh
-# On Linux or macOS
-make debug
+## 数据目录
 
-# On Windows
-.\gradlew assembleDebug
-```
-
-#### 3. Release version with signture:
-
-Create `keystore.properties` file which contains following contents for [signing information](https://developer.android.com/studio/publish/app-signing.html):
-
-```gradle.properties
-storePassword=myStorePassword
-keyPassword=mykeyPassword
-keyAlias=myKeyAlias
-storeFile=myStoreFileLocation
-```
-
-Then, you may run:
-
-```sh
-# On Linux or macOS
-make release
-
-# On Windows
-.\gradlew assembleRelease
-```
-
-### Troubleshooting
+「应用专属空间」模式下：
 
 ```
-Target "boost_log_setup" links to target "Boost::coroutine" but the target was not found.
+files/rime/
+├── 方案/        输入方案源文件，一个包一个文件夹
+├── 皮肤/        键盘皮肤源文件
+├── 部署/        Rime 编译产物，删了会重新生成
+├── 学习/        词频、用户词典（*.userdb）和同步快照
+└── 运行数据/    Rime 引擎读取的目录，别手动改
 ```
 
-Run `make clean` on Linux or macOS, or run `.\gradlew clean` on Windows.
+选「直接使用外部目录」时这套结构原样搬到你指定的共享存储目录。
 
-Other issues:
+几个要点：
 
-1. Try `make clean`
-2. Make sure your repo is up-to-date. If one or more submodules are modified, also make sure they are compatible with the current version.
-3. If the problem still exists(very unlikely), try to make a new clone.
-4. Check if this is there is an issue/PR related to your problem. If yes, try their solutions.
-5. If none of them works, you may make an issue to ask for help.(optional)
+- **包就是纯源**：导入时会丢掉包里自带的 `*.userdb`、`user.yaml`、`installation.yaml`
+  以及其它平台的学习数据，不会覆盖你自己的词频。
+- **预编译词典会保留**：芝鹤这类包没有 `.dict.yaml` 源，词典只在 `build/*.bin` 里。
+  应用会把它们收进包内 `.prebuilt/`，部署前再放进 `部署/`。
+- **部署产物和学习数据分开放**：`部署/` 可以随时删；`学习/` 单独备份就能带走词频。
+- 「运行数据」存在是因为 Rime 只在数据目录**根**上找方案、不认子目录，源文件要摊平一份给它读。
 
-## Acknowledgments
+---
 
-- Developer: [osfans](https://github.com/osfans)
-- Contributors: [boboIqiqi](https://github.com/boboIqiqi)、[Bambooin](https://github.com/Bambooin)、[senchi96](https://github.com/senchi96)、[heiher](https://github.com/heiher)、[abay](https://github.com/a342191555)、[iovxw](https://github.com/iovxw)、[huyz-git](https://github.com/huyz-git)、[tumuyan](https://github.com/tumuyan)、[WhiredPlanck](https://github.com/WhiredPlanck)、[nopdan](https://github.com/nopdan)...
-- [Wiki Editors](https://github.com/osfans/trime/wiki): [xiaoqun2016](https://github.com/xiaoqun2016)、[boboIqiqi](https://github.com/boboIqiqi)...
-- Translators: 天真可爱的满满 (Chinese Traditional), 点解 (English) ...
-- Keyboard Designers: 天真可爱的满满、皛筱晓小笨鱼、吴琛 11、熊猫阿 Bo、默默ㄇㄛ ˋ...
-- Donations: See QR Code in [Releases](https://github.com/osfans/trime/releases)
-- Community: Netizens who feedback in [Issues](https://github.com/osfans/trime/issues)、[QQ Group (811142286)](https://jq.qq.com/?_wv=1027&k=AXdR80HN)、[QQ Group (224230445)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=pg_q7UVumWYLq1Rk8kIAqkK1xGt64VnX&authKey=04m9l7OBO5H5vgrEL8IbpsmtnptWM60xy%2FUwYCfyvw9VcRhe8zRzAS1ezoemZdFr&noverify=0&group_code=224230445)、[Tieba](http://tieba.baidu.com/f?kw=rime)、[Google Play](https://play.google.com/store/apps/details?id=com.osfans.trime)、[Telegram](https://t.me/trime_dev)...
-- Projects: [RIME]、[OpenCC]、[Android Traditional Chinese IME] and so on.
+## 致谢与许可
 
-## Third Party Libraries
+- 上游：[osfans/trime](https://github.com/osfans/trime)（GPL-3.0-or-later），本项目的全部基础
+- 引擎：[rime/librime](https://github.com/rime/librime)、[BYVoid/OpenCC](https://github.com/BYVoid/OpenCC)
+- 皮肤与交互取舍参考了同文社区和 [咩版 trime-mie](https://github.com/qxm888/trime-mie)
 
-- [Boost C++ Libraries](https://www.boost.org/) (Boost Software License)
-- [darts-clone](https://github.com/s-yata/darts-clone) (New BSD License)
-- [LevelDB](https://github.com/google/leveldb) (New BSD License)
-- [libiconv](https://www.gnu.org/software/libiconv/) (LGPL License)
-- [marisa-trie](https://github.com/s-yata/marisa-trie) (BSD License)
-- [glog](https://github.com/google/glog) (New BSD License)
-- [OpenCC](https://github.com/BYVoid/OpenCC) (Apache License 2.0)
-- [RIME](https://rime.im) (BSD License)
-- [snappy](https://github.com/google/snappy)(BSD License)
-- [utfcpp](https://github.com/nemtrif/utfcpp) (Boost Software License)
-- [yaml-cpp](https://github.com/jbeder/yaml-cpp) (MIT License)
-- [Android Traditional Chinese IME](https://code.google.com/p/android-traditional-chinese-ime/) (Apache License 2.0)
+本项目沿用 **GPL-3.0-or-later**，与上游一致。修改自用没问题，再分发请同样开源。
 
-[Android Traditional Chinese IME]: https://code.google.com/p/android-traditional-chinese-ime/
-[RIME]: http://rime.im
-[OpenCC]: https://github.com/BYVoid/OpenCC
+> 这是一个个人定制版，不承诺功能完整性与问题响应速度；完整社区支持请看上游。

@@ -103,6 +103,9 @@ class TrimeApplication : Application() {
 
         if (!BuildConfig.DEBUG) {
             Thread.setDefaultUncaughtExceptionHandler { _, e ->
+                // 先把堆栈打进 logcat：默认处理器已被替换，不打这里就只剩崩溃页可看，
+                // adb logcat 里什么都抓不到，排障全靠猜。
+                Log.e("TrimeCrash", "Uncaught exception", e)
                 val crashTime = System.currentTimeMillis()
                 val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(ctx)
                 val lastCrashTimePrefKey = "last_crash_time"

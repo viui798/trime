@@ -89,19 +89,18 @@ object ThemeManager {
     )
 
     private fun getThemeById(id: String): ResolvedTheme {
-        when (val result = ThemeLoader.loadTheme(id)) {
-            is ThemeLoader.ThemeLoadResult.Success -> return ResolvedTheme(id, result.theme, result.findings)
-            is ThemeLoader.ThemeLoadResult.Failure -> Timber.w(result.error)
+        loadThemeOrNull(id)?.let { return it }
+
+        // 全新安装 / 清数据后，内置资源可能还没同步到 shared 目录，此刻所有主题
+        // 都会读失败。先补一次同步再试一次，别让用户在这里看到「主题加载失败」。
+        if (runCatching { DataManager.sync() }.isSuccess) {
+            loadThemeOrNull(id)?.let { return it }
         }
 
         if (id != "trime") {
-            when (val result = ThemeLoader.loadTheme("trime")) {
-                is ThemeLoader.ThemeLoadResult.Success -> {
-                    Timber.w("Theme '$id' is unavailable, fallback to default theme 'trime'")
-                    return ResolvedTheme("trime", result.theme, result.findings)
-                }
-
-                is ThemeLoader.ThemeLoadResult.Failure -> Timber.w(result.error)
+            loadThemeOrNull("trime")?.let {
+                Timber.w("Theme '$id' is unavailable, fallback to default theme 'trime'")
+                return it
             }
         }
 
@@ -117,9 +116,25 @@ object ThemeManager {
             }
         }
 
+        // 一个都读不出来时，如果已经有一套主题在生效就继续用它——切换失败顶多是
+        // 没切换成功，不该把整个应用带崩（原先这里直接 error()，用户看到的是闪退）。
+        if (::_activeTheme.isInitialized) {
+            Timber.w(lastFailure, "No theme could be loaded, keeping the active one")
+            return ResolvedTheme(prefs.selectedTheme.getValue(), _activeTheme, _activeFindings)
+        }
+
         Timber.w(lastFailure, "No valid theme available")
         error("No valid theme available")
     }
+
+    private fun loadThemeOrNull(id: String): ResolvedTheme? =
+        when (val result = ThemeLoader.loadTheme(id)) {
+            is ThemeLoader.ThemeLoadResult.Success -> ResolvedTheme(id, result.theme, result.findings)
+            is ThemeLoader.ThemeLoadResult.Failure -> {
+                Timber.w(result.error)
+                null
+            }
+        }
 
     private fun evaluateActiveTheme(): Theme {
         val selectedThemeId = prefs.selectedTheme.getValue()

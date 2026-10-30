@@ -17,6 +17,7 @@ import com.osfans.trime.util.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 object ThemePickerDialog {
     suspend fun build(
@@ -40,11 +41,20 @@ object ThemePickerDialog {
                         allThemes.map { it.name }.toTypedArray(),
                         selectedIndex,
                     ) { dialog, which ->
+                        val newItem = allThemes[which]
                         scope.launch {
                             afterConfirm?.invoke()
-                            val newItem = allThemes[which]
-                            UserDataManager.sync()
-                            val resolvedThemeId = ThemeManager.selectTheme(newItem.configId)
+                            // 切换主题要读文件、可能失败；失败就保留当前主题并提示，
+                            // 不要让异常逃出协程把应用带崩（用户看到的是闪退）。
+                            val resolvedThemeId = runCatching {
+                                UserDataManager.sync()
+                                ThemeManager.selectTheme(newItem.configId)
+                            }.getOrElse { e ->
+                                Timber.w(e, "Failed to switch theme to ${newItem.configId}")
+                                runCatching { dialog.dismiss() }
+                                context.toast(context.getString(R.string.theme_switch_failed, newItem.name), Toast.LENGTH_LONG)
+                                return@launch
+                            }
                             dialog.dismiss()
                             if (resolvedThemeId != newItem.configId) {
                                 // Chosen theme unavailable: report the one actually in effect.

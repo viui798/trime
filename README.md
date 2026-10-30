@@ -7,8 +7,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # 同文输入法芝士 · Trime Cheese
 
-[![同文输入法芝士：内置主题、中文候选与键盘实拍](docs/images/cover-keyboard.png)](https://github.com/viui798/trime/releases/latest)
-
 基于 [同文 Trime](https://github.com/osfans/trime) 与 Rime 的 Android 输入法个人定制版。保留方案、词库和 YAML 主题生态，重做导入与存储流程：**装完不塞方案，导入和部署你说了算**，外部存储想怎么放就怎么放。
 
 包名 `com.viui.trime.cheese`，**可以和官方同文同时安装**，互不影响。
@@ -50,19 +48,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 截图
 
-<p>
-  <img src="docs/images/keyboard-light.png" width="270" alt="简白配色：未导入方案提示">
-  <img src="docs/images/cover-keyboard.png" width="270" alt="简黑配色：芝鹤音形中文候选">
-  <img src="docs/images/appearance.png" width="270" alt="外观页：主题与配色">
-</p>
+<img src="docs/images/home.png" width="270" alt="设置主界面">
 
-<p>
-  <img src="docs/images/theme-list.png" width="270" alt="主题列表：内置主题 + 导入的皮肤">
-  <img src="docs/images/color-schemes.png" width="270" alt="配色列表">
-  <img src="docs/images/home.png" width="270" alt="设置主界面">
-</p>
-
-*图为模拟器实拍：简白 / 简黑配色为内置默认；「芝鹤音形」方案与咖啡系列皮肤为用户自行导入。*
+*图为模拟器实拍的设置主界面。*
 
 ---
 

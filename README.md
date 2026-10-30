@@ -7,11 +7,62 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # 同文输入法芝士 · Trime Cheese
 
-[同文输入法 Trime](https://github.com/osfans/trime) 的个人定制版，基于上游 `develop`（3.3.13）改造。
+[![同文输入法芝士：内置主题、中文候选与键盘实拍](docs/images/cover-keyboard.png)](https://github.com/viui798/trime/releases/latest)
+
+基于 [同文 Trime](https://github.com/osfans/trime) 与 Rime 的 Android 输入法个人定制版。保留方案、词库和 YAML 主题生态，重做导入与存储流程：**装完不塞方案，导入和部署你说了算**，外部存储想怎么放就怎么放。
 
 包名 `com.viui.trime.cheese`，**可以和官方同文同时安装**，互不影响。
 
 [**下载最新版**](https://github.com/viui798/trime/releases/latest) · [所有版本](https://github.com/viui798/trime/releases) · [问题反馈](https://github.com/viui798/trime/issues)
+
+> 当前源码版本：**1.2.9-cheese**（versionCode 19），正式 APK 约 7.3 MB，已在 [Releases](https://github.com/viui798/trime/releases/latest) 发布，附 `SHA256SUMS.txt` 可核对完整性。
+
+---
+
+## 更新记录
+
+### 1.2.9 · 装完就有完整外观
+
+- 内置 **「咖啡芝士默认」主题**与 14 张按键背景图（共 36 KB）：新装不再出现
+  「按键没有底色块、回车键淡到看不见」的裸文字键盘
+- 配色精简为 **简白 / 简黑** 两套；没有方案时空格键明确显示「未导入方案」
+- 应用图标换成 **「㞢」宣纸墨印**，右下角带「芝」字水印
+- 外部目录管理页状态提示改用独立样式
+
+### 1.2.8 · 修复切换主题必失败
+
+主题列表与磁盘文件不一致时的崩溃与切换失败问题。
+
+### 1.2.7 · 引擎自愈 + 手动部署
+
+- **引擎自愈**：上游在存储权限被撤销（卸载重装必然发生）后引擎启动被跳过，键盘能弹但
+  完全没反应。本版每次弹出输入法都检查引擎状态，停摆自动重启
+- **导入不自动部署**：导入只做「把文件放到位」，要不要部署、什么时候部署由你决定
+  （与咩版一致），导完大词库不会突然卡住几分钟
+- 字体缓存、绘制路径、界面重建三处性能修复：连打 20 键卡顿帧 60% → 22%
+
+### 1.2.6 · 数据目录改版
+
+用户数据分成五个平级目录（`方案/`、`皮肤/`、`部署/`、`学习/`、`运行数据/`），
+方案包零复制、学习数据全局共享；更早版本见 [Releases](https://github.com/viui798/trime/releases)。
+
+---
+
+## 截图
+
+<p>
+  <img src="docs/images/keyboard-light.png" width="270" alt="简白配色：未导入方案提示">
+  <img src="docs/images/cover-keyboard.png" width="270" alt="简黑配色：芝鹤音形中文候选">
+  <img src="docs/images/appearance.png" width="270" alt="外观页：主题与配色">
+</p>
+
+<p>
+  <img src="docs/images/theme-list.png" width="270" alt="主题列表：内置主题 + 导入的皮肤">
+  <img src="docs/images/color-schemes.png" width="270" alt="配色列表">
+  <img src="docs/images/home.png" width="270" alt="设置主界面">
+</p>
+
+*图为模拟器实拍：简白 / 简黑配色为内置默认；「芝鹤音形」方案与咖啡系列皮肤为用户自行导入。*
 
 ---
 
@@ -19,20 +70,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ### 装完是空的：方案和皮肤都由你自己导入
 
-上游预置了一堆拼音方案和两套皮肤，这个版本**全部删掉**了（APK 从 8.8 MB 降到 5.3 MB）。
-
-首次启动向导的第 2、3 步就是导入：支持打包好的 `.zip`，也支持散装的
-`.schema.yaml` / `.dict.yaml` / `.lua` / `.trime.yaml`。错过向导也没关系，
-「设置 → 方案」在没有方案时会直接给一个「导入方案…」按钮。
+上游预置了一堆拼音方案和两套皮肤，这个版本**全部删掉**。首次启动向导的第 2、3 步
+就是导入：支持打包好的 `.zip`，也支持散装的 `.schema.yaml` / `.dict.yaml` / `.lua` /
+`.trime.yaml`。错过向导也没关系，「设置 → 方案」在没有方案时会直接给一个「导入方案…」按钮。
 
 > 一个方案都不导入也能用键盘，但打不出字——空格键会明确显示「未导入方案」，
-> 不会让你对着一个没反应的键盘猜。
+> 不会让你对着一个没反应的键盘猜。外观不受影响：主题、配色、按键底色都随 APK 内置。
 
 ### 导入后不会自动部署，部署你说了算
 
-导入只做「把文件放到位 + 提示导入成功」，**要不要部署、什么时候部署由你决定**
-（与咩版一致）。这样导完一个大词库不会突然卡住几分钟。部署入口在方案页 /
-外观页右下角的 `+` 里。
+导入只做「把文件放到位 + 提示导入成功」，**要不要部署、什么时候部署由你决定**。
+部署入口在方案页 / 外观页右下角的 `+` 里。
 
 ### 数据放哪，你选
 
@@ -46,14 +94,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 选「直接使用外部目录」时还有一个独立的管理页：查看/授予权限、改路径、一键切换
 （切换时补齐旧目录的数据；目标目录已有的同名文件优先保留，旧目录不删）。
-
-### 引擎会自己爬起来
-
-上游有个坑：外部目录权限被撤销（**卸载重装必然发生**）、或存储向导没走完时，
-引擎启动会被跳过，而会话还在——于是键盘能弹出来但**完全没反应**，只能靠手动部署救回来。
-
-这个版本每次弹出输入法都会检查一次引擎状态，停摆了就重新启动。
-权限恢复后重新点一下输入框就能继续打字，不用重启应用。
 
 ### 键盘上的改动
 
@@ -71,46 +111,29 @@ SPDX-License-Identifier: GPL-3.0-or-later
 - **快捷短语**：直接编辑 Rime 用户目录的 `custom_phrase.txt`。
 - **剪贴板同步**：多设备剪贴板互通（需自行配置服务端）。
 
-### 性能
-
-按实际测量调过几处，模拟器上连打 20 键的卡顿帧从 60% 降到 22%，90 分位帧耗时
-从 89 ms 降到 32 ms：
-
-- 字体不再每帧重建（原实现每次都 stat 字体文件，且缓存容量按 KB 算，大字体条目当场被淘汰）
-- 绘制路径去掉了上百个 `runBlocking`（每个按键每帧会创建大量协程）
-- 切换应用时不再把整屏键盘拆掉重建（补上了上游缺失的一个 `return`）
-
 ---
 
 ## 下载与安装
 
-到 [Releases](https://github.com/viui798/trime/releases) 下载对应架构的 APK：
+1. 到 [Releases](https://github.com/viui798/trime/releases/latest) 下载对应架构的 APK，
+   同目录的 `SHA256SUMS.txt` 可核对完整性。
+2. 允许安装后，到「设置 → 语言和输入法」启用「同文输入法芝士」并设为默认输入法。
+3. 导入你的方案与皮肤并部署。
 
-| 文件 | 适用 |
+| 项目 | 当前安装包 |
 | --- | --- |
-| `trime-cheese-arm64-v8a.apk` | **绝大多数手机**（2017 年后的机型基本都选这个） |
-| `trime-cheese-armeabi-v7a.apk` | 老的 32 位 ARM 机型 |
-| `trime-cheese-x86_64.apk` / `x86` | 模拟器 |
+| 应用名 | 同文输入法芝士 |
+| 包名 | `com.viui.trime.cheese`，可与官方同文共存 |
+| 版本 | `1.2.9-cheese` / versionCode 19 |
+| 系统 | Android 5.0 及以上；语音识别需 Android 6.0+（QuickJS 限制） |
+| 架构 | **arm64-v8a**（绝大多数手机）、armeabi-v7a、x86、x86_64（模拟器） |
+| 体积 | 约 7.3 MB |
 
-最低支持 Android 5.0（API 21）；语音识别需要 Android 6.0 以上（QuickJS 的限制）。
+### 升级提示
 
-安装后到「设置 → 语言和输入法」启用「同文输入法芝士」，并设为默认输入法。
-
-## 从源码构建
-
-需要 JDK 21、Android SDK（platform 37 / build-tools 37.0.0）、NDK 30、CMake 3.31.6。
-
-```bash
-git clone --recursive https://github.com/viui798/trime.git
-cd trime
-
-# 32 位 ARM 必须先打 lua 补丁，否则 lua 5.4 报 fseeko 未声明
-git apply --directory=app/src/main/jni/librime-lua-deps patches/lua.patch
-
-./gradlew app:assembleRelease     # 产物在 app/build/outputs/apk/release/
-```
-
-首次构建会下载 Boost 并现场编译 librime，比较慢；之后改 Kotlin / 资源都是增量。
+主题文件的查找顺序是**用户数据目录优先于 APK 内置**。若你的用户目录里残留旧版
+`咖啡*.trime.yaml` / `咖啡配色.yaml`，它们会盖住内置的「咖啡芝士默认」主题——
+升级后主题名没变，把这些旧文件挪走即可。
 
 ## 数据目录
 
@@ -135,6 +158,22 @@ files/rime/
   应用会把它们收进包内 `.prebuilt/`，部署前再放进 `部署/`。
 - **部署产物和学习数据分开放**：`部署/` 可以随时删；`学习/` 单独备份就能带走词频。
 - 「运行数据」存在是因为 Rime 只在数据目录**根**上找方案、不认子目录，源文件要摊平一份给它读。
+
+## 从源码构建
+
+需要 JDK 21、Android SDK（platform 37 / build-tools 37.0.0）、NDK 30、CMake 3.31.6。
+
+```bash
+git clone --recursive https://github.com/viui798/trime.git
+cd trime
+
+# 32 位 ARM 必须先打 lua 补丁，否则 lua 5.4 报 fseeko 未声明
+git apply --directory=app/src/main/jni/librime-lua-deps patches/lua.patch
+
+./gradlew app:assembleRelease     # 产物在 app/build/outputs/apk/release/
+```
+
+首次构建会下载 Boost 并现场编译 librime，比较慢；之后改 Kotlin / 资源都是增量。
 
 ---
 

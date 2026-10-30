@@ -35,6 +35,7 @@ import com.osfans.trime.ime.composition.PreeditDelegate
 import com.osfans.trime.ime.keyboard.CommonKeyboardActionListener
 import com.osfans.trime.ime.keyboard.KeyboardPrefs.isLandscapeMode
 import com.osfans.trime.ime.keyboard.KeyboardWindow
+import com.osfans.trime.ime.voice.VoiceHoldWaveBar
 import com.osfans.trime.ime.voice.VoiceInputOverlay
 import com.osfans.trime.ime.popup.PopupDelegate
 import com.osfans.trime.ime.symbol.LiquidWindow
@@ -132,6 +133,7 @@ class InputView(
     private val liquidWindow: LiquidWindow by instance()
 
     private val voiceOverlay = VoiceInputOverlay(service)
+    private val voiceHoldWaveBar = VoiceHoldWaveBar(service)
 
     private val candidatesMode by AppPrefs.defaultInstance().candidates.mode
 
@@ -177,6 +179,7 @@ class InputView(
         inputBar.refreshColors()
         preedit.refreshColors()
         windowManager.refreshColors()
+        voiceHoldWaveBar.applyThemeColors(scope)
     }
 
     init {
@@ -202,6 +205,13 @@ class InputView(
                 )
                 add(
                     inputBar.view,
+                    lParams(matchParent, dp(inputBar.themedHeight)) {
+                        topOfParent()
+                        centerHorizontally()
+                    },
+                )
+                add(
+                    voiceHoldWaveBar,
                     lParams(matchParent, dp(inputBar.themedHeight)) {
                         topOfParent()
                         centerHorizontally()
@@ -264,6 +274,8 @@ class InputView(
             },
         )
         voiceOverlay.attach()
+        voiceHoldWaveBar.applyThemeColors(scope)
+        voiceHoldWaveBar.attach()
 
         updateKeyboardSize()
 
@@ -402,6 +414,7 @@ class InputView(
         // implies that InputView should not be attached again after detached.
         updateWindowViewHeightJob.cancel()
         voiceOverlay.detach()
+        voiceHoldWaveBar.detach()
         popup.root.removeAllViews()
         broadcaster.clear()
         super.onDetachedFromWindow()

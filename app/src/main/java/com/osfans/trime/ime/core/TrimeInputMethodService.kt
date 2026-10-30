@@ -157,7 +157,15 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
      * subsequent operations can start if the prior operation is not finished (suspended),
      * [postRimeJob] ensures that operations are executed sequentially.
      */
-    fun postRimeJob(block: suspend RimeApi.() -> Unit) = postJob(rime.lifecycleScope) { rime.runOnReady(block) }
+    fun postRimeJob(block: suspend RimeApi.() -> Unit) {
+        // 引擎起不来时（存储不可用）不要把这些任务排进 runOnReady 的无限等待队列，
+        // 否则连续按键会不停堆积协程。此刻本来就输入不了字，直接丢弃更安全。
+        if (!RimeDaemon.ensureRunning()) {
+            Timber.w("postRimeJob: rime unavailable, job dropped")
+            return
+        }
+        postJob(rime.lifecycleScope) { rime.runOnReady(block) }
+    }
 
     private suspend fun updateRimeOption(api: RimeApi) {
         try {
@@ -201,6 +209,12 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
                 ThemeManager.init(resources.configuration)
                 ThemeManager.addOnChangedListener(onThemeChangeListener)
                 ColorManager.addOnChangedListener(onColorChangeListener)
+                // 主题可能晚于首次显示才就绪（引擎曾经延迟启动/自愈恢复），
+                // 此时 onCreateInputView 早已因拿不到 ThemeScope 返回过 null，
+                // 系统不会再回调，必须在这里补建一次，否则键盘一直空白。
+                ContextCompat.getMainExecutor(this@TrimeInputMethodService).execute {
+                    ensureInputViewPresent()
+                }
             }
         }
         InputFeedbackManager.init(this)
@@ -516,6 +530,25 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         return null
     }
 
+    /**
+     * 主题已就绪但输入视图还没建出来时补建一次。
+     *
+     * 引擎延迟启动（存储暂不可用、权限撤销后自愈）会让 `ThemeManager.init` 晚于键盘
+     * 首次显示；那时 [onCreateInputView] 因拿不到 ThemeScope 返回了 null，系统不会
+     * 再回调，键盘就一直是空白的。这个入口同时供 [onStartInputView] 与主题就绪回调使用。
+     *
+     * @return 是否真的补建了视图（false 表示已有视图或条件仍不满足）。
+     */
+    private fun ensureInputViewPresent(info: EditorInfo? = currentInputEditorInfo): Boolean {
+        if (inputView != null) return false
+        val scope = themeScope ?: return false
+        if (info == null || currentInputConnection == null) return false
+        Timber.i("ensureInputViewPresent: rebuilding deferred input view")
+        replaceInputViews(scope)
+        inputView?.startInput(info, false)
+        return inputView != null
+    }
+
     override fun setInputView(view: View) {
         super.setInputView(view)
         val inputArea = contentView.findViewById<FrameLayout>(android.R.id.inputArea)
@@ -571,6 +604,12 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         restarting: Boolean,
     ) {
         Timber.d("onStartInputView: restarting=$restarting")
+        // 引擎可能因存储暂不可用（外部目录权限被撤销、向导没走完等）而从未启动过，
+        // 那样所有按键都会永久挂在 runOnReady 上、主题也不初始化，键盘一片空白。
+        // 每次弹出输入法都给一次自愈机会，权限恢复后重新点输入框即可用。
+        if (!RimeDaemon.ensureRunning()) {
+            Timber.w("onStartInputView: rime still not runnable, storage may be unavailable")
+        }
         InputFeedbackManager.startInput()
         // 剪贴板同步服务若因后台启动受限没起来，输入框唤起时补一次
         com.osfans.trime.data.clipsync.ClipSync.ensureStarted(this)
@@ -580,13 +619,14 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
         val (useVirtualKeyboard, useCandidatesView) =
             inputDeviceManager.evaluateOnStartInputView(attribute, this)
         if (useVirtualKeyboard) {
-            if (inputView == null) {
-                // 兜底：首次显示早于主题加载完成时，onCreateInputView 推迟建视图，
-                // 而部署完成后的 selectTheme 会因「主题结构相同」早退、不再通知重建，
-                // 键盘会一直空白。这里在每次输入视图启动时补建一次。
-                themeScope?.let { replaceInputViews(it) }
+            val view = inputView
+            if (view == null) {
+                // 兜底：首次显示早于主题加载完成时 onCreateInputView 推迟建视图，
+                // 之后系统不会再次回调，键盘会一直空白。这里补建一次。
+                ensureInputViewPresent(attribute)
+            } else {
+                view.startInput(attribute, restarting)
             }
-            inputView?.startInput(attribute, restarting)
         }
         if (useCandidatesView) {
             if (currentInputConnection?.monitorCursorAnchor() != true) {
@@ -976,7 +1016,7 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     }
 
     fun getActiveText(type: Int): String {
-        val rimeComposition = rime.run { compositionCached }
+        val rimeComposition = rime.peek { compositionCached }
         val selected = currentInputConnection?.getSelectedText(0)?.toString()
         val commitPreview = rimeComposition.commitTextPreview
         val preedit = rimeComposition.preedit ?: ""

@@ -37,35 +37,63 @@ class ThemeFonts(private val theme: Theme) {
     private fun names(key: String, fallback: List<String>): List<String> =
         ColorManager.fontNames(theme, key) ?: fallback
 
+    /**
+     * 具名字体的强缓存。
+     *
+     * 绘制路径（`KeyView.onDraw`）每帧都要取一次 `fonts.key`，而解析一次要 stat
+     * 两三组字体文件再拼 LruCache 的 key——中文字体动辄十几兆，按 KB 计的 LruCache
+     * 容量根本装不下，条目当场被淘汰，于是每帧都在重建 Typeface
+     * （`minikin::FontCollection::init`）。40 多个按键叠起来就是几十毫秒的卡顿。
+     *
+     * 这里按字体名做一层实例级强缓存；配色切换（[ColorManager.colorGeneration]
+     * 变化）时整体失效，因为配色可以覆盖字体列表。
+     */
+    private val typefaceByName = HashMap<String, Typeface>()
+    private var typefaceByNameGeneration = -1L
+
+    private fun cached(
+        name: String,
+        fallback: List<String>,
+    ): Typeface {
+        val generation = ColorManager.colorGeneration
+        if (generation != typefaceByNameGeneration) {
+            typefaceByName.clear()
+            typefaceByNameGeneration = generation
+        }
+        return typefaceByName.getOrPut(name) { getTypeface(names(name, fallback)) }
+    }
+
     val hanb: Typeface
-        get() = getTypeface(names("hanb_font", style.hanbFont.toList()))
+        get() = cached("hanb_font", style.hanbFont.toList())
 
     val latin: Typeface
-        get() = getTypeface(names("latin_font", style.latinFont.toList()))
+        get() = cached("latin_font", style.latinFont.toList())
 
     val candidate: Typeface
-        get() = getTypeface(names("candidate_font", style.candidateFont.toList()))
+        get() = cached("candidate_font", style.candidateFont.toList())
 
     val comment: Typeface
-        get() = getTypeface(names("comment_font", style.commentFont.toList()))
+        get() = cached("comment_font", style.commentFont.toList())
 
     val key: Typeface
-        get() = getTypeface(names("key_font", style.keyFont.toList()))
+        get() = cached("key_font", style.keyFont.toList())
 
     val label: Typeface
-        get() = getTypeface(names("label_font", style.labelFont.toList()))
+        get() = cached("label_font", style.labelFont.toList())
 
     val popup: Typeface
-        get() = getTypeface(names("popup_font", style.popupFont.toList()))
+        get() = cached("popup_font", style.popupFont.toList())
 
     val symbol: Typeface
-        get() = getTypeface(names("symbol_font", style.symbolFont.toList()))
+        get() = cached("symbol_font", style.symbolFont.toList())
 
     val text: Typeface
-        get() = getTypeface(names("text_font", style.textFont.toList()))
+        get() = cached("text_font", style.textFont.toList())
+
+    private var cachedToolbar: Typeface? = null
 
     val toolbar: Typeface
-        get() = getTypeface(theme.toolBar.buttonFont.toList())
+        get() = cachedToolbar ?: getTypeface(theme.toolBar.buttonFont.toList()).also { cachedToolbar = it }
 
     private fun makeFileStateList(names: List<String>): List<FileState> = names.asSequence()
         // 皮肤包里的 fonts 直读，其次才是「运行数据」和 shared。

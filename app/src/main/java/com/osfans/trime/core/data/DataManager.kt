@@ -84,11 +84,10 @@ object DataManager {
                 putBoolean("traditional_storage_modes_v1", true)
             }.commit()
         }
-        val custom = externalEngineRootPref.trim()
-        if (custom.isNotEmpty() && AppPrefs.defaultInstance().profile.dataStorageMode.getValue() == DataStorageMode.DIRECT_EXTERNAL) {
-            val dir = File(custom)
-            if (canUseExternalRoot(dir)) return dir.also { it.mkdirs() }
-            Timber.w("外部数据目录不可用，回落到应用私有目录: %s", custom)
+        val directDir = directExternalDir()
+        if (directDir != null) return directDir.also { it.mkdirs() }
+        if (externalEngineRootPref.isNotBlank()) {
+            Timber.w("外部数据目录不可用，回落到应用私有目录: %s", externalEngineRootPref.trim())
         }
         return File(externalFilesDir, "rime")
     }
@@ -101,11 +100,24 @@ object DataManager {
     private val externalEngineRootPref: String
         get() = AppPrefs.defaultInstance().profile.externalEngineRoot.getValue()
 
-    /** 当前是否真的在用外部目录（false 表示回落到了应用私有目录）。 */
-    fun isUsingExternalRoot(): Boolean {
+    /**
+     * 直接外部模式下实际可用的目录，不可用时返回 null。
+     *
+     * 选了「直接使用外部目录（旧版方式）」却没指定路径（向导里没点「选择外部数据目录…」）
+     * 时用默认目录兜底。否则 `isUsingExternalRoot()` 恒为 false，引擎启动会被一直跳过，
+     * 键盘表现为一片空白、完全无响应，只有手动部署才能救回来。
+     */
+    private fun directExternalDir(): File? {
+        if (AppPrefs.defaultInstance().profile.dataStorageMode.getValue() != DataStorageMode.DIRECT_EXTERNAL) {
+            return null
+        }
         val custom = externalEngineRootPref.trim()
-        return AppPrefs.defaultInstance().profile.dataStorageMode.getValue() == DataStorageMode.DIRECT_EXTERNAL && custom.isNotEmpty() && canUseExternalRoot(File(custom))
+        val dir = if (custom.isNotEmpty()) File(custom) else ExternalRootAutoConfig.targetDir()
+        return dir.takeIf { canUseExternalRoot(it) }
     }
+
+    /** 当前是否真的在用外部目录（false 表示回落到了应用私有目录）。 */
+    fun isUsingExternalRoot(): Boolean = directExternalDir() != null
 
     /**
      * 能否把引擎目录放在 [dir]。

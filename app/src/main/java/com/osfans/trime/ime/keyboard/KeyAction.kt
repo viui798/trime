@@ -62,7 +62,7 @@ class KeyAction(
                 "click" -> true
 
                 // 点击锁定
-                "ascii_long" -> !rime.run { statusCached }.isAsciiMode
+                "ascii_long" -> !rime.peek { statusCached }.isAsciiMode
 
                 // 英文长按锁定，中文点击锁定
                 else -> false
@@ -95,7 +95,7 @@ class KeyAction(
     // 这时空格键如果照常显示 `.default`，用户只会觉得「键盘坏了」，所以换成一句人话。
     private fun getSpaceKeySchemaName(): String {
         val name =
-            rime.run {
+            rime.peek {
                 statusCached.schemaName.ifEmpty {
                     // 如果schemaName为空，尝试使用schemaId作为显示名称
                     schemaCached.schemaId.takeIf { it.isNotEmpty() && it != ".default" } ?: ""
@@ -132,7 +132,7 @@ class KeyAction(
         str: String,
         keyboard: Keyboard,
     ): String {
-        val status = rime.run { statusCached }
+        val status = rime.peek { statusCached }
         return if (str.length == 1 && (keyboard.isShifted || (!status.isAsciiMode && keyboard.isLabelUppercase))) {
             str.uppercase()
         } else {
@@ -143,11 +143,15 @@ class KeyAction(
     fun getLabel(keyboard: Keyboard): String {
         ensureLabels()
         if (states.isNotEmpty() && toggle.isNotEmpty()) {
-            return states[if (rime.run { getRuntimeOption(toggle) }) 1 else 0]
+            // 绘制线程优先读本地缓存；只有缓存未命中时才同步问一次引擎（问过就有缓存了）。
+            // 直接 run 会切到 rime-main 线程，按键处理期间能把 UI 卡住几十毫秒。
+            val on = rime.peek { peekRuntimeOption(toggle) } ?: rime.run { getRuntimeOption(toggle) }
+            return states[if (on) 1 else 0]
         }
         if (keyboard.isOnlyShiftOn) {
-            val asciiMode = rime.run { statusCached }.isAsciiMode
-            val composing = rime.run { statusCached }.isComposing
+            val status = rime.peek { statusCached }
+            val asciiMode = status.isAsciiMode
+            val composing = status.isComposing
             if (!hookShiftNum && !composing && code in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9) {
                 return adjustCase(shiftLabel, keyboard)
             }
@@ -173,7 +177,7 @@ class KeyAction(
         return if (text.isNotEmpty()) {
             adjustCase(text, keyboard)
         } else if (keyboard.isShifted && code in KeyEvent.KEYCODE_A..KeyEvent.KEYCODE_Z && modifier == 0) {
-            if (rime.run { statusCached.isAsciiMode }) "" else adjustCase(label, keyboard)
+            if (rime.peek { statusCached.isAsciiMode }) "" else adjustCase(label, keyboard)
         } else {
             text
         }

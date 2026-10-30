@@ -81,6 +81,15 @@ interface RimeApi {
 
     suspend fun getRuntimeOption(option: String): Boolean
 
+    /**
+     * 读取已缓存的运行时开关，不切线程、不进 JNI；未缓存时返回 null。
+     *
+     * 键盘绘制会给每个带 `toggle` 的按键取标签，那一层绝不能同步等引擎
+     * （`getRuntimeOption` 要切到 rime-main 线程，按键处理期间会把 UI 卡住几十毫秒）。
+     * 需要真值而缓存又没有时，调用方再回退到 [getRuntimeOption] 补一次。
+     */
+    fun peekRuntimeOption(option: String): Boolean?
+
     suspend fun setNullInputType(value: Boolean)
 
     suspend fun getCandidates(

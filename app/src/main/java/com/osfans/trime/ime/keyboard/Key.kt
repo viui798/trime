@@ -272,10 +272,14 @@ class Key(
 
     private fun checkKeyAction(): KeyAction? {
         val rime = rime
-        val asciiMode = rime.run { statusCached }.isAsciiMode
-        val paging = rime.run { paging }
-        val hasMenu = rime.run { hasMenu }
-        val composing = rime.run { statusCached }.isComposing
+        // 绘制与触摸路径每帧都会走到这里（每个键一次），必须用 peek 读缓存。
+        // 用 run 的话每次读取都要建一个 runBlocking 协程，整屏 40 多个键
+        // 一帧就能创建上百个协程，UI 线程会被拖到 40ms 以上。
+        val status = rime.peek { statusCached }
+        val paging = rime.peek { paging }
+        val hasMenu = rime.peek { hasMenu }
+        val asciiMode = status.isAsciiMode
+        val composing = status.isComposing
         return keyActions[KeyBehavior.ASCII].takeIf { asciiMode }
             ?: keyActions[KeyBehavior.PAGING]?.takeIf { paging }
             ?: keyActions[KeyBehavior.HAS_MENU]?.takeIf { hasMenu }
@@ -293,7 +297,7 @@ class Key(
         label.isNotEmpty() &&
             keyAction == click &&
             !keyActions.containsKey(KeyBehavior.ASCII) &&
-            !rime.run { statusCached }.let { it.isAsciiMode || it.isAsciiPunct } -> label
+            !rime.peek { statusCached }.let { it.isAsciiMode || it.isAsciiPunct } -> label
 
         else -> keyAction!!.getLabel(parent) // 中文狀態顯示標籤
     }

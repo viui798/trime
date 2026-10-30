@@ -29,6 +29,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import timber.log.Timber
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.minutes
 
@@ -48,18 +49,25 @@ class Rime :
     override val isReady: Boolean
         get() = lifecycle.currentState == RimeLifecycle.State.READY
 
+    // 这几个缓存会被 UI 线程直接读（绘制按键标签），写入发生在 rime-main 线程，
+    // 用 @Volatile 保证跨线程可见性——去掉 runBlocking 读取后必须靠它。
+    @Volatile
     override var schemaCached = RimeSchema(".default")
         private set
 
+    @Volatile
     override var statusCached = StatusProto()
         private set
 
+    @Volatile
     override var compositionCached = CompositionProto()
         private set
 
+    @Volatile
     override var hasMenu: Boolean = false
         private set
 
+    @Volatile
     override var paging: Boolean = false
         private set
 
@@ -80,6 +88,9 @@ class Rime :
         )
 
     private val lock = Mutex()
+
+    /** 运行时开关的本地镜像：绘制线程无阻塞读取，写侧在 rime-main 线程同步。 */
+    private val runtimeOptionCache = ConcurrentHashMap<String, Boolean>()
 
     private val inlinePreeditMode by AppPrefs.defaultInstance().general.inlinePreeditMode
     private val showAsciiSwitchTips by AppPrefs.defaultInstance().general.asciiSwitchTips
@@ -264,10 +275,26 @@ class Rime :
         value: Boolean,
     ): Unit = withRimeContext {
         setRimeOption(option, value)
+        runtimeOptionCache[option] = value
     }
 
     override suspend fun getRuntimeOption(option: String): Boolean = withRimeContext {
-        getRimeOption(option)
+        getRimeOption(option).also { runtimeOptionCache[option] = it }
+    }
+
+    override fun peekRuntimeOption(option: String): Boolean? = runtimeOptionCache[option]
+
+    /**
+     * 把 [StatusProto] 里能直接映射的开关刷进本地缓存。
+     *
+     * 每次按键响应都会调用，保证 `toggle` 键的标签在状态变化后立刻正确，
+     * 而绘制时只需读缓存，不必再同步等引擎。
+     */
+    private fun syncRuntimeOptionCache(status: StatusProto) {
+        runtimeOptionCache["ascii_mode"] = status.isAsciiMode
+        runtimeOptionCache["full_shape"] = status.isFullShape
+        runtimeOptionCache["simplification"] = status.isSimplified
+        runtimeOptionCache["ascii_punct"] = status.isAsciiPunct
     }
 
     override suspend fun setNullInputType(value: Boolean) = withRimeContext {
@@ -370,6 +397,7 @@ class Rime :
             is Candidates.Bulk -> handleRimeMessage(9, arrayOf(candidates))
         }
         handleRimeMessage(8, arrayOf(response.status))
+        syncRuntimeOptionCache(response.status)
         val commitText = commitProto.text
         if (!commitText.isNullOrEmpty()) {
             InputStats.onCommit(

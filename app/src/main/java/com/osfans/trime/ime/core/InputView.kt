@@ -152,10 +152,11 @@ class InputView(
     private var lastAppearanceState = Triple(false, false, false)
 
     private fun broadcastKeyAppearanceUpdate() {
-        val composing = rime.run { statusCached.isComposing }
-        val hasMenu = rime.run { hasMenu }
-        val paging = rime.run { paging }
-        val current = Triple(composing, hasMenu, paging)
+        // 每处理一条按键消息都会走到这里，读缓存即可，别用 run 建协程
+        val status = rime.peek { statusCached }
+        val hasMenu = rime.peek { hasMenu }
+        val paging = rime.peek { paging }
+        val current = Triple(status.isComposing, hasMenu, paging)
         if (current != lastAppearanceState) {
             lastAppearanceState = current
             broadcaster.onKeyAppearanceUpdate(current.first, current.second, current.third)

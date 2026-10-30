@@ -211,6 +211,13 @@
     <string name="sync_user_data_failure">用户数据同步失败</string>
     <string name="data_path_permission_revoked">数据文件夹访问权限已被撤销，请重新选择文件夹。</string>
     <string name="grant_permission">授予权限</string>
+    <string name="external_root_auto_title">数据目录迁到外部存储</string>
+    <string name="external_root_auto_message">芝版同文将把方案、皮肤和用户词典存放在外部存储的 %1$s 目录，方便备份和查看。点击「去授权」后在系统页面打开「所有文件访问」开关，返回后既有数据会自动迁移过去。</string>
+    <string name="external_root_auto_go">去授权</string>
+    <string name="external_root_auto_stay">暂不，继续用应用内存储</string>
+    <string name="external_root_auto_applied">数据根目录已切换到外部存储：%1$s</string>
+    <string name="external_root_auto_migrated_suffix">，既有数据已迁移</string>
+    <string name="external_root_auto_failed">外部数据目录配置失败，可在 设置 → 配置 中手动设置引擎目录。</string>
     <string name="notification_permission_title">没有通知权限</string>
     <string name="notification_permission_message">没有发送通知的权限，我们无法在一些耗时操作完成时通知您。</string>
     <string name="rime_daemon">Rime 守护程序</string>

@@ -212,6 +212,13 @@
     <string name="sync_user_data_failure">Failed to sync user data</string>
     <string name="data_path_permission_revoked">Data folder access was revoked. Please select the folder again.</string>
     <string name="grant_permission">Grant permission</string>
+    <string name="external_root_auto_title">Move data to shared storage</string>
+    <string name="external_root_auto_message">Zhi Trime will keep schemas, themes and user dictionaries in %1$s on shared storage, easy to back up and browse. Tap \"Go grant\", switch on \"All files access\" in the system page, and existing data will be migrated automatically when you return.</string>
+    <string name="external_root_auto_go">Go grant</string>
+    <string name="external_root_auto_stay">Not now, keep in-app storage</string>
+    <string name="external_root_auto_applied">Data root switched to shared storage: %1$s</string>
+    <string name="external_root_auto_migrated_suffix">, existing data migrated</string>
+    <string name="external_root_auto_failed">Failed to set up the external data root; you can configure the engine folder manually in Settings → Profile.</string>
     <string name="notification_permission_title">No Notification Permission</string>
     <string name="notification_permission_message">Without the permission to post notifications, we are not able to notify you when some time-consuming operations are done.</string>
     <string name="rime_daemon">Rime Daemon</string>

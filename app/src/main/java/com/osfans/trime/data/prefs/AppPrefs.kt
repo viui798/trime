@@ -404,6 +404,12 @@ class AppPrefs(
              * 所以这个值可以保留在磁盘上而不影响使用。
              */
             const val EXTERNAL_ENGINE_ROOT = "profile_external_engine_root"
+
+            /** 芝版同文：「免选即外部」自动配置已完成。 */
+            const val EXTERNAL_ROOT_AUTO_DONE = "profile_external_root_auto_done"
+
+            /** 芝版同文：用户拒绝了「免选即外部」授权，不再弹窗。 */
+            const val EXTERNAL_ROOT_AUTO_DISMISSED = "profile_external_root_auto_dismissed"
         }
 
         // 芝版同文（2026-10-29 改）：默认「从外部存储同步」，与元书输入法一致，
@@ -413,6 +419,8 @@ class AppPrefs(
         val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.EXTERNAL_SYNC)
         val rimeProfile = string(RIME_PROFILE, "")
         val externalEngineRoot = string(EXTERNAL_ENGINE_ROOT, "")
+        val externalRootAutoDone = bool(EXTERNAL_ROOT_AUTO_DONE, false)
+        val externalRootAutoDismissed = bool(EXTERNAL_ROOT_AUTO_DISMISSED, false)
         val externalRimeTreeUri = string(EXTERNAL_RIME_TREE_URI, "")
         val periodicBackgroundSync = bool(PERIODIC_BACKGROUND_SYNC, false)
         val periodicBackgroundSyncInterval = int(PERIODIC_BACKGROUND_SYNC_INTERVAL, 30)

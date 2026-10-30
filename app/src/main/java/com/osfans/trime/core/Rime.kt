@@ -67,6 +67,8 @@ class Rime :
         RimeDispatcher(
             object : RimeDispatcher.RimeController {
                 override fun nativeStartup() {
+                    // Startup only loads existing deployment artifacts. The
+                    // explicit deploy action keeps the original full path.
                     startRime(false)
                     lifecycleRegistry.emitEvent(RimeLifecycle.Event.ON_READY)
                 }
@@ -313,12 +315,20 @@ class Rime :
             fullCheck: $fullCheck
             """.trimIndent(),
         )
-        startupRime(
-            sharedDataDir,
-            userDataDir,
-            BuildConfig.BUILD_VERSION_NAME,
-            fullCheck,
-        )
+        if (fullCheck) {
+            startupRime(
+                sharedDataDir,
+                userDataDir,
+                BuildConfig.BUILD_VERSION_NAME,
+                true,
+            )
+        } else {
+            startupRimeWithoutMaintenance(
+                sharedDataDir,
+                userDataDir,
+                BuildConfig.BUILD_VERSION_NAME,
+            )
+        }
     }
 
     private fun processKeyInner(value: Int, modifiers: Int, isVirtual: Boolean): Boolean {
@@ -519,6 +529,7 @@ class Rime :
 
         init {
             System.loadLibrary("rime_jni")
+            System.loadLibrary("trime_startup")
         }
 
         // init
@@ -528,6 +539,13 @@ class Rime :
             userDir: String,
             versionName: String,
             fullCheck: Boolean,
+        )
+
+        @JvmStatic
+        external fun startupRimeWithoutMaintenance(
+            sharedDir: String,
+            userDir: String,
+            versionName: String,
         )
 
         @JvmStatic

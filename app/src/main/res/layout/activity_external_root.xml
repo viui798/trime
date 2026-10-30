@@ -10,9 +10,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/colorBackground">
+    android:background="@color/settings_surface">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/external_root_app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorSurface"
@@ -22,9 +23,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
             android:id="@+id/external_root_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:titleTextAppearance="@style/TextAppearance.Trime.ToolbarTitle"
             app:navigationIcon="?attr/homeAsUpIndicator"
             app:navigationIconTint="?attr/colorOnSurface"
-            app:title="@string/external_root_title"
+            app:title="@string/external_root_path_label"
             app:titleTextColor="?attr/colorOnSurface" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -40,31 +42,77 @@ SPDX-License-Identifier: GPL-3.0-or-later
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="20dp">
+            android:paddingStart="24dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="24dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_settings_card"
+                android:padding="20dp"
+                android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:background="@drawable/bg_external_root_status"
+                android:src="@drawable/ic_baseline_snippet_folder_24"
+                android:importantForAccessibility="no"
+                app:tint="@color/settings_on_primary_container" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/external_root_title"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/settings_on_surface" />
 
             <TextView
                 android:id="@+id/external_root_desc"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:lineSpacingExtra="4dp"
                 android:text="@string/external_root_desc"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:textSize="14sp" />
 
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_settings_card"
+                android:orientation="vertical"
+                android:padding="20dp">
+
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/external_root_path_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                app:boxBackgroundColor="@android:color/transparent"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxStrokeColor="@color/settings_outline"
+                app:boxStrokeWidth="1dp"
+                app:boxStrokeWidthFocused="2dp"
                 android:hint="@string/external_root_path_label">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/external_root_path"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="@color/settings_on_surface"
                     android:inputType="textUri"
+                    android:textSize="14sp"
                     android:singleLine="true"
                     tools:text="/storage/emulated/0/rime-cheese" />
             </com.google.android.material.textfield.TextInputLayout>
@@ -74,32 +122,69 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
                 android:lineSpacingExtra="3dp"
                 android:text="@string/external_root_note"
                 android:textColor="?attr/colorOnSurfaceVariant"
                 android:textSize="13sp" />
 
-            <TextView
-                android:id="@+id/external_root_status"
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_settings_card"
+                android:gravity="center_vertical"
+                android:minHeight="76dp"
+                android:orientation="horizontal"
+                android:padding="20dp">
+
+            <ImageView
+                android:id="@+id/external_root_status_icon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_external_root_status"
+                android:padding="7dp"
+                android:importantForAccessibility="no"
+                app:tint="@color/settings_on_primary_container" />
+
+            <TextView
+                android:id="@+id/external_root_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:minHeight="40dp"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="14sp"
+                android:textSize="15sp"
+                android:textStyle="bold"
                 tools:text="@string/external_root_perm_on" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/external_root_grant"
-                android:layout_width="match_parent"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="end"
                 android:layout_marginTop="12dp"
+                android:minHeight="48dp"
+                android:textSize="14sp"
+                app:cornerRadius="12dp"
                 android:text="@string/external_root_grant" />
+
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/external_root_switch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="24dp"
+                android:minHeight="52dp"
+                app:cornerRadius="14dp"
                 android:text="@string/external_root_switch" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

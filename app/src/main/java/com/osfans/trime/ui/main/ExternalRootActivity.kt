@@ -3,8 +3,12 @@
 package com.osfans.trime.ui.main
 
 import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
+import androidx.core.view.isVisible
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.osfans.trime.R
 import com.osfans.trime.core.data.DataStorageMode
@@ -29,8 +33,17 @@ class ExternalRootActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityExternalRootBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Keep the toolbar below the status bar on edge-to-edge Android versions.
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(bars.left, bars.top, bars.right, maxOf(bars.bottom, ime.bottom))
+            insets
+        }
 
         binding.externalRootToolbar.setNavigationOnClickListener { finish() }
 
@@ -55,9 +68,15 @@ class ExternalRootActivity : AppCompatActivity() {
     }
 
     private fun renderPermission() {
+        val ready = ExternalRootAutoConfig.permissionReady()
         binding.externalRootStatus.text =
-            if (ExternalRootAutoConfig.permissionReady()) getString(R.string.external_root_perm_on)
+            if (ready) getString(R.string.external_root_perm_on)
             else getString(R.string.external_root_perm_off)
+        binding.externalRootStatusIcon.setImageResource(
+            if (ready) R.drawable.ic_baseline_check_circle_24 else R.drawable.ic_baseline_lock_24,
+        )
+        binding.externalRootGrant.isVisible = !ready
+        binding.externalRootSwitch.isEnabled = ready && !busy
     }
 
     private fun activate() {

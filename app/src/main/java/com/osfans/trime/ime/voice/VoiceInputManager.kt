@@ -209,17 +209,20 @@ object VoiceInputManager {
 
     fun cancel() {
         if (!current.active && session == null) return
+        clearComposing()
         cleanup()
         setState(State())
     }
 
     private fun finish() {
         Timber.i("voice: finished")
+        clearComposing()
         cleanup()
         setState(State())
     }
 
     private fun fail(message: String) {
+        clearComposing()
         cleanup()
         setState(State())
         Toast.makeText(appContext, message, Toast.LENGTH_LONG).show()
@@ -245,6 +248,9 @@ object VoiceInputManager {
         override fun onPartial(text: String) = postIfCurrent(gen) {
             if (text.isEmpty()) return@postIfCurrent
             setState(current.copy(partial = text))
+            // 咩版同款：按住说话时把流式 partial 作为组字预演写进输入框，边说边出字；
+            // 点按会话已经由 VoiceInputOverlay 显示 partial，不重复写组字。
+            if (current.hold) previewComposing(text)
         }
 
         override fun onFinal(text: String) = postIfCurrent(gen) {
@@ -274,6 +280,21 @@ object VoiceInputManager {
             main.post {
                 service.commitText(text)
             }
+        }
+    }
+
+    /** 咩版同款：把流式 partial 作为组字预演写进输入框（按住说话时边走字）。 */
+    private fun previewComposing(text: String) {
+        val ic = serviceRef?.get()?.currentInputConnection ?: return
+        runCatching { ic.setComposingText(text, 1) }
+    }
+
+    /** 清掉预演组字（取消/失败/结束时用，避免残留半截文字）。 */
+    private fun clearComposing() {
+        val ic = serviceRef?.get()?.currentInputConnection ?: return
+        runCatching {
+            ic.setComposingText("", 1)
+            ic.finishComposingText()
         }
     }
 

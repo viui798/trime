@@ -32,7 +32,7 @@ object SchemePackageManager {
 
     /** 列出 `方案/` 下所有至少含一个 schema 的包，按显示名排序。 */
     fun listPackages(): List<SchemePackage> =
-        DataManager.schemaRootDir
+        RimeProfileManager.root
             .listFiles { f -> f.isDirectory && !f.name.startsWith(".") }
             ?.mapNotNull { dir ->
                 if (schemaIds(dir).isEmpty()) {

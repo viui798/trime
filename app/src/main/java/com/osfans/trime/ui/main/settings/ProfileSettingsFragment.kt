@@ -179,25 +179,18 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                 ctx.toast(R.string.setup__data_path_import_failed)
                 return@launch
             }
-            val oldRoot = DataManager.rimeRootDir
-            withLoadingDialog(ctx, R.string.engine_root_migrating) {
-                withContext(Dispatchers.IO) {
-                    val newRoot = File(target)
-                    newRoot.mkdirs()
-                    MIGRATED_DIRS.forEach { name ->
-                        val src = File(oldRoot, name)
-                        val dst = File(newRoot, name)
-                        if (src.isDirectory && runCatching { src.canonicalPath != dst.canonicalPath }.getOrDefault(true)) {
-                            copyDirectory(src, dst)
-                        }
+            val result = runCatching {
+                withLoadingDialog(ctx, R.string.engine_root_migrating) {
+                    withContext(Dispatchers.IO) {
+                        com.osfans.trime.core.data.StorageLocation.switchTo(DataStorageMode.DIRECT_EXTERNAL, target)
                     }
                 }
-                prefs.externalEngineRoot.setValue(target)
-                // 引擎目录已经在外部了，就不需要再走「从外部存储同步」那条 SAF 通道，
-                // 两者叠加会互相覆盖；统一用应用存储模式，避免 isStorageAvailable 误判。
-                prefs.dataStorageMode.setValue(DataStorageMode.APP_STORAGE)
-                DataManager.invalidateRimeRootCache()
             }
+            if (result.isFailure) {
+                ctx.toast(result.exceptionOrNull()?.message ?: getString(R.string.setup__data_path_import_failed))
+                return@launch
+            }
+            updateStorageModeUi()
             engineRootPreference.summary = provideEngineRootSummary()
             ctx.toast(R.string.engine_root_switched)
         }
@@ -220,15 +213,7 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
         src: File,
         dst: File,
     ) {
-        dst.mkdirs()
-        src.listFiles()?.forEach { child ->
-            val out = File(dst, child.name)
-            if (child.isDirectory) {
-                copyDirectory(child, out)
-            } else {
-                runCatching { child.copyTo(out, overwrite = true) }
-            }
-        }
+        com.osfans.trime.core.data.SafeDirectoryCopy.copy(src, dst)
     }
 
     private fun updateStorageModeUi() {
@@ -256,7 +241,8 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                     runCatching {
                         withContext(Dispatchers.IO) {
                             UserDataManager.persistTreeUri(picked.uri)
-                            viewModel.rime.runOnReady { deploy() }
+                            if (externalSyncSetup) com.osfans.trime.core.data.StorageLocation.switchTo(DataStorageMode.EXTERNAL_SYNC)
+                            check(UserDataManager.sync()) { "同步失败，请检查目录是否重叠、权限及剩余空间" }
                         }
                     }.onSuccess {
                         updateDataPathSummary()
@@ -302,7 +288,6 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
 
     /** Falls back to app-specific storage when the user gives up on choosing a folder. */
     private fun cancelExternalSyncSetup() {
-        prefs.dataStorageMode.setValue(DataStorageMode.APP_STORAGE)
         updateStorageModeUi()
     }
 
@@ -337,25 +322,22 @@ class ProfileSettingsFragment : PaddingPreferenceFragment() {
                         setDefaultValue(DataStorageMode.APP_STORAGE.name)
                         summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
                         setOnPreferenceChangeListener { _, newValue ->
-                            val oldMode = prefs.dataStorageMode.getValue()
                             val mode =
                                 DataStorageMode.valueOf(newValue as String)
-                            prefs.dataStorageMode.setValue(mode)
-                            if (
-                                oldMode == DataStorageMode.APP_STORAGE &&
-                                mode == DataStorageMode.EXTERNAL_SYNC &&
-                                !UserDataManager.hasExternalAccess()
-                            ) {
+                            if (mode == DataStorageMode.EXTERNAL_SYNC && !UserDataManager.hasExternalAccess()) {
                                 promptExternalSyncFolderSelection()
-                            } else if (
-                                oldMode == DataStorageMode.EXTERNAL_SYNC &&
-                                mode == DataStorageMode.APP_STORAGE
-                            ) {
-                                // The picked folder and its grant are kept, so switching back to
-                                // external sync does not ask the user to pick it again.
-                                updateDataPathSummary()
+                            } else {
+                                lifecycleScope.launch {
+                                    runCatching {
+                                        withContext(Dispatchers.IO) {
+                                            com.osfans.trime.core.data.StorageLocation.switchTo(mode)
+                                        }
+                                    }.onFailure { ctx.toast(it.message ?: "切换目录失败") }
+                                    updateStorageModeUi()
+                                    updateDataPathSummary()
+                                }
                             }
-                            true
+                            false
                         }
                     },
                 )

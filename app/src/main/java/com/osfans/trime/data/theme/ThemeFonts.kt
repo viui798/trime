@@ -34,32 +34,35 @@ class ThemeFonts(private val theme: Theme) {
             }
         }
 
+    private fun names(key: String, fallback: List<String>): List<String> =
+        ColorManager.fontNames(theme, key) ?: fallback
+
     val hanb: Typeface
-        get() = getTypeface(style.hanbFont.toList())
+        get() = getTypeface(names("hanb_font", style.hanbFont.toList()))
 
     val latin: Typeface
-        get() = getTypeface(style.latinFont.toList())
+        get() = getTypeface(names("latin_font", style.latinFont.toList()))
 
     val candidate: Typeface
-        get() = getTypeface(style.candidateFont.toList())
+        get() = getTypeface(names("candidate_font", style.candidateFont.toList()))
 
     val comment: Typeface
-        get() = getTypeface(style.commentFont.toList())
+        get() = getTypeface(names("comment_font", style.commentFont.toList()))
 
     val key: Typeface
-        get() = getTypeface(style.keyFont.toList())
+        get() = getTypeface(names("key_font", style.keyFont.toList()))
 
     val label: Typeface
-        get() = getTypeface(style.labelFont.toList())
+        get() = getTypeface(names("label_font", style.labelFont.toList()))
 
     val popup: Typeface
-        get() = getTypeface(style.popupFont.toList())
+        get() = getTypeface(names("popup_font", style.popupFont.toList()))
 
     val symbol: Typeface
-        get() = getTypeface(style.symbolFont.toList())
+        get() = getTypeface(names("symbol_font", style.symbolFont.toList()))
 
     val text: Typeface
-        get() = getTypeface(style.textFont.toList())
+        get() = getTypeface(names("text_font", style.textFont.toList()))
 
     val toolbar: Typeface
         get() = getTypeface(theme.toolBar.buttonFont.toList())
@@ -72,8 +75,8 @@ class ThemeFonts(private val theme: Theme) {
 
     private fun resolveKey(fonts: List<String>): TypefaceKey {
         val existing = makeFileStateList(fonts)
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            TypefaceKey(existing)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && existing.isNotEmpty()) {
+            TypefaceKey(makeFileStateList(names("latin_font", style.latinFont.toList()) + fonts + names("hanb_font", style.hanbFont.toList())))
         } else {
             TypefaceKey(existing.take(1))
         }
@@ -87,8 +90,7 @@ class ThemeFonts(private val theme: Theme) {
             val newTypeface = if (key.files.isEmpty()) {
                 Typeface.DEFAULT
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val bulk = makeFileStateList(style.latinFont.toList() + fonts + style.hanbFont.toList())
-                val fontFamilies = bulk.map { getFontFamily(it) }
+                val fontFamilies = key.files.map { getFontFamily(it) }
                 Typeface.CustomFallbackBuilder(fontFamilies.first())
                     .apply {
                         for (i in 1 until fontFamilies.size) {

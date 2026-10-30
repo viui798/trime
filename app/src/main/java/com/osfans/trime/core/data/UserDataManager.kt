@@ -121,10 +121,14 @@ object UserDataManager {
      * 或者外部同步目录已授权。第一种与 SAF 同步无关，要单独放行，
      * 否则切到外部根目录后仍会被判成「存储不可用」。
      */
-    fun isStorageAvailable(): Boolean =
-        DataManager.isUsingExternalRoot() || !useExternalSync() || hasExternalAccess()
+    fun isStorageAvailable(): Boolean = when (dataStorageMode) {
+        DataStorageMode.DIRECT_EXTERNAL -> DataManager.isUsingExternalRoot()
+        DataStorageMode.APP_STORAGE -> true
+        DataStorageMode.EXTERNAL_SYNC -> hasExternalAccess()
+    }
 
     fun isStorageChoiceDone(): Boolean = when (dataStorageMode) {
+        DataStorageMode.DIRECT_EXTERNAL -> isStorageAvailable()
         DataStorageMode.APP_STORAGE -> true
         DataStorageMode.EXTERNAL_SYNC -> externalRimeTreeUri.isNotEmpty()
     }
@@ -214,6 +218,28 @@ object UserDataManager {
 
     suspend fun sync(): Boolean = lock.withLock {
         if (!useExternalSync()) return@withLock true
+        // SAF trees and native paths must never name overlapping directories.
+        val documentId = runCatching { android.provider.DocumentsContract.getTreeDocumentId(externalRimeDir) }.getOrNull()
+        val remotePath = documentId?.let {
+            val volume = it.substringBefore(':')
+            val relative = it.substringAfter(':', "")
+            when {
+                !it.contains(':') -> null
+                volume == "primary" -> File(android.os.Environment.getExternalStorageDirectory(), relative)
+                volume == "raw" -> File(relative)
+                volume.matches(Regex("[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}")) -> File("/storage/$volume", relative)
+                else -> null
+            }
+        }
+        if (remotePath != null) {
+            val remote = remotePath.canonicalFile
+            val local = userDataDir.canonicalFile
+            if (remote == local || remote.path.startsWith(local.path + File.separator) || local.path.startsWith(remote.path + File.separator)) {
+                Timber.e("拒绝同步互相包含的目录: %s / %s", remote, local)
+                return@withLock false
+            }
+        }
+        try {
         if (!hasExternalAccess()) {
             DeployNotification.promptDataPathPermissionRevoked()
             return@withLock false
@@ -227,14 +253,14 @@ object UserDataManager {
 
             val remoteMap = buildMap {
                 StorageAccess.walk(externalRimeDir)
-                    .collect { put(it.relativePath, it.file) }
+                    .collect { if (isRimeDataPath(it.relativePath)) put(it.relativePath, it.file) }
             }
             // 注意：v7 起用户词典（*.userdb）和 sync 快照搬到了 rime/学习，
             // 不在 userDataDir 下，所以外部同步模式目前不会同步这部分数据。
             // 该模式本身尚未验证；默认数据模式是 APP_STORAGE。
             val localMap = walkLocal(userDataDir)
 
-            val allPaths = (localMap.keys + remoteMap.keys + oldManifest.files.keys)
+            val allPaths = (localMap.keys + remoteMap.keys + oldManifest.files.keys.filter(::isRimeDataPath))
                 .sortedBy { it.count { c -> c == '/' } }
 
             // Fast path: when every path still matches the recorded state on both sides and no
@@ -285,6 +311,13 @@ object UserDataManager {
 
         Timber.d("Synced")
         true
+        } catch (e: IOException) {
+            Timber.e(e, "文件同步失败，保留原文件")
+            false
+        } catch (e: SecurityException) {
+            Timber.e(e, "文件同步权限失效")
+            false
+        }
     }
 
     private suspend fun syncEntry(
@@ -486,9 +519,13 @@ object UserDataManager {
         if (!root.exists()) return emptyMap()
         return root
             .walkTopDown()
+            .onEnter { it == root || isRimeDataPath(it.toRelativeString(root)) }
             .filter { it != root }
             .associateBy { it.toRelativeString(root) }
     }
+
+    private fun isRimeDataPath(path: String): Boolean =
+        path.replace('\\', '/').substringBefore('/') !in setOf("cheese", "mie", "mie_resources", "方案", "皮肤", "运行数据", "部署", "学习", "方案库")
 
     private fun isUnchanged(
         path: String,

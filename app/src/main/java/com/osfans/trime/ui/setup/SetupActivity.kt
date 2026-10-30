@@ -153,6 +153,9 @@ class SetupActivity : FragmentActivity() {
             val picked = storageAccess.pickDirectory() ?: return@launch
             runCatching {
                 UserDataManager.persistTreeUri(picked.uri)
+                withContext(Dispatchers.IO) {
+                    com.osfans.trime.core.data.StorageLocation.switchTo(com.osfans.trime.core.data.DataStorageMode.EXTERNAL_SYNC)
+                }
                 check(UserDataManager.sync())
                 refreshCurrentFragment()
                 updateButtons()
@@ -165,6 +168,30 @@ class SetupActivity : FragmentActivity() {
                 updateButtons()
                 toast(R.string.setup__data_path_import_failed)
             }
+        }
+    }
+
+    /** 存储页按钮：外部同步→选 SAF 目录；直接外部→授权后把引擎根激活到外部固定目录。 */
+    fun pickOrActivateStorage() {
+        val mode = com.osfans.trime.data.prefs.AppPrefs.defaultInstance().profile.dataStorageMode.getValue()
+        if (mode == com.osfans.trime.core.data.DataStorageMode.DIRECT_EXTERNAL) {
+            if (!com.osfans.trime.core.data.ExternalRootAutoConfig.permissionReady()) {
+                com.osfans.trime.core.data.ExternalRootAutoConfig.openPermissionSettings(this)
+                return
+            }
+            lifecycleScope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        com.osfans.trime.core.data.StorageLocation.switchTo(
+                            com.osfans.trime.core.data.DataStorageMode.DIRECT_EXTERNAL,
+                        )
+                    }
+                }.onFailure { toast(it.message ?: "切换目录失败") }
+                refreshCurrentFragment()
+                updateButtons()
+            }
+        } else {
+            pickDataPath()
         }
     }
 

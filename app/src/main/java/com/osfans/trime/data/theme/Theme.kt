@@ -27,6 +27,7 @@ data class Theme(
     val liquidKeyboard: LiquidKeyboard = LiquidKeyboard(),
     val presetKeys: Map<String, PresetKey> = emptyMap(),
     val presetKeyboards: Map<String, TextKeyboard> = emptyMap(),
+    @Serializable(with = PresetColorSchemesSerializer::class)
     val presetColorSchemes: PresetColorSchemes = emptyMap(),
     val fallbackColors: Map<String, String> = emptyMap(),
     val toolBar: ToolBar = ToolBar(),

@@ -114,6 +114,20 @@ object RimeDaemon {
 
     private var restartId = 0
 
+    /** Directory changes happen only after native workers and sessions have stopped. */
+    fun changeStorage(block: () -> Unit) = lock.withLock {
+        check(realRime.lifecycle.currentState == com.osfans.trime.core.RimeLifecycle.State.READY ||
+            realRime.lifecycle.currentState == com.osfans.trime.core.RimeLifecycle.State.STOPPED) {
+            "引擎正在启动或部署，请完成后再切换目录"
+        }
+        realRime.finalize()
+        try {
+            block()
+        } finally {
+            realRime.startup()
+        }
+    }
+
     init {
         DeployNotification.ensureChannel()
         TrimeApplication.getInstance().coroutineScope.launch {

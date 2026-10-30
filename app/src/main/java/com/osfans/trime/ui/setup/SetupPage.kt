@@ -71,7 +71,7 @@ enum class SetupPage {
 
     fun getButtonAction(activity: FragmentActivity) {
         when (this) {
-            Mode -> (activity as SetupActivity).pickDataPath()
+            Mode -> (activity as SetupActivity).pickOrActivateStorage()
             Schema -> (activity as SetupActivity).pickRimeResources()
             Skin -> (activity as SetupActivity).pickRimeResources()
             Enable -> InputMethodUtils.showImeEnablerActivity(activity)
@@ -80,7 +80,8 @@ enum class SetupPage {
     }
 
     fun showActionButton(): Boolean = when (this) {
-        Mode -> UserDataManager.useExternalSync()
+        // 存储页只要有待办（外部同步选目录 / 直接外部授权激活）就显示按钮；应用专属无需操作。
+        Mode -> true
         else -> true
     }
 

@@ -59,7 +59,8 @@ object RimeProfileManager {
         val name = currentName()
         if (name.isBlank()) return null
         val dir = File(DataManager.schemaRootDir, name)
-        return if (dir.isDirectory) dir else null
+        return if (dir.isDirectory && SchemePackageManager.schemaIds(dir).isNotEmpty() &&
+            name !in setOf("build", "cheese", "方案库")) dir else null
     }
 
     /** 手工创建的 `方案库/<名>/` 完整 Rime 目录。 */
@@ -95,7 +96,6 @@ object RimeProfileManager {
     }
 
     fun isProfile(): Boolean {
-        migrateLegacyCopy()
         val name = currentName()
         return name.isNotBlank() && (manualProfileDir() != null || linkedPackageDir() != null)
     }

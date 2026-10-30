@@ -159,11 +159,11 @@
     <!-- 芝版同文：引导页导入方案与皮肤 -->
     <string name="setup__step_four">第 4 步</string>
     <string name="setup__step_five">第 5 步</string>
-    <string name="setup__import_schema_hint">导入你的输入方案。\n支持打包好的 .zip，也可以多选 .schema.yaml、.dict.yaml、.lua。\n文件会存到 <b>rime/方案</b>，导入后自动启用并部署。</string>
+    <string name="setup__import_schema_hint">导入你的输入方案。\n支持打包好的 .zip，也可以多选 .schema.yaml、.dict.yaml、.lua。\n文件直接存到 <b>Rime 数据目录</b>。</string>
     <string name="setup__import_schema">选择方案文件…</string>
     <string name="setup__import_schema_done">已启用方案：%1$s</string>
     <string name="setup__import_schema_done_more">已启用方案：%1$s 等 %2$d 个</string>
-    <string name="setup__import_skin_hint">导入键盘皮肤。\n支持 .zip 包或单个 .trime.yaml 文件，存到 <b>rime/皮肤</b>。\n这一步可以跳过，不导入就继续用内置的芝色皮肤。</string>
+    <string name="setup__import_skin_hint">导入键盘皮肤。\n支持 .zip 包或单个 .trime.yaml 文件，存到 <b>Rime 数据目录</b>。\n这一步可以跳过，不导入就继续用内置的芝色皮肤。</string>
     <string name="setup__import_skin">选择皮肤文件…</string>
     <string name="setup__import_skin_done">已启用皮肤：%1$s</string>
     <string name="setup__import_ok">已导入 %1$d 个文件</string>
@@ -177,7 +177,7 @@
 
     <!-- 芝版同文：方案列表空状态 -->
     <string name="schema_list_empty_title">还没有输入方案</string>
-    <string name="schema_list_empty_hint">这一版移除了内置方案。\n把方案包放进 <b>rime/方案</b> 文件夹，或点下面的按钮导入。\n支持 .zip、.schema.yaml、.dict.yaml。</string>
+    <string name="schema_list_empty_hint">这一版移除了内置方案。\n点下面的按钮导入方案包，或把方案文件直接放进 <b>Rime 数据目录</b>。\n支持 .zip、.schema.yaml、.dict.yaml。</string>
     <string name="schema_action_import">导入</string>
     <string name="schema_action_directory">目录</string>
     <string name="schema_action_deploy">部署</string>
@@ -193,7 +193,7 @@
     <string name="scheme_directory_preparing">正在准备「%1$s」…</string>
     <string name="scheme_directory_preparing_hint">首次切换需要把方案包复制到方案库，包较大时请稍候。</string>
     <string name="scheme_directory_prepare_failed">准备方案目录失败，请检查存储空间。</string>
-    <string name="scheme_directory_default">默认（运行数据）</string>
+    <string name="scheme_directory_default">默认（Rime 数据目录）</string>
     <string name="scheme_directory_hint">把完整的 Rime 方案目录放进 rime/方案库。切换后会重新选择方案并部署。</string>
     <string name="scheme_directory_switching">正在切换方案目录并重新部署…</string>
 
@@ -610,6 +610,8 @@
 
     <!-- 引擎数据目录（外部存储，需要「所有文件访问」） -->
     <string name="engine_root_title">引擎数据目录（所有文件访问）</string>
+    <string name="direct_external_storage">直接使用外部目录（旧版方式）</string>
+    <string name="direct_external_storage_desc">直接读写共享存储的 Rime 目录，默认 /storage/emulated/0/rime-cheese；可用文件管理器直接修改方案、主题和词库，需要授予「所有文件访问」权限。</string>
     <string name="engine_root_summary_internal">正在使用应用私有目录</string>
     <string name="engine_root_permission_needed">请先在系统设置中开启本应用的「所有文件访问」</string>
     <string name="engine_root_switched">已切换，重启输入法后生效</string>

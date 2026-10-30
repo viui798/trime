@@ -74,8 +74,18 @@ object DataManager {
     private var cachedRimeRoot: File? = null
 
     private fun computeRimeRoot(): File {
+        val profile = AppPrefs.defaultInstance().profile
+        val migrationPrefs = profile.dataStorageMode.sharedPreferences
+        if (!migrationPrefs.getBoolean("traditional_storage_modes_v1", false)) {
+            migrationPrefs.edit().apply {
+                if (profile.externalEngineRoot.getValue().isNotBlank()) {
+                    putString(profile.dataStorageMode.key, DataStorageMode.DIRECT_EXTERNAL.name)
+                }
+                putBoolean("traditional_storage_modes_v1", true)
+            }.commit()
+        }
         val custom = externalEngineRootPref.trim()
-        if (custom.isNotEmpty()) {
+        if (custom.isNotEmpty() && AppPrefs.defaultInstance().profile.dataStorageMode.getValue() == DataStorageMode.DIRECT_EXTERNAL) {
             val dir = File(custom)
             if (canUseExternalRoot(dir)) return dir.also { it.mkdirs() }
             Timber.w("外部数据目录不可用，回落到应用私有目录: %s", custom)
@@ -94,7 +104,7 @@ object DataManager {
     /** 当前是否真的在用外部目录（false 表示回落到了应用私有目录）。 */
     fun isUsingExternalRoot(): Boolean {
         val custom = externalEngineRootPref.trim()
-        return custom.isNotEmpty() && canUseExternalRoot(File(custom))
+        return AppPrefs.defaultInstance().profile.dataStorageMode.getValue() == DataStorageMode.DIRECT_EXTERNAL && custom.isNotEmpty() && canUseExternalRoot(File(custom))
     }
 
     /**
@@ -114,10 +124,10 @@ object DataManager {
     }
 
     /** 用户放方案的目录，一包一个文件夹。 */
-    val schemaRootDir: File get() = File(rimeRootDir, "方案")
+    val schemaRootDir: File get() = rimeRootDir
 
     /** 用户放皮肤的目录，一包一个文件夹。 */
-    val themeRootDir: File get() = File(rimeRootDir, "皮肤")
+    val themeRootDir: File get() = rimeRootDir
 
     /**
      * 「部署」的**根**。直连方案包 / 方案库模式下真正的 staging 是它下面的
@@ -126,7 +136,7 @@ object DataManager {
      * 故意设为 private：路径只有一个出口，外部拿不到这个目录就没法写错。
      * 需要 `部署/<名>/` 时用 [stagingDirFor]。
      */
-    private val deployDir: File get() = File(rimeRootDir, "部署")
+    private val deployDir: File get() = File(rimeRootDir, "build")
 
     /** `部署/<方案目录名>/`：直连方案包 / 方案库模式的 staging，同时用于该模式的 [stagingDir]。 */
     fun stagingDirFor(name: String): File = File(deployDir, name).also { it.mkdirs() }
@@ -141,10 +151,10 @@ object DataManager {
     internal fun defaultStagingRoot(): File = deployDir
 
     /** 学习数据：用户词典（*.userdb）与同步快照。 */
-    val learnDir: File get() = File(rimeRootDir, "学习")
+    val learnDir: File get() = rimeRootDir
 
     /** Rime 的 user_data_dir。摊平源与运行状态都在这里，属于引擎内部目录。 */
-    val userDataDir: File get() = File(rimeRootDir, "运行数据")
+    val userDataDir: File get() = rimeRootDir
 
     val prebuiltDataDir = File(sharedDataDir, "build")
 

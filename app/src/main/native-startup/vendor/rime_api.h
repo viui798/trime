@@ -114,6 +114,8 @@ typedef struct rime_traits_t {
   const char* prebuilt_data_dir;
   //! staging directory. defaults to ${user_data_dir}/build
   const char* staging_dir;
+  //! Zhi Trime extension; must match the bundled engine's RimeTraits.
+  const char* userdb_dir;
 } RimeTraits;
 
 typedef struct {

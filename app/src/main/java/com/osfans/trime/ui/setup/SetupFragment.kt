@@ -11,6 +11,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import com.osfans.trime.core.data.StorageLocation
+import com.osfans.trime.core.data.ExternalRootAutoConfig
+import com.osfans.trime.util.toast
 import com.osfans.trime.R
 import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.core.data.DataStorageMode
@@ -22,6 +29,7 @@ import com.osfans.trime.util.serializable
 
 class SetupFragment : Fragment() {
     private lateinit var binding: FragmentSetupBinding
+    private var updatingStorageUi = false
 
     private val page: SetupPage by lazy { requireArguments().serializable("page")!! }
 
@@ -34,15 +42,31 @@ class SetupFragment : Fragment() {
     ): View {
         binding = FragmentSetupBinding.inflate(inflater).apply {
             storageModeOptions.setOnCheckedChangeListener { _, checkedId ->
+                if (updatingStorageUi) return@setOnCheckedChangeListener
                 val newMode = when (checkedId) {
+                    R.id.direct_external_option -> DataStorageMode.DIRECT_EXTERNAL
                     R.id.sync_from_external_option -> DataStorageMode.EXTERNAL_SYNC
                     R.id.app_specific_storage_option -> DataStorageMode.APP_STORAGE
                     else -> return@setOnCheckedChangeListener
                 }
-                prefs.dataStorageMode.setValue(newMode)
-                sync()
-                (requireActivity() as SetupActivity).updateButtons()
+                if (newMode == DataStorageMode.DIRECT_EXTERNAL && !ExternalRootAutoConfig.permissionReady()) {
+                    ExternalRootAutoConfig.openPermissionSettings(requireActivity())
+                    sync()
+                    return@setOnCheckedChangeListener
+                }
+                if (newMode == DataStorageMode.EXTERNAL_SYNC && !UserDataManager.hasExternalAccess()) {
+                    (requireActivity() as SetupActivity).pickDataPath()
+                    sync()
+                    return@setOnCheckedChangeListener
+                }
+                lifecycleScope.launch {
+                    runCatching { withContext(Dispatchers.IO) { StorageLocation.switchTo(newMode) } }
+                        .onFailure { requireContext().toast(it.message ?: "切换目录失败") }
+                    sync()
+                    (requireActivity() as SetupActivity).updateButtons()
+                }
             }
+            directExternalDesc.setOnClickListener { directExternalOption.isChecked = true }
             syncFromExternalDesc.setOnClickListener { syncFromExternalOption.isChecked = true }
             appSpecificStorageDesc.setOnClickListener { appSpecificStorageOption.isChecked = true }
         }
@@ -57,6 +81,7 @@ class SetupFragment : Fragment() {
         val checkedId = when (prefs.dataStorageMode.getValue()) {
             DataStorageMode.EXTERNAL_SYNC -> R.id.sync_from_external_option
             DataStorageMode.APP_STORAGE -> R.id.app_specific_storage_option
+            DataStorageMode.DIRECT_EXTERNAL -> R.id.direct_external_option
         }
         with(binding) {
             appIcon.setImageResource(page.getIconRes())
@@ -65,7 +90,9 @@ class SetupFragment : Fragment() {
                     androidx.core.content.ContextCompat.getColor(requireContext(), R.color.settings_on_primary_container),
                 )
             storageModeOptions.visibility = if (isStorageModePage) View.VISIBLE else View.GONE
+            updatingStorageUi = true
             storageModeOptions.check(checkedId)
+            updatingStorageUi = false
 
             stepText.text = page.getTitleText(requireContext())
             hintText.text = buildHint()

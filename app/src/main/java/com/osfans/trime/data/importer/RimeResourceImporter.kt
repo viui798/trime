@@ -20,8 +20,7 @@ import java.io.File
  * - **zip 包**：交给 [ZipExtractor] 解到 [destDir]，自动剥掉唯一的顶层目录、跳过垃圾文件
  * - **散装文件**：多选 `.yaml` / `.dict.yaml` / `.lua` / `.trime.yaml` 直接落到 [destDir]
  *
- * 注意 [destDir] 是**用户可见的存放目录**（`rime/方案` 或 `rime/皮肤`），不是 Rime 读的目录。
- * 导入完还要调 `RimeDataLayout.mirror()` 摊平到 `rime/运行数据`，Rime 才看得见。
+ * [destDir] 默认就是 Rime 用户目录，方案、皮肤直接解到根目录，不再镜像复制。
  */
 object RimeResourceImporter {
     private const val TAG = "RimeResourceImporter"
@@ -47,7 +46,7 @@ object RimeResourceImporter {
         context: Context,
         uris: List<Uri>,
         destDir: File,
-        flat: Boolean = false,
+        flat: Boolean = true,
     ): Result = withContext(Dispatchers.IO) {
         var files = 0
         var skipped = 0
@@ -62,7 +61,7 @@ object RimeResourceImporter {
                 if (isZip) {
                     // 旧版：每个包解到自己的同名子文件夹，避免多个包的根文件互相覆盖。
                     // 方案库：直接解到方案目录根，那个目录本身就是 Rime 的 user_data_dir。
-                    val folder = if (flat) destDir else File(destDir, packageFolderName(name))
+                    val folder = if (flat || destDir.canonicalFile == com.osfans.trime.core.data.DataManager.rimeRootDir.canonicalFile) destDir else File(destDir, packageFolderName(name))
                     val result = importZip(context, uri, folder)
                     files += result.files
                     skipped += result.skipped

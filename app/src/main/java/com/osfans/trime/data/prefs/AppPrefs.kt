@@ -416,7 +416,7 @@ class AppPrefs(
         // 用户选一个目录当 Rime 数据根，方便备份和跨应用查看。
         // 注意：新装还没挑目录时 isStorageAvailable() 返回 false、Rime 不启动；
         // 向导第一页和主页状态卡都会引导选目录，选完即恢复。
-        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.EXTERNAL_SYNC)
+        val dataStorageMode = enum(R.string.data_storage_mode, DATA_STORAGE_MODE, DataStorageMode.DIRECT_EXTERNAL)
         val rimeProfile = string(RIME_PROFILE, "")
         val externalEngineRoot = string(EXTERNAL_ENGINE_ROOT, "")
         val externalRootAutoDone = bool(EXTERNAL_ROOT_AUTO_DONE, false)

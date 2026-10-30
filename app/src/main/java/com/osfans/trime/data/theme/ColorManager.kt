@@ -40,6 +40,9 @@ object ColorManager {
 
     private var isNightMode = false
 
+    internal fun fontNames(theme: Theme, key: String): List<String>? =
+        scope?.takeIf { it.theme === theme }?.activeColorScheme?.fontNames(key)
+
     val activeColorScheme: ColorScheme
         get() = requireNotNull(requireScope().activeColorScheme) { "ColorManager is not initialized" }
 

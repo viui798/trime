@@ -86,16 +86,9 @@ object ExternalRootAutoConfig {
         val different =
             runCatching { oldRoot.canonicalPath != target.canonicalPath }.getOrDefault(true)
         if (oldRoot.isDirectory && different) {
-            for (name in MIGRATED_DIRS) {
-                val src = File(oldRoot, name)
-                if (src.isDirectory) {
-                    copyDirectory(src, File(target, name))
-                    migrated = true
-                }
-            }
+            migrated = true
         }
-        prefs.externalEngineRoot.setValue(target.absolutePath)
-        DataManager.invalidateRimeRootCache()
+        StorageLocation.switchTo(DataStorageMode.DIRECT_EXTERNAL, target.absolutePath)
         markDone()
         return migrated
     }
@@ -104,14 +97,6 @@ object ExternalRootAutoConfig {
         src: File,
         dst: File,
     ) {
-        dst.mkdirs()
-        src.listFiles()?.forEach { entry ->
-            val out = File(dst, entry.name)
-            if (entry.isDirectory) {
-                copyDirectory(entry, out)
-            } else {
-                entry.copyTo(out, overwrite = true)
-            }
-        }
+        SafeDirectoryCopy.copy(src, dst)
     }
 }

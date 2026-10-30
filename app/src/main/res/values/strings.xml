@@ -160,11 +160,11 @@
     <!-- Zhi Trime: import schema / theme in setup wizard -->
     <string name="setup__step_four">Setup 4</string>
     <string name="setup__step_five">Setup 5</string>
-    <string name="setup__import_schema_hint">Import your input schema.\nA packaged .zip works, and you can also pick .schema.yaml, .dict.yaml or .lua.\nFiles are stored in <b>rime/方案</b> and deployed right away.</string>
+    <string name="setup__import_schema_hint">Import your input schema.\nA packaged .zip works, and you can also pick .schema.yaml, .dict.yaml or .lua.\nFiles are stored directly in the <b>Rime data folder</b>.</string>
     <string name="setup__import_schema">Choose schema files…</string>
     <string name="setup__import_schema_done">Enabled schemas: %1$s</string>
     <string name="setup__import_schema_done_more">Enabled schemas: %1$s and %2$d in total</string>
-    <string name="setup__import_skin_hint">Import a keyboard theme.\nA .zip or a single .trime.yaml, stored in <b>rime/皮肤</b>.\nOptional — the built-in Zhi theme stays in use.</string>
+    <string name="setup__import_skin_hint">Import a keyboard theme.\nA .zip or a single .trime.yaml, stored in the <b>Rime data folder</b>.\nOptional — the built-in Zhi theme stays in use.</string>
     <string name="setup__import_skin">Choose theme files…</string>
     <string name="setup__import_skin_done">Enabled themes: %1$s</string>
     <string name="setup__import_ok">Imported %1$d files</string>
@@ -178,7 +178,7 @@
 
     <!-- Zhi Trime: schema list empty state -->
     <string name="schema_list_empty_title">No input schema yet</string>
-    <string name="schema_list_empty_hint">Built-in schemas were removed from this build.\nDrop a schema package into <b>rime/方案</b>, or use the button below.\n.zip, .schema.yaml and .dict.yaml are supported.</string>
+    <string name="schema_list_empty_hint">Built-in schemas were removed from this build.\nImport a package below, or place schema files directly in the <b>Rime data folder</b>.\n.zip, .schema.yaml and .dict.yaml are supported.</string>
     <string name="schema_action_import">Import</string>
     <string name="schema_action_directory">Directory</string>
     <string name="schema_action_deploy">Deploy</string>
@@ -194,7 +194,7 @@
     <string name="scheme_directory_preparing">Preparing “%1$s”…</string>
     <string name="scheme_directory_preparing_hint">The first switch copies this package into the scheme library. Large packages may take a while.</string>
     <string name="scheme_directory_prepare_failed">Failed to prepare the scheme directory. Check storage space.</string>
-    <string name="scheme_directory_default">Default (runtime data)</string>
+    <string name="scheme_directory_default">Default (Rime data folder)</string>
     <string name="scheme_directory_hint">Put complete Rime scheme directories under rime/方案库. Switching reselects schemas and redeploys.</string>
     <string name="scheme_directory_switching">Switching scheme directory and redeploying…</string>
 
@@ -612,6 +612,8 @@
 
     <!-- Engine data folder on external storage (needs All files access) -->
     <string name="engine_root_title">Engine data folder</string>
+    <string name="direct_external_storage">Use external folder directly (old way)</string>
+    <string name="direct_external_storage_desc">Read/write the shared Rime folder directly (default /storage/emulated/0/rime-cheese); edit schemas, themes and dicts with a file manager. Requires the All Files access permission.</string>
     <string name="engine_root_summary_internal">Using app-private storage</string>
     <string name="engine_root_permission_needed">Turn on “All files access” for this app first</string>
     <string name="engine_root_switched">Switched. Restart the keyboard to take effect.</string>

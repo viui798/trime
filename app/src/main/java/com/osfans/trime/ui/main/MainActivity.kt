@@ -33,7 +33,6 @@ import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.osfans.trime.BuildConfig
 import com.osfans.trime.R
-import com.osfans.trime.core.data.ExternalRootAutoConfig
 import com.osfans.trime.core.data.RimeProfileManager
 import com.osfans.trime.core.data.SchemePackage
 import com.osfans.trime.core.data.SchemePackageManager
@@ -64,8 +63,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var navController: NavController
 
-    /** onCreate 走了「免选即外部」授权分支、还没完成创建时为 true，由 onResume 收尾。 */
-    private var waitingExternalRootPermission = false
     private var testInputPanel: TestInputPanel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,52 +74,10 @@ class MainActivity : AppCompatActivity() {
             }
         AppCompatDelegate.setDefaultNightMode(uiMode)
         super.onCreate(savedInstanceState)
-        // 芝版同文「免选即外部」：首次启动把引擎根指到外部固定目录，需要
-        // 「所有文件访问」授权时先拦下说明，授权回来后 onResume 会补走创建。
-        if (ExternalRootAutoConfig.pending() && !ExternalRootAutoConfig.permissionReady()) {
-            promptExternalRootPermission()
-            return
-        }
         continueOnCreate()
     }
 
-    private fun promptExternalRootPermission() {
-        MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.external_root_auto_title)
-            .setMessage(getString(R.string.external_root_auto_message, ExternalRootAutoConfig.targetDir().absolutePath))
-            .setCancelable(false)
-            .setNegativeButton(R.string.external_root_auto_stay) { _, _ ->
-                ExternalRootAutoConfig.markDismissed()
-                continueOnCreate()
-            }
-            .setPositiveButton(R.string.external_root_auto_go) { _, _ ->
-                waitingExternalRootPermission = true
-                ExternalRootAutoConfig.openPermissionSettings(this)
-            }
-            .show()
-    }
-
     private fun continueOnCreate() {
-        if (ExternalRootAutoConfig.pending()) {
-            // 权限已就绪：静默切换引擎根并迁移既有数据，完成后重启 Rime 在新根上重建。
-            lifecycleScope.launch {
-                runCatching { withContext(Dispatchers.IO) { ExternalRootAutoConfig.apply() } }
-                    .onSuccess { migrated ->
-                        toast(
-                            getString(R.string.external_root_auto_applied, ExternalRootAutoConfig.targetDir().absolutePath) +
-                                if (migrated) getString(R.string.external_root_auto_migrated_suffix) else "",
-                        )
-                        runCatching { RimeDaemon.restartRime(fullCheck = true) }
-                            .onFailure { Timber.w(it, "restart rime after external root switch failed") }
-                    }
-                    .onFailure {
-                        Timber.w(it, "external root auto config failed")
-                        toast(getString(R.string.external_root_auto_failed))
-                        // 失败不再反复打扰；用户仍可在 设置→配置 里手动配置引擎目录。
-                        ExternalRootAutoConfig.markDismissed()
-                    }
-            }
-        }
         if (SetupActivity.shouldShowUp()) {
             startActivity<SetupActivity>()
             finish()
@@ -365,16 +320,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (waitingExternalRootPermission) {
-            // 只有真从「所有文件访问」设置页回来才检查：授权成功补走创建流程，
-            // 没授权就不再打扰。首次进入（对话框还挂着）不会走到这里。
-            waitingExternalRootPermission = false
-            if (!ExternalRootAutoConfig.permissionReady()) {
-                ExternalRootAutoConfig.markDismissed()
-            }
-            continueOnCreate()
-            return
-        }
         if (UserDataManager.isStorageAvailable()) {
             SoundEffectManager.init()
         }

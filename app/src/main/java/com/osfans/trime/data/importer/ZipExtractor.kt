@@ -42,8 +42,7 @@ object ZipExtractor {
      * 别的平台的学习数据目录，解包时直接丢掉。
      *
      * `build/` 不能在这里丢：不少方案包（芝鹤就是）不带 `.dict.yaml` 源，
-     * 词典只在 `build/` 下的 `.bin` 里。保留下来交给 `RimeDataLayout.sanitizePackages()`
-     * 把 `.bin` 收进包内 `.prebuilt/`，其余部署产物再删。
+     * 词典只在 `build/` 下的 `.bin` 里。保留它们，布局准备时为无词典源的二进制留恢复副本。
      */
     private val JUNK_DIRS = setOf("trash", "sync")
 

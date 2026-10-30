@@ -97,6 +97,8 @@ Java_com_osfans_trime_core_Rime_startupRimeWithoutMaintenance(
   traits.distribution_version = getenv("RIME_DISTRIBUTION_VERSION");
   traits.app_name = "rime.trime";
   traits.log_dir = "";
+  traits.staging_dir = getenv("RIME_STAGING_DIR");
+  traits.userdb_dir = getenv("RIME_USERDB_DIR");
   api->setup(&traits);
   api->initialize(&traits);
   // Register deployment/sync task types without scheduling or running them.

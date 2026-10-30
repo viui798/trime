@@ -50,7 +50,7 @@ object ThemeAssets {
     private fun findPackageDir(configId: String): File? {
         val fileName = "$configId.yaml"
         return DataManager.themeRootDir
-            .walkTopDown()
+            .listFiles().orEmpty().asSequence()
             .firstOrNull { it.isFile && it.name == fileName }
             ?.parentFile
     }

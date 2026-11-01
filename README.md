@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <p align="center"><b>简体中文</b></p>
 
 <p align="center">
-  <a href="https://github.com/viui798/trime/releases/latest"><img src="docs/images/hero.webp" width="100%" alt="同文输入法芝士：内置咖啡皮肤、标准 Rime 目录、内置语音与输入统计"></a>
+  <a href="https://github.com/viui798/trime/releases/latest"><img src="docs/images/hero.png" width="100%" alt="同文输入法芝士：落字有声，输入随心。内置咖啡皮肤、自选 Rime 方案与手动部署，支持语音输入、输入统计及跨设备剪贴板同步。"></a>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
   <a href="https://github.com/viui798/trime/releases/latest"><img alt="Android 5.0+" src="https://img.shields.io/badge/Android-5.0%2B-8B6B4A?style=flat-square&logo=android&logoColor=white&labelColor=3E332A"></a>
   <a href="LICENSE"><img alt="许可证 GPL-3.0" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-GPL--3.0-8B6B4A?style=flat-square&labelColor=3E332A"></a>
   <a href="https://github.com/osfans/trime"><img alt="基于 Trime 3.3.13" src="https://img.shields.io/badge/%E5%9F%BA%E4%BA%8E-Trime%203.3.13-8B6B4A?style=flat-square&labelColor=3E332A"></a>
-  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.9-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.9--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
+  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.10-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.10--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
 </p>
 
 <br>
@@ -58,9 +58,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <p align="center">方案、主题、词库、学习数据都在根目录，和桌面版 Rime 一样。文件管理器改完，部署一下就生效。</p>
 
-<p align="center"><code>build/</code> 是部署产物，删掉会重新生成；学习数据 <code>*.userdb</code> 也在根目录，单独备份就能带走词频。</p>
+<p align="center"><code>build/</code> 存放部署产物；部分方案只有预编译词典，请勿随意删除。备份建议停用输入法后完整复制 Rime 目录，保留方案、用户词典 <code>*.userdb</code> 与 <code>sync/</code>。</p>
 
-<p align="center">从旧版升级时，「方案 / 皮肤 / 部署 / 学习 / 运行数据」会自动合并到根目录，冲突内容留在 <code>cheese/legacy/</code> 备查，不删任何东西。</p>
+<p align="center">从旧版升级时，旧分类目录会迁移到根目录，已有文件优先保留；冲突与剩余内容留在 <code>cheese/legacy/</code>，请保留以便核对。</p>
 
 <br>
 
@@ -78,7 +78,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <h3 align="center">引擎会自己爬起来</h3>
 
-<p align="center">存储权限被撤销（卸载重装必然发生）后，上游会让键盘能弹但完全没反应。这个版本发现引擎停摆就自动重启，权限恢复后点一下输入框就能继续打字。</p>
+<p align="center">存储不可用时，键盘可能显示但无法输入。本版在唤起输入法时检查引擎状态并尝试恢复；若外部目录权限失效，需先重新授权，必要时手动部署。</p>
 
 <br>
 
@@ -96,17 +96,19 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | **输入统计** | 输入速度、生涯段位与键盘热力，可生成图片分享 |
 | **剪贴板同步** | 多设备互通，支持多种服务端类型，可按文本长度、后缀、大小做接收过滤 |
 
+语音输入需麦克风权限、网络及所选服务的凭据，并需授权插件访问其声明的域名；剪贴板同步需配置兼容的服务端。两者都不是安装后自动启用的离线功能。
+
 ## 安装
 
 1. 到 [Releases](https://github.com/viui798/trime/releases/latest) 下载对应架构的 APK，常见手机选 **arm64-v8a**。
 2. 允许安装后，到「设置 → 语言和输入法」启用「同文输入法芝士」并设为默认输入法。
-3. 导入你的方案与皮肤，再点右下角 `+` 里的**部署**。
+3. 导入你的输入方案，再点方案页右下角 `+` 里的**部署**。咖啡皮肤已内置，其他皮肤可按需导入。
 
 | 项目 | 当前安装包 |
 | --- | --- |
 | 应用名 | 同文输入法芝士 |
 | 包名 | `com.viui.trime.cheese` |
-| 版本 | `1.2.9-cheese` / versionCode 19 |
+| 版本 | `1.2.10-cheese` / versionCode 20 |
 | 系统 | Android 5.0 及以上；语音识别需 Android 6.0+（QuickJS 限制） |
 | 架构 | arm64-v8a、armeabi-v7a、x86、x86_64（模拟器） |
 | 体积 | 约 7.2 MB |
@@ -146,7 +148,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 </details>
 
 <details>
-<summary><b>为什么 APK 里不带方案和皮肤？</b></summary>
+<summary><b>为什么不预置输入方案？皮肤需要自己装吗？</b></summary>
 <br>
 
 预置方案体积大且多数人用不到。删掉后安装包更小，你导入什么就是什么；外观方面内置了主题和按键背景图，所以新装打开也是一个完整键盘。
@@ -162,6 +164,13 @@ arm64-v8a（绝大多数手机）、armeabi-v7a（老 32 位 ARM）、x86 / x86_
 </details>
 
 ## 更新记录
+
+### 1.2.10 · 图标与外部目录页面优化
+
+- 缩小桌面图标的「㞢」字，增加留白；更新五档图标资源
+- 外部目录管理页统一卡片布局、输入框与权限状态，修正状态栏避让
+- 关于页修正内置皮肤说明，补充输入统计、语音与剪贴板同步致谢和链接
+- README 更换主图，修正安装、备份与功能说明
 
 ### 1.2.9 · 内置咖啡皮肤，装完即有完整外观
 
@@ -192,6 +201,7 @@ cd trime
 
 # 32 位 ARM 必须先打 lua 补丁，否则 lua 5.4 报 fseeko 未声明
 git apply --directory=app/src/main/jni/librime-lua-deps patches/lua.patch
+git apply --directory=app/src/main/jni/librime patches/rime-userdirs.patch
 
 ./gradlew app:assembleRelease     # 产物在 app/build/outputs/apk/release/
 ```
@@ -206,7 +216,7 @@ git apply --directory=app/src/main/jni/librime-lua-deps patches/lua.patch
 | `app/src/main/assets/shared/` | 内置主题与按键背景图 |
 | `app/data/rime/` | Rime 与方案子模块 |
 | `app/src/main/jni/` | librime 及原生依赖 |
-| `patches/` | 构建补丁（32 位 lua） |
+| `patches/` | 构建补丁（32 位 lua、Rime 用户词典目录） |
 
 ## 致谢与许可
 
@@ -214,9 +224,9 @@ git apply --directory=app/src/main/jni/librime-lua-deps patches/lua.patch
 
 - **[osfans/trime](https://github.com/osfans/trime)**：同文输入法上游，本项目的全部基础（GPL-3.0-or-later）
 - **[rime/librime](https://github.com/rime/librime)**、**[BYVoid/OpenCC](https://github.com/BYVoid/OpenCC)**：输入引擎与简繁转换
-- **[咩版同文](https://github.com/qxm888/trime-mie)**（qxm888）：传统 Rime 根目录布局、导入不自动部署、若干交互取舍都参考了它，存储改版也是照它的思路做的
-- **中州鹅**：感谢在方案整理与使用体验上的帮助
-- **[fxliang](https://github.com/fxliang)**：Rime 社区维护者，小狐狸作者，感谢对 Rime 生态的长期维护
+- **[咩版同文](https://github.com/qxm888/trime-mie)**（qxm888）：感谢输入统计功能的开源实现，芝士版的输入统计由此移植；存储布局与手动部署交互也参考了咩版
+- **[中州鹅](https://github.com/SandyYuR/fcitx5-android)**（SandyYuR）：感谢语音输入与剪贴板同步相关的开源实现
+- **[fxliang](https://github.com/fxliang)**：感谢语音输入与剪贴板同步相关的开源贡献
 - **Rime 与同文社区**的方案作者、皮肤作者、字体作者，以及所有提过 issue、反馈过问题的朋友
 
 本项目沿用 **GPL-3.0-or-later**，与上游一致。修改自用没问题，再分发请同样开源。主题、皮肤、字体与词库素材的权利归各自作者所有。

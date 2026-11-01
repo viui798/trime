@@ -1,234 +1,65 @@
-<!DOCTYPE html>
+<!doctype html>
+<!-- SPDX-FileCopyrightText: 2026 Zhi Trime contributors
+     SPDX-License-Identifier: GPL-3.0-or-later -->
 <html lang="zh-CN">
-<head>
 <meta charset="utf-8">
+<title>同文输入法芝士 · README 主图</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    width: 1200px;
-    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-    background: #FFFFFF;
-    padding: 40px;
-  }
-  .stage {
-    position: relative; width: 1120px; border-radius: 30px; overflow: hidden;
-    background: linear-gradient(135deg, #FBF7F1 0%, #F2E7D8 50%, #EADCC7 100%);
-    padding: 52px 56px 44px;
-  }
-  .stage .blob-a {
-    position: absolute; width: 760px; height: 760px; border-radius: 50%;
-    background: rgba(255,255,255,0.34); right: -200px; top: -280px;
-  }
-  .stage .blob-b {
-    position: absolute; width: 560px; height: 560px; border-radius: 50%;
-    background: rgba(200,170,135,0.13); left: -240px; bottom: -280px;
-  }
-
-  /* 顶部：左文右设备 */
-  .hero { position: relative; display: flex; }
-  .copy { width: 470px; padding-top: 104px; position: relative; z-index: 3; }
-
-  .brandline { display: flex; align-items: center; gap: 13px; }
-  .logo {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(140deg, #B89368, #9A7550);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 25px; font-weight: 700;
-    box-shadow: 0 6px 14px rgba(140, 108, 72, 0.28);
-  }
-  .brandline .nm { font-size: 17px; font-weight: 600; color: #4A3D31; letter-spacing: 0.5px; }
-
-  h1 { font-size: 50px; line-height: 1.18; color: #1E1811; font-weight: 800; margin-top: 30px; letter-spacing: 1px; }
-  h1 em { font-style: normal; color: #A8845C; }
-
-  .sub { font-size: 19px; color: #7A6653; margin-top: 20px; line-height: 1.7; font-weight: 500; }
-
-  .rule { width: 100%; height: 1px; background: rgba(160, 132, 100, 0.22); margin-top: 42px; }
-  .meta { font-size: 12.5px; color: #9A8672; margin-top: 14px; letter-spacing: 0.3px; }
-
-  /* 右侧设备 */
-  .devices { position: relative; flex: 1; height: 646px; }
-
-  .kb-card {
-    position: absolute; left: 22px; top: 198px; width: 486px;
-    background: #fff; border-radius: 20px; padding: 14px 16px 16px;
-    box-shadow: 0 22px 48px rgba(120, 92, 62, 0.18);
-    transform: rotate(-2.5deg);
-    z-index: 1;
-  }
-  .kb-bar { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px; }
-  .kb-bar .t { font-size: 12px; color: #6B5744; letter-spacing: 1px; }
-  .kb-bar .badge { font-size: 10.5px; color: #A8845C; border: 1px solid #DFCBAF; border-radius: 5px; padding: 1px 6px; }
-  .cands { display: flex; padding: 2px 6px 9px; font-size: 16px; color: #3E332A; }
-  .cands span { padding: 0 11px; border-right: 1px solid #EEE4D6; }
-  .cands span:last-child { border-right: none; }
-  .cands span.on { color: #A8845C; font-weight: 700; }
-  .row { display: flex; gap: 6px; margin-bottom: 6px; }
-  .key {
-    flex: 1; height: 38px; border-radius: 7px; background: #F6F1E9;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: #4A3E33; font-weight: 500; box-shadow: 0 1px 0 #E7DBCB;
-  }
-  .key.fn { background: #EDE3D6; font-size: 12px; color: #6B5744; }
-  .key.num { flex: 1.3; background: #A8845C; color: #fff; font-size: 11px; font-weight: 600; }
-  .key.space { flex: 5.4; font-size: 11px; color: #8A7765; }
-  .key.enter { flex: 1.3; background: #3F7FBF; color: #fff; }
-
-  /* 手机样机 */
-  .phone {
-    position: absolute; right: 0px; top: 8px; width: 272px;
-    transform: rotate(-5deg); z-index: 4;
-  }
-  .phone .frame {
-    background: linear-gradient(150deg, #3A3230 0%, #17120F 60%, #2A2321 100%);
-    border-radius: 46px; padding: 11px;
-    box-shadow:
-      0 40px 70px rgba(78, 56, 36, 0.34),
-      0 0 0 1.5px rgba(255,255,255,0.14) inset,
-      0 2px 3px rgba(255,255,255,0.22) inset;
-  }
-  .phone .screen {
-    border-radius: 36px; overflow: hidden; background: #fff; position: relative;
-    box-shadow: 0 0 0 1px rgba(0,0,0,0.5) inset;
-  }
-  .phone .screen img { width: 100%; display: block; }
-  .phone .notch {
-    position: absolute; left: 50%; transform: translateX(-50%); top: 9px;
-    width: 52px; height: 5px; border-radius: 3px; background: rgba(0,0,0,0.22);
-  }
-
-  /* 中部 */
-  .section-title { position: relative; font-size: 24px; font-weight: 800; color: #1E1811; margin-top: 18px; letter-spacing: 0.4px; z-index: 2; }
-
-  .grid { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; z-index: 2; }
-  .card {
-    background: rgba(255,255,255,0.66); border-radius: 15px; padding: 18px 20px;
-    display: flex; gap: 15px; align-items: flex-start;
-  }
-  .ico {
-    width: 40px; height: 40px; border-radius: 11px; flex: none;
-    background: rgba(232, 216, 196, 0.75); display: flex; align-items: center; justify-content: center;
-  }
-  .ico svg { width: 21px; height: 21px; stroke: #A8845C; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-  .card h3 { font-size: 16.5px; color: #1E1811; font-weight: 700; }
-  .card p { font-size: 12.5px; color: #8A7765; margin-top: 5px; line-height: 1.65; }
-
-  .foot { position: relative; margin-top: 26px; display: flex; align-items: flex-end; justify-content: space-between; z-index: 2; }
-  .foot .v { font-size: 14.5px; color: #A8845C; font-weight: 700; }
-  .foot .v small { display: block; font-size: 12px; color: #6B5744; font-weight: 500; margin-top: 4px; }
-  .foot .rt { text-align: right; font-size: 11.5px; color: #9A8672; line-height: 1.75; }
-  .note { position: relative; margin-top: 16px; font-size: 10.5px; color: #AB9783; z-index: 2; }
+*{box-sizing:border-box}body{margin:0;font-family:"PingFang SC",-apple-system,sans-serif;color:#243e32}
+.hero{position:relative;width:1440px;height:860px;overflow:hidden;background:#f7f5ee}
+.grain{position:absolute;inset:0;background-image:radial-gradient(#33533d14 .65px,transparent .65px);background-size:6px 6px;opacity:.35}
+.right{position:absolute;left:830px;top:65px;width:610px;height:710px;background:radial-gradient(ellipse,#e7e9dc80,transparent 70%)}
+header{position:absolute;top:55px;left:64px;display:flex;align-items:center;gap:18px}
+header img{width:66px;height:66px;border-radius:17px;border:1px solid #26443315}
+.english{font-size:21px;letter-spacing:4px;font-weight:600}
+.eyebrow{font-size:12px;letter-spacing:3px;color:#7e8c7d;margin-top:8px}
+.copy{position:absolute;left:64px;top:187px;width:780px}
+h1{font-size:73px;letter-spacing:-3px;line-height:1.2;font-weight:650;margin:0}
+.tagline{font-family:"Songti SC",serif;font-weight:700;font-size:48px;letter-spacing:5px;margin:26px 0 23px;color:#65856b}
+.description{font-size:23px;line-height:1.85;color:#637165;margin:0}
+.features{position:absolute;left:64px;top:470px;display:flex;width:780px;border-top:1px solid #29473926;padding-top:28px}
+.feature{width:260px;padding-right:20px}
+.number{font-size:13px;letter-spacing:2px;color:#8b9c89}
+h2{font-size:24px;font-weight:600;margin:13px 0 10px}
+.feature p{font-size:17px;line-height:1.7;color:#717a6d;margin:0}
+.bottom{position:absolute;left:64px;bottom:54px;font-size:14px;color:#6b796c;line-height:1.9}
+.bottom b{font-size:16px;font-weight:500;color:#314e3d}
+.keyboard{position:absolute;left:862px;top:330px;width:470px;padding:17px;border:1px solid #deded1;border-radius:21px;background:#fffdf8;box-shadow:0 18px 40px #31433218;transform:rotate(-3deg)}
+.keyboard-title{font-size:13px;letter-spacing:2px;color:#788471;padding:0 4px 13px}
+.candidates{font-size:21px;word-spacing:18px;padding:2px 6px 14px;color:#536b53}
+.candidates b{color:#254936}
+.keys{display:flex;gap:5px;margin-bottom:6px}
+.keys span{display:flex;align-items:center;justify-content:center;flex:1;height:38px;border-radius:6px;background:#f0eee6;color:#4e574b;font-size:14px;box-shadow:0 2px 0 #e0dfd5}
+.keys .function{background:#e0e6da}.keys .space{flex:5;font-size:12px}.keys .enter{background:#58745d;color:white}
+.phone{position:absolute;top:147px;left:1138px;width:236px;padding:8px;border-radius:32px;background:#29332c;box-shadow:0 24px 42px #23352929;border:1px solid #8a9485}
+.phone img{display:block;width:100%;border-radius:24px}
+.caption{position:absolute;left:890px;top:710px;width:460px;color:#798272;text-align:center;font-size:13px;letter-spacing:1px}
+.seal{position:absolute;right:42px;top:38px;writing-mode:vertical-rl;color:#9aa48d;letter-spacing:8px;font-family:"Songti SC",serif;font-size:16px}
 </style>
-</head>
-<body>
-  <div class="stage">
-    <div class="blob-a"></div>
-    <div class="blob-b"></div>
-
-    <div class="hero">
-      <div class="copy">
-        <div class="brandline">
-          <div class="logo">㞢</div>
-          <div class="nm">同文输入法芝士</div>
-        </div>
-        <h1>装完即用的<br><em>咖啡皮肤</em></h1>
-        <div class="sub">内置「咖啡芝士默认」皮肤<br>简白与简黑两套配色 · 14 张按键背景图随包装好</div>
-        <div class="rule"></div>
-        <div class="meta">Android 5.0+ · 个人定制版 · 与官方同文共存 · 1.2.9-cheese</div>
-      </div>
-
-      <div class="devices">
-        <div class="kb-card">
-          <div class="kb-bar">
-            <div class="t">☰　同文输入法</div>
-            <div class="badge">芝士</div>
-          </div>
-          <div class="cands"><span class="on">芝</span><span>之</span><span>知</span><span>支</span><span>枝</span></div>
-          <div class="row">
-            <div class="key">Q</div><div class="key">W</div><div class="key">E</div><div class="key">R</div><div class="key">T</div><div class="key">Y</div><div class="key">U</div><div class="key">I</div><div class="key">O</div><div class="key">P</div>
-          </div>
-          <div class="row">
-            <div class="key">A</div><div class="key">S</div><div class="key">D</div><div class="key">F</div><div class="key">G</div><div class="key">H</div><div class="key">J</div><div class="key">K</div><div class="key">L</div>
-          </div>
-          <div class="row">
-            <div class="key fn">⇧</div><div class="key">Z</div><div class="key">X</div><div class="key">C</div><div class="key">V</div><div class="key">B</div><div class="key">N</div><div class="key">M</div><div class="key fn">⌫</div>
-          </div>
-          <div class="row" style="margin-bottom:0">
-            <div class="key num">123</div>
-            <div class="key fn">，</div>
-            <div class="key space">长按空格 · 语音输入</div>
-            <div class="key fn">。</div>
-            <div class="key enter">⏎</div>
-          </div>
-        </div>
-
-        <div class="phone">
-          <div class="frame">
-            <div class="screen">
-              <div class="notch"></div>
-              <img src="home.png" alt="同文输入法芝士设置首页">
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-title">从日常输入，到你的专属键盘</div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
-        <div>
-          <h3>标准 Rime 目录</h3>
-          <p>方案、主题、词库、学习数据都在根目录，文件管理器改完部署即生效</p>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8"/><path d="M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16"/><path d="M4 20v-4h4"/></svg></div>
-        <div>
-          <h3>导入不自动部署</h3>
-          <p>只把文件放到位，要不要部署、什么时候部署由你决定</p>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ico"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></div>
-        <div>
-          <h3>内置语音</h3>
-          <p>通义千问 · 豆包 · 腾讯云四个插件，也能导入第三方 .js</p>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></div>
-        <div>
-          <h3>输入统计</h3>
-          <p>输入速度、生涯段位与完整键盘热力，可生成图片分享</p>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ico"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></div>
-        <div>
-          <h3>剪贴板同步</h3>
-          <p>多设备互通，支持多种服务端，可按长度、后缀与大小过滤</p>
-        </div>
-      </div>
-      <div class="card">
-        <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18"/><circle cx="7.2" cy="15" r="1.1"/></svg></div>
-        <div>
-          <h3>外部 Rime 目录</h3>
-          <p>数据放共享存储，用文件管理器直接改，主题与方案照旧通用</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="foot">
-      <div class="v">1.2.9-cheese
-        <small>下载、源码与构建说明</small>
-        <small style="color:#A8845C;font-weight:600">github.com/viui798/trime</small>
-      </div>
-      <div class="rt">正式版 · arm64-v8a · Android 5.0+<br>包名 com.viui.trime.cheese</div>
-    </div>
-
-    <div class="note">键盘为示意，实际外观随主题变化；内置皮肤与按键背景图随 APK 一起安装。</div>
+<main class="hero">
+  <div class="grain"></div><div class="right"></div>
+  <header><img src="../../app/src/main/res/mipmap-xxxhdpi/ic_app_icon.png" alt="芝士图标"><div><div class="english">TRIME CHEESE</div><div class="eyebrow">ANDROID · RIME · OPEN SOURCE</div></div></header>
+  <section class="copy">
+    <h1>同文输入法芝士</h1>
+    <p class="tagline">落字有声，输入随心。</p>
+    <p class="description">熟悉的 Rime，自由的日常输入。<br>内置咖啡皮肤，搭配你自己的输入方案。</p>
+  </section>
+  <section class="features">
+    <div class="feature"><span class="number">01 / 外观</span><h2>简白 · 简黑</h2><p>咖啡皮肤随包内置<br>打开就有完整外观</p></div>
+    <div class="feature"><span class="number">02 / 方案</span><h2>由你部署</h2><p>标准 Rime 目录<br>导入后，手动部署生效</p></div>
+    <div class="feature"><span class="number">03 / 日常</span><h2>不止于打字</h2><p>语音输入 · 输入统计<br>跨设备剪贴板同步</p></div>
+  </section>
+  <div class="bottom"><b>github.com/viui798/trime</b><br>同文输入法个人定制版 · 可与官方版共存 · 输入方案需自行导入</div>
+  <div class="keyboard" aria-label="键盘布局示意">
+    <div class="keyboard-title">☰　同文输入法芝士</div>
+    <div class="candidates"><b>芝</b> 之 知 支 枝</div>
+    <div class="keys"><span>Q</span><span>W</span><span>E</span><span>R</span><span>T</span><span>Y</span><span>U</span><span>I</span><span>O</span><span>P</span></div>
+    <div class="keys"><span>A</span><span>S</span><span>D</span><span>F</span><span>G</span><span>H</span><span>J</span><span>K</span><span>L</span></div>
+    <div class="keys"><span class="function">⇧</span><span>Z</span><span>X</span><span>C</span><span>V</span><span>B</span><span>N</span><span>M</span><span class="function">⌫</span></div>
+    <div class="keys"><span class="function">123</span><span>，</span><span class="space">长按空格 · 语音输入</span><span class="enter">↵</span></div>
   </div>
-</body>
+  <div class="phone"><img src="home.png" alt="同文输入法芝士设置首页实拍"></div>
+  <div class="caption">设置页实拍 · 键盘为布局示意，外观随主题变化</div>
+  <div class="seal">芝士 · 同文</div>
+</main>
 </html>

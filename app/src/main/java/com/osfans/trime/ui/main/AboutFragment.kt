@@ -58,6 +58,19 @@ class AboutFragment : PaddingPreferenceFragment() {
                 }
             }
 
+            addCategory(R.string.about_credits) {
+                isIconSpaceReserved = false
+                addPreference("咩版同文", getString(R.string.about_credit_stats)) {
+                    openUrl("https://github.com/qxm888/trime-mie")
+                }
+                addPreference("中州鹅", getString(R.string.about_credit_voice_sync)) {
+                    openUrl("https://github.com/SandyYuR/fcitx5-android")
+                }
+                addPreference("fxliang", getString(R.string.about_credit_voice_sync)) {
+                    openUrl("https://github.com/fxliang")
+                }
+            }
+
             addCategory(R.string.about_category_engine) {
                 isIconSpaceReserved = false
                 addPreference(R.string.librime_version, BuildConfig.LIBRIME_VERSION) {

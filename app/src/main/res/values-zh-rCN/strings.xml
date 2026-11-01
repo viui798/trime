@@ -111,7 +111,10 @@
     <string name="app_crash_message">抱歉，但我们提供了日志以供调查。</string>
     <string name="virtual_keyboard">虚拟键盘</string>
     <string name="about">关于</string>
-    <string name="about_intro">同文输入法（Trime）的个人定制版。不预置方案与皮肤，装完自己导入；引擎可自愈，切换应用不重建键盘。</string>
+    <string name="about_intro">同文输入法（Trime）的个人定制版。内置咖啡皮肤，输入方案需自行导入并手动部署；支持语音输入、输入统计与剪贴板同步。</string>
+    <string name="about_credits">致谢</string>
+    <string name="about_credit_stats">感谢输入统计功能的开源实现。</string>
+    <string name="about_credit_voice_sync">感谢语音输入与剪贴板同步相关的开源贡献。</string>
     <string name="about_category_project">芝版同文</string>
     <string name="about_project_page">项目主页</string>
     <string name="about_project_page_summary">源码、更新记录与问题反馈</string>

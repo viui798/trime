@@ -121,7 +121,10 @@
     <string name="theme_diagnostics_no_findings">No problems found in the current theme</string>
     <string name="theme_diagnostics_unchecked">The static checks could not run for this theme</string>
     <string name="about">About</string>
-    <string name="about_intro">A personal build of Trime. No bundled schemas or themes — import your own. The engine heals itself, and the keyboard is not rebuilt when switching apps.</string>
+    <string name="about_intro">A personal build of Trime with a bundled Coffee theme. Import your own input schemas and deploy manually. Includes voice input, input statistics and clipboard sync.</string>
+    <string name="about_credits">Acknowledgements</string>
+    <string name="about_credit_stats">Thanks for the open-source input statistics implementation.</string>
+    <string name="about_credit_voice_sync">Thanks for open-source contributions to voice input and clipboard sync.</string>
     <string name="about_category_project">Zhi Trime</string>
     <string name="about_project_page">Project page</string>
     <string name="about_project_page_summary">Source code, changelog and issue tracker</string>

@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <p align="center"><b>简体中文</b></p>
 
 <p align="center">
-  <img src="docs/images/home.png" width="320" alt="同文输入法芝士设置首页">
+  <a href="https://github.com/viui798/trime/releases/latest"><img src="docs/images/hero.webp" width="100%" alt="同文输入法芝士：内置咖啡皮肤、标准 Rime 目录、内置语音与输入统计"></a>
 </p>
 
 <p align="center">
@@ -40,11 +40,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <br>
 
-<h3 align="center">装完就有完整外观</h3>
+<h3 align="center">内置一套完整的咖啡皮肤</h3>
 
-<p align="center">内置「咖啡芝士默认」主题：简白、简黑两套配色，14 张按键背景图随安装包一起进。</p>
+<p align="center">皮肤「<b>咖啡芝士默认</b>」随安装包一起进：简白、简黑两套配色，14 张按键背景图也打包好了，新装打开就是一个完整键盘。</p>
 
-<p align="center">咖啡主题的按键底色全部来自图片而不是色值，所以只内置 yaml 是不够的——两套配色实际用到的图都打进了 APK，只多 36 KB。</p>
+<p align="center">咖啡皮肤的按键底色全部来自图片而不是色值，所以只内置 yaml 不够——两套配色实际用到的图都在 APK 里，只多 36 KB。</p>
 
 <br>
 
@@ -163,9 +163,9 @@ arm64-v8a（绝大多数手机）、armeabi-v7a（老 32 位 ARM）、x86 / x86_
 
 ## 更新记录
 
-### 1.2.9 · 装完就有完整外观
+### 1.2.9 · 内置咖啡皮肤，装完即有完整外观
 
-- 内置「咖啡芝士默认」主题与 14 张按键背景图（共 36 KB），修复新装「按键没有底色块、回车键淡到看不见」
+- 内置皮肤「咖啡芝士默认」：主题 + 14 张按键背景图（共 36 KB），修复新装「按键没有底色块、回车键淡到看不见」
 - 配色精简为简白 / 简黑两套；没有方案时空格键明确显示「未导入方案」
 - 应用图标换成「㞢」宣纸墨印，右下角带「芝」字水印
 - 删除早已失效的「方案目录」入口（传统布局下它必然弹「还没有导入方案包」）
@@ -210,9 +210,14 @@ git apply --directory=app/src/main/jni/librime-lua-deps patches/lua.patch
 
 ## 致谢与许可
 
-- 上游：[osfans/trime](https://github.com/osfans/trime)（GPL-3.0-or-later），本项目的全部基础
-- 引擎：[rime/librime](https://github.com/rime/librime)、[BYVoid/OpenCC](https://github.com/BYVoid/OpenCC)
-- 皮肤与交互取舍参考了同文社区和 [咩版 trime-mie](https://github.com/qxm888/trime-mie)；传统 Rime 根目录布局与手动部署的思路同样来自咩版
+这个版本站在很多人的肩膀上：
+
+- **[osfans/trime](https://github.com/osfans/trime)**：同文输入法上游，本项目的全部基础（GPL-3.0-or-later）
+- **[rime/librime](https://github.com/rime/librime)**、**[BYVoid/OpenCC](https://github.com/BYVoid/OpenCC)**：输入引擎与简繁转换
+- **[咩版同文](https://github.com/qxm888/trime-mie)**（qxm888）：传统 Rime 根目录布局、导入不自动部署、若干交互取舍都参考了它，存储改版也是照它的思路做的
+- **中州鹅**：感谢在方案整理与使用体验上的帮助
+- **[fxliang](https://github.com/fxliang)**：Rime 社区维护者，小狐狸作者，感谢对 Rime 生态的长期维护
+- **Rime 与同文社区**的方案作者、皮肤作者、字体作者，以及所有提过 issue、反馈过问题的朋友
 
 本项目沿用 **GPL-3.0-or-later**，与上游一致。修改自用没问题，再分发请同样开源。主题、皮肤、字体与词库素材的权利归各自作者所有。
 

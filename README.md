@@ -58,6 +58,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <p align="center">方案、主题、词库、学习数据都在根目录，和桌面版 Rime 一样。文件管理器改完，部署一下就生效。</p>
 
+<p align="center"><code>build/</code> 是部署产物，删掉会重新生成；学习数据 <code>*.userdb</code> 也在根目录，单独备份就能带走词频。</p>
+
 <p align="center">从旧版升级时，「方案 / 皮肤 / 部署 / 学习 / 运行数据」会自动合并到根目录，冲突内容留在 <code>cheese/legacy/</code> 备查，不删任何东西。</p>
 
 <br>
@@ -108,26 +110,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | 系统 | Android 5.0 及以上；语音识别需 Android 6.0+（QuickJS 限制） |
 | 架构 | arm64-v8a、armeabi-v7a、x86、x86_64（模拟器） |
 | 体积 | 约 7.2 MB |
-
-## 数据目录
-
-你选的数据目录就是 Rime 根目录本身：
-
-```
-<你选的目录>/
-├── *.schema.yaml      方案
-├── *.dict.yaml        词典
-├── *.trime.yaml       主题
-├── *.userdb           用户词典与词频
-├── build/             部署产物（可以随时删）
-├── sync/              同步快照
-├── fonts/             字体
-└── backgrounds/       按键背景图
-```
-
-- 方案、皮肤、字体直接放根目录，**改完部署就生效**
-- 学习数据（`*.userdb`）也在根目录，单独备份就能带走词频
-- `build/` 是编译产物，删掉会重新生成
 
 ## 常见问题
 

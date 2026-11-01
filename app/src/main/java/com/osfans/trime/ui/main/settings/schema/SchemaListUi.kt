@@ -65,7 +65,6 @@ class SchemaListUi(
     private val initialEntries: List<SchemaItem>,
     private val contentSource: SchemaListUi.() -> Array<SchemaItem>,
     private val onImportRequested: () -> Unit = {},
-    private val onDirectoryRequested: () -> Unit = {},
     private val onDeployRequested: () -> Unit = {},
 ) : Ui {
     private var shouldShowFab = false
@@ -122,13 +121,6 @@ class SchemaListUi(
                     actionButton(R.drawable.ic_baseline_add_24, R.string.schema_action_import) {
                         popup?.dismiss()
                         showImportOrEnable()
-                    },
-                    coreLParams(),
-                )
-                add(
-                    actionButton(R.drawable.ic_baseline_book_24, R.string.schema_action_directory) {
-                        popup?.dismiss()
-                        onDirectoryRequested()
                     },
                     coreLParams(),
                 )

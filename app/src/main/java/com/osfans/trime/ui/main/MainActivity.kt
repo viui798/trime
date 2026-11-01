@@ -15,7 +15,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.content.ContextCompat
@@ -33,9 +32,6 @@ import com.hjq.permissions.Permission
 import com.hjq.permissions.XXPermissions
 import com.osfans.trime.BuildConfig
 import com.osfans.trime.R
-import com.osfans.trime.core.data.RimeProfileManager
-import com.osfans.trime.core.data.SchemePackage
-import com.osfans.trime.core.data.SchemePackageManager
 import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.daemon.RimeDaemon
 import com.osfans.trime.daemon.launchOnReady
@@ -49,9 +45,6 @@ import com.osfans.trime.util.isNightMode
 import com.osfans.trime.util.parcelable
 import com.osfans.trime.util.startActivity
 import com.osfans.trime.worker.BackgroundSyncWork
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import splitties.dimensions.dp
 import splitties.views.topPadding
@@ -192,9 +185,6 @@ class MainActivity : AppCompatActivity() {
             menu.item(R.string.test_input, R.drawable.ic_baseline_keyboard_24, iconTint = menuIconTint, showAsAction = true) {
                 testInputPanel?.show(window)
             },
-            menu.item(R.string.scheme_directory) {
-                showSchemeDirectoryDialog()
-            },
             menu.item(R.string.developer) {
                 navController.navigate(NavigationRoute.Developer)
             },
@@ -224,89 +214,6 @@ class MainActivity : AppCompatActivity() {
         menu.forEach { item ->
             // show menu item on demand
             item.isVisible = false
-        }
-    }
-
-    fun showSchemeDirectoryDialog(onDone: (() -> Unit)? = null) {
-        val packages = SchemePackageManager.listPackages()
-        if (packages.isEmpty()) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.scheme_directory)
-                .setMessage(R.string.scheme_directory_no_package)
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
-            return
-        }
-        val currentName = RimeProfileManager.currentName()
-        val current = packages.firstOrNull { it.profileName == currentName }
-        // 首项固定为「默认（运行数据）」，这是从方案目录切回默认目录的入口
-        val labels =
-            listOf(getString(R.string.scheme_directory_default)) + packages.map { it.displayName }
-        val checked =
-            when {
-                currentName.isBlank() -> 0
-                current != null -> packages.indexOf(current) + 1
-                else -> -1
-            }
-        val currentLabel =
-            current?.displayName
-                ?: if (currentName.isBlank()) {
-                    getString(R.string.scheme_directory_default)
-                } else {
-                    currentName
-                }
-        MaterialAlertDialogBuilder(this)
-            .setTitle("${getString(R.string.scheme_directory)} · $currentLabel")
-            .setSingleChoiceItems(labels.toTypedArray(), checked) { dialog, which ->
-                dialog.dismiss()
-                if (which == 0) {
-                    switchToDefaultProfile(onDone)
-                } else {
-                    switchToPackage(packages[which - 1], onDone)
-                }
-            }.setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun switchToDefaultProfile(onDone: (() -> Unit)?) {
-        if (!RimeProfileManager.isProfile()) return
-        RimeProfileManager.switchTo("")
-        toast(R.string.scheme_directory_switching)
-        viewModel.rime.launchOnReady {
-            UserDataManager.refreshSchemaListAfterImport()
-            it.deploy()
-            runOnUiThread { onDone?.invoke() }
-        }
-    }
-
-    private fun switchToPackage(
-        pkg: SchemePackage,
-        onDone: (() -> Unit)?,
-    ) {
-        if (RimeProfileManager.isProfile() && RimeProfileManager.currentName() == pkg.profileName) return
-        val progress =
-            MaterialAlertDialogBuilder(this)
-                .setTitle(getString(R.string.scheme_directory_preparing, pkg.displayName))
-                .setMessage(R.string.scheme_directory_preparing_hint)
-                .setCancelable(false)
-                .show()
-        lifecycleScope.launch {
-            val ready =
-                withContext(Dispatchers.IO) {
-                    runCatching { SchemePackageManager.ensureProfile(pkg) }.isSuccess
-                }
-            progress.dismiss()
-            if (!ready) {
-                toast(R.string.scheme_directory_prepare_failed)
-                return@launch
-            }
-            RimeProfileManager.switchTo(pkg.profileName)
-            toast(R.string.scheme_directory_switching)
-            viewModel.rime.launchOnReady {
-                UserDataManager.refreshSchemaListAfterImport()
-                it.deploy()
-                runOnUiThread { onDone?.invoke() }
-            }
         }
     }
 

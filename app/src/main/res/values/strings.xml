@@ -192,7 +192,6 @@
     <string name="schema_list_empty_title">No input schema yet</string>
     <string name="schema_list_empty_hint">Built-in schemas were removed from this build.\nImport a package below, or place schema files directly in the <b>Rime data folder</b>.\n.zip, .schema.yaml and .dict.yaml are supported.</string>
     <string name="schema_action_import">Import</string>
-    <string name="schema_action_directory">Directory</string>
     <string name="schema_action_deploy">Deploy</string>
     <string name="schema_list_import">Import schemas…</string>
     <string name="keyboard__no_schema">No schema</string>
@@ -200,22 +199,7 @@
     <string name="schema_list_enabled_hint">Check to enable; use + to add or import.</string>
     <string name="schema_list_deploying_title">Deploying…</string>
     <string name="schema_list_deploying_hint">First import of a large dictionary can take a few minutes. Please stay on this screen.</string>
-    <string name="scheme_directory">Scheme directory</string>
-    <string name="scheme_directory_all">All schemes (all packages)</string>
-    <string name="scheme_directory_no_package">No scheme packages imported yet. Import one from the Schemes page first.</string>
-    <string name="scheme_directory_preparing">Preparing “%1$s”…</string>
-    <string name="scheme_directory_preparing_hint">The first switch copies this package into the scheme library. Large packages may take a while.</string>
-    <string name="scheme_directory_prepare_failed">Failed to prepare the scheme directory. Check storage space.</string>
-    <string name="scheme_directory_default">Default (Rime data folder)</string>
-    <string name="scheme_directory_hint">Put complete Rime scheme directories under rime/方案库. Switching reselects schemas and redeploys.</string>
-    <string name="scheme_directory_switching">Switching scheme directory and redeploying…</string>
 
-    <string name="scheme_directory_new">New scheme folder</string>
-    <string name="scheme_directory_new_hint">Folder name under rime/方案库</string>
-    <string name="scheme_directory_new_invalid">Name must be 1–40 characters, cannot contain / \\ : * ? " &lt; > | or start with a dot</string>
-    <string name="scheme_directory_new_exists">A folder with this name already exists</string>
-    <string name="scheme_directory_created">Created: %1$s</string>
-    <string name="scheme_directory_create_failed">Could not create the folder</string>
     <string name="select_another_directory_to_sync">Change another directory to import?</string>
     <string name="select_another_directory">Change</string>
     <string name="data_path_not_selected">No data folder selected</string>

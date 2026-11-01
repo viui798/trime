@@ -192,7 +192,6 @@
     <string name="schema_list_empty_title">還沒有輸入方案</string>
     <string name="schema_list_empty_hint">這一版移除了內建方案。\n點下面的按鈕匯入方案包，或把方案檔直接放進 <b>Rime 資料目錄</b>。\n支援 .zip、.schema.yaml、.dict.yaml。</string>
     <string name="schema_action_import">匯入</string>
-    <string name="schema_action_directory">目錄</string>
     <string name="schema_action_deploy">部署</string>
     <string name="schema_list_import">匯入方案…</string>
     <string name="keyboard__no_schema">未匯入方案</string>
@@ -200,22 +199,7 @@
     <string name="schema_list_enabled_hint">勾選啟用；右下角 + 新增或匯入方案。</string>
     <string name="schema_list_deploying_title">正在部署…</string>
     <string name="schema_list_deploying_hint">首次匯入大詞庫需要幾分鐘，請留在這個頁面稍候。</string>
-    <string name="scheme_directory">方案目錄</string>
-    <string name="scheme_directory_all">全部方案（所有包）</string>
-    <string name="scheme_directory_no_package">還沒有匯入方案包。請先在「方案」頁匯入。</string>
-    <string name="scheme_directory_preparing">正在準備「%1$s」…</string>
-    <string name="scheme_directory_preparing_hint">首次切換需要把方案包複製到方案庫，包較大時請稍候。</string>
-    <string name="scheme_directory_prepare_failed">準備方案目錄失敗，請檢查儲存空間。</string>
-    <string name="scheme_directory_default">預設（Rime 資料目錄）</string>
-    <string name="scheme_directory_hint">把完整的 Rime 方案目錄放進 rime/方案庫。切換後會重新選擇方案並部署。</string>
-    <string name="scheme_directory_switching">正在切換方案目錄並重新部署…</string>
 
-    <string name="scheme_directory_new">新建方案目錄</string>
-    <string name="scheme_directory_new_hint">目錄名（建在 rime/方案庫 下）</string>
-    <string name="scheme_directory_new_invalid">名稱需為 1–40 個字元，不能以點開頭，也不能包含 / \\ : * ? " &lt; > |</string>
-    <string name="scheme_directory_new_exists">已存在同名方案目錄</string>
-    <string name="scheme_directory_created">已建立：%1$s</string>
-    <string name="scheme_directory_create_failed">建立目錄失敗</string>
     <string name="select_another_directory_to_sync">要選擇另一個資料夾進行同步嗎？</string>
     <string name="select_another_directory">選擇</string>
     <string name="data_path_not_selected">未選擇資料夾</string>

@@ -14,11 +14,9 @@ import com.osfans.trime.R
 import com.osfans.trime.core.SchemaItem
 import com.osfans.trime.core.data.RimeDataLayout
 import com.osfans.trime.core.data.RimeProfileManager
-import com.osfans.trime.core.data.SchemePackageManager
 import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.data.importer.RimeResourceImporter
 import com.osfans.trime.ui.common.OnItemChangedListener
-import com.osfans.trime.ui.main.MainActivity
 import com.osfans.trime.ui.main.settings.ProgressFragment
 import com.osfans.trime.util.NaiveDustman
 import com.osfans.trime.util.toast
@@ -46,8 +44,7 @@ class SchemaListFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             val ctx = context ?: return@launch
             ctx.toast(R.string.setup__import_busy)
-            val packagesBefore = SchemePackageManager.listPackages().map { it.dir.name }.toSet()
-            // 方案包一律进全局「方案/」，方案库目录只是生成出来的运行副本。
+            // 传统 Rime 布局：方案源文件直接摊在 Rime 根目录，没有独立的「方案包」目录。
             val dest = RimeDataLayout.schemaDir
             val result =
                 runCatching {
@@ -71,15 +68,6 @@ class SchemaListFragment :
                     ctx.getString(R.string.setup__import_ok, result.files)
                 },
             )
-            // 新包不会混进当前目录：导入后直接让用户去「方案目录」选。
-            val newPackages =
-                SchemePackageManager.listPackages().filter { it.dir.name !in packagesBefore }
-            if (newPackages.isNotEmpty()) {
-                (activity as? MainActivity)?.showSchemeDirectoryDialog {
-                    if (isAdded && view != null) reload()
-                }
-                return@launch
-            }
             // 芝版同文：导入后不自动部署，提示导入成功即可，需手动「部署」才生效（咩版同款）。
             // 不再显示「正在部署…」遮罩；真正部署走 FAB 的「部署」。
             if (isAdded && view != null) reload()
@@ -98,11 +86,6 @@ class SchemaListFragment :
                 onImportRequested = {
                     runCatching { importPicker.launch(arrayOf("*/*")) }
                         .onFailure { requireContext().toast(R.string.setup__import_no_picker) }
-                },
-                onDirectoryRequested = {
-                    (requireActivity() as? MainActivity)?.showSchemeDirectoryDialog {
-                        if (isAdded && view != null) reload()
-                    }
                 },
                 onDeployRequested = {
                     val ctx = requireContext()

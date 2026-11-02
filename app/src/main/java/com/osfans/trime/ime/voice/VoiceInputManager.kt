@@ -15,6 +15,8 @@ import com.osfans.trime.data.voice.JsVoiceCallbacks
 import com.osfans.trime.data.voice.JsVoiceHostPermissions
 import com.osfans.trime.data.voice.JsVoiceProviders
 import com.osfans.trime.data.voice.JsVoiceSession
+import com.osfans.trime.data.voice.SystemAsrEngines
+import com.osfans.trime.data.voice.SystemVoiceSession
 import com.osfans.trime.data.voice.VoiceAudioCapture
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ui.voice.VoiceHostPermissionDialog
@@ -67,6 +69,7 @@ object VoiceInputManager {
     private var current = State()
     private var generation = 0
     private var session: JsVoiceSession? = null
+    private var systemSession: SystemVoiceSession? = null
     private var capture: VoiceAudioCapture? = null
     private var serviceRef: WeakReference<TrimeInputMethodService>? = null
     private var watchdog: Runnable? = null
@@ -79,6 +82,9 @@ object VoiceInputManager {
     fun state(): State = current
 
     fun isBuiltIn(pluginId: String): Boolean = pluginId.startsWith("js:")
+
+    /** 这个引擎能否在当前进程内识别：内置 JS 插件，或提供了 RecognitionService 的系统语音输入法。 */
+    fun canHandle(engineId: String): Boolean = SystemAsrEngines.canHandle(engineId)
 
     fun addListener(listener: Listener) {
         listeners += listener
@@ -138,7 +144,8 @@ object VoiceInputManager {
         }
         val spec = JsVoiceProviders.specOf(pluginId)
         if (spec == null) {
-            toast(appContext.getString(R.string.voice_error_plugin_missing, pluginId))
+            // 不是内置 JS 插件：尝试把它当作系统语音输入法，用 RecognitionService 进程内识别。
+            startSystem(service, pluginId)
             return
         }
         if (!JsVoiceHostPermissions.isApproved(pluginId, spec.hosts)) {
@@ -197,13 +204,41 @@ object VoiceInputManager {
         next.start(callbacks(gen))
     }
 
+    /**
+     * 系统语音输入法（如「说点啥」）：用它的 RecognitionService 在当前进程内识别。
+     *
+     * 不切换输入法，也不自己采麦克风——录音和识别都由目标服务完成，这里只转发回调，
+     * 因此长按空格的体验与内置插件一致：按住说话，松手上屏。
+     */
+    private fun startSystem(
+        service: TrimeInputMethodService,
+        pluginId: String,
+    ) {
+        val component = SystemAsrEngines.resolve(pluginId)
+        if (component == null) {
+            toast(appContext.getString(R.string.voice_error_plugin_missing, pluginId))
+            return
+        }
+        serviceRef = WeakReference(service)
+        val gen = ++generation
+        setState(State(Phase.CONNECTING, pluginId, hold = holdMode))
+        val next =
+            SystemVoiceSession(
+                context = appContext,
+                component = component,
+                onLevel = { level -> postIfCurrent(gen) { setState(current.copy(level = level)) } },
+            )
+        systemSession = next
+        next.start(callbacks(gen))
+    }
+
     fun stop() {
         if (!current.active) return
         if (current.phase == Phase.PROCESSING) return
         capture?.stop()
         capture = null
         setState(current.copy(phase = Phase.PROCESSING, level = 0))
-        session?.endStream()
+        session?.endStream() ?: systemSession?.endStream()
         armWatchdog(generation)
     }
 
@@ -236,6 +271,8 @@ object VoiceInputManager {
         capture = null
         session?.cancel()
         session = null
+        systemSession?.cancel()
+        systemSession = null
         serviceRef = null
     }
 

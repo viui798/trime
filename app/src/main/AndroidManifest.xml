@@ -42,6 +42,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <intent>
             <action android:name="android.view.InputMethod" />
         </intent>
+        <!-- 同上：不加这条，queryIntentServices 查不到「说点啥」等应用提供的
+             RecognitionService，进程内语音识别就无法启动。 -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
     </queries>
 
     <application

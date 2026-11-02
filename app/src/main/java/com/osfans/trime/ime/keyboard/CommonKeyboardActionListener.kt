@@ -145,7 +145,7 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                         KeyEvent.KEYCODE_SETTINGS -> handleSettings(action)
                         KeyEvent.KEYCODE_PROG_RED -> showColorPicker()
                         KeyEvent.KEYCODE_MENU -> showEnabledSchemaPicker()
-                        KeyEvent.KEYCODE_VOICE_ASSIST -> switchToVoiceInputMethod()
+                        KeyEvent.KEYCODE_VOICE_ASSIST -> handleVoiceAssist()
                         else -> handleDefaultKeyAction(action)
                     }
                 }
@@ -159,9 +159,9 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                 // 键盘保持原样；松手由 onLongPressReleased 收尾。其余按键与单击同路。
                 if (behavior == KeyBehavior.LONG_CLICK && action.code == KeyEvent.KEYCODE_VOICE_ASSIST) {
                     val engine = prefs.voice.preferredVoiceInput.getValue()
-                    // 首选引擎是系统语音输入法（如「说点啥」）时，进程内没有可用的 JS 插件，
-                    // 必须走切换输入法这条路，否则会报「找不到语音插件」。
-                    if (VoiceInputManager.isBuiltIn(engine)) {
+                    // 内置 JS 插件与提供 RecognitionService 的系统语音输入法都能进程内识别；
+                    // 只有两者都不是时，才退回「切换输入法」这条老路。
+                    if (VoiceInputManager.canHandle(engine)) {
                         VoiceFeedback.init(context)
                         VoiceInputManager.startHold(service, engine)
                     } else {
@@ -344,6 +344,17 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                     "schema" -> AppUtils.launchMainToSchemaList(context)
                     "sound" -> showSoundEffectPicker()
                     else -> AppUtils.launchMainActivity(service)
+                }
+            }
+
+            /** 点按语音键：能进程内识别就直接开始，否则切到系统语音输入法。 */
+            private fun handleVoiceAssist() {
+                val engine = prefs.voice.preferredVoiceInput.getValue()
+                if (VoiceInputManager.canHandle(engine)) {
+                    VoiceFeedback.init(context)
+                    VoiceInputManager.toggle(service, engine)
+                } else {
+                    switchToVoiceInputMethod()
                 }
             }
 

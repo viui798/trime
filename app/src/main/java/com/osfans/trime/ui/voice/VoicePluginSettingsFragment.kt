@@ -362,7 +362,7 @@ class VoicePluginSettingsFragment : PaddingPreferenceFragment() {
                 JsVoicePluginStore.delete(pluginId.removePrefix(PLUGIN_ID_PREFIX))
                 JsVoiceProviders.reload()
                 if (AppPrefs.defaultInstance().voice.preferredVoiceInput.getValue() == pluginId) {
-                    AppPrefs.defaultInstance().voice.preferredVoiceInput.setValue(JsVoiceProviders.QWEN_ASR_ID)
+                    AppPrefs.defaultInstance().voice.preferredVoiceInput.setValue("")
                 }
                 toast(getString(R.string.voice_plugin_removed))
                 requireActivity().finish()

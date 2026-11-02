@@ -124,7 +124,7 @@ class AppPrefs(
         val preferredVoiceInput = list(
             R.string.preferred_voice_input,
             PREFERRED_VOICE_INPUT,
-            JsVoiceProviders.QWEN_ASR_ID,
+            "",   // 不再内置插件：默认留空，运行时回退到系统语音输入法或已导入插件
             {
                 JsVoiceProviders.all().map { it.id } +
                     InputMethodUtils.voiceInputMethods().map { it.first.packageName }

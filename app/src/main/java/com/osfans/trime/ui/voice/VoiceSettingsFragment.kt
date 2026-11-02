@@ -114,7 +114,7 @@ class VoiceSettingsFragment : PaddingPreferenceFragment() {
 
         val current = AppPrefs.defaultInstance().voice.preferredVoiceInput.getValue()
         val all = JsVoiceProviders.all()
-        addGroup(screen, R.string.voice_plugins_builtin, all.filter { it.builtIn }, current)
+        // 插件不再内置，只剩「已导入」一组；导入为空时 addGroup 会自己给出提示。
         addGroup(screen, R.string.voice_plugins_imported, all.filterNot { it.builtIn }, current)
 
         screen.addPreference(

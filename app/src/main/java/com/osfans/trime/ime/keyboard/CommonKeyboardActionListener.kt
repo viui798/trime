@@ -158,10 +158,9 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
                 // 长按语音键（空格）= 咩版式按住说话：按下即录音，全程无覆盖层，
                 // 键盘保持原样；松手由 onLongPressReleased 收尾。其余按键与单击同路。
                 if (behavior == KeyBehavior.LONG_CLICK && action.code == KeyEvent.KEYCODE_VOICE_ASSIST) {
-                    val engine = prefs.voice.preferredVoiceInput.getValue()
-                    // 内置 JS 插件与提供 RecognitionService 的系统语音输入法都能进程内识别；
-                    // 只有两者都不是时，才退回「切换输入法」这条老路。
-                    if (VoiceInputManager.canHandle(engine)) {
+                    // 插件已不再内置：首选引擎可能已被删除，先取一个当前真正可用的。
+                    val engine = VoiceInputManager.effectiveEngine(prefs.voice.preferredVoiceInput.getValue())
+                    if (engine != null) {
                         VoiceFeedback.init(context)
                         VoiceInputManager.startHold(service, engine)
                     } else {
@@ -349,8 +348,8 @@ class CommonKeyboardActionListener(override val di: DI) : DIAware {
 
             /** 点按语音键：能进程内识别就直接开始，否则切到系统语音输入法。 */
             private fun handleVoiceAssist() {
-                val engine = prefs.voice.preferredVoiceInput.getValue()
-                if (VoiceInputManager.canHandle(engine)) {
+                val engine = VoiceInputManager.effectiveEngine(prefs.voice.preferredVoiceInput.getValue())
+                if (engine != null) {
                     VoiceFeedback.init(context)
                     VoiceInputManager.toggle(service, engine)
                 } else {

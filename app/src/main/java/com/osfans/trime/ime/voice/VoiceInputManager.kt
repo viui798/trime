@@ -20,6 +20,7 @@ import com.osfans.trime.data.voice.SystemVoiceSession
 import com.osfans.trime.data.voice.VoiceAudioCapture
 import com.osfans.trime.ime.core.TrimeInputMethodService
 import com.osfans.trime.ui.voice.VoiceHostPermissionDialog
+import com.osfans.trime.util.InputMethodUtils
 import com.osfans.trime.util.appContext
 import com.osfans.trime.util.toast
 import com.osfans.trime.util.withMaterialDialogTheme
@@ -83,8 +84,26 @@ object VoiceInputManager {
 
     fun isBuiltIn(pluginId: String): Boolean = pluginId.startsWith("js:")
 
-    /** 这个引擎能否在当前进程内识别：内置 JS 插件，或提供了 RecognitionService 的系统语音输入法。 */
-    fun canHandle(engineId: String): Boolean = SystemAsrEngines.canHandle(engineId)
+    /**
+     * 这个引擎能否在当前进程内识别：已导入的 JS 插件，或提供了 RecognitionService 的系统语音输入法。
+     *
+     * 注意不能用「js: 前缀」判断——插件被删掉之后 id 仍在偏好里，必须真的能读到 Spec。
+     */
+    fun canHandle(engineId: String): Boolean =
+        engineId.isNotBlank() &&
+            (JsVoiceProviders.specOf(engineId) != null || SystemAsrEngines.resolve(engineId) != null)
+
+    /**
+     * 取一个当前真正可用的引擎。
+     *
+     * 首选还能用就用首选；否则退回第一个系统语音输入法；再不行用第一个已导入插件。
+     * 都拿不到返回 null，调用方再决定是切输入法还是提示。
+     */
+    fun effectiveEngine(saved: String): String? {
+        if (canHandle(saved)) return saved
+        InputMethodUtils.voiceInputMethods().firstOrNull()?.first?.packageName?.let { return it }
+        return JsVoiceProviders.all().firstOrNull()?.id
+    }
 
     fun addListener(listener: Listener) {
         listeners += listener

@@ -5,7 +5,6 @@
  */
 package com.osfans.trime.data.voice
 
-import com.osfans.trime.R
 import com.osfans.trime.util.appContext
 import okhttp3.OkHttpClient
 import java.io.File
@@ -13,24 +12,19 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
- * JS 语音插件清单：内置两条 + 用户导入的若干条。
+ * JS 语音插件清单：**全部来自用户导入**，APK 里不再内置任何插件。
+ *
+ * 与 Foxy 的做法一致——语音引擎是可选扩展，用户导入什么就用什么；
+ * 系统语音输入法（说点啥、各家语音助手）走 `RecognitionService` 那条路，不在此登记。
  *
  * 这里是「插件是什么」的唯一权威：设置页渲染的字段、会话下发的设置、设置页列表的条目，
  * 全都从同一份 [Spec] 派生，避免各处各读一套数据。
  *
- * 脚本在**会话启动时**才读（asset 或文件），不进输入法启动热路径。
+ * 脚本在**会话启动时**才读，不进输入法启动热路径。
  */
 internal object JsVoiceProviders {
-
-    const val QWEN_ASR_ID = "js:qwen-asr"
-    const val DOUBAO_ASR_ID = "js:doubao-asr"
-    const val TENCENT_ASR_ID = "js:tencent-asr"
-    const val TENCENT_TRANSLATE_ID = "js:tencent-translate"
-
-    /** 脚本正文的来源。内置读 asset，用户导入的读私有目录文件。 */
+    /** 脚本正文的来源：用户导入的私有目录文件。 */
     internal sealed interface Source {
-        class Asset(val path: String) : Source
-
         class Imported(val file: File) : Source
     }
 
@@ -41,8 +35,9 @@ internal object JsVoiceProviders {
         val hosts: Set<String>,
         val sampleRate: Int,
         val source: Source,
+        /** 历史字段：内置插件已移除，现在恒为 false，保留是为了不动调用方。 */
         val builtIn: Boolean,
-        /** 界面展示的来源：内置是 asset 名，导入是用户选中的文件名。 */
+        /** 界面展示的来源：用户导入时选中的文件名。 */
         val originName: String,
     )
 
@@ -62,54 +57,6 @@ internal object JsVoiceProviders {
 
     fun httpClient(): OkHttpClient = http
 
-    private fun builtInSpecs(): List<Spec> = listOf(
-        Spec(
-            id = QWEN_ASR_ID,
-            label = appContext.getString(R.string.voice_provider_qwen),
-            version = "1.6.3",
-            hosts = setOf(
-                "dashscope.aliyuncs.com",
-                "maas.qianwenaiapi.com",
-                "cn-beijing.maas.qianwenaiapi.com",
-            ),
-            sampleRate = 16000,
-            source = Source.Asset("voice/qwen-asr.js"),
-            builtIn = true,
-            originName = "qwen-asr.js",
-        ),
-        Spec(
-            id = DOUBAO_ASR_ID,
-            label = appContext.getString(R.string.voice_provider_doubao),
-            version = "1.2.0",
-            // 火山引擎语音识别只开这两个口子：bigmodel_async（流式）与 bigmodel_nostream（单次）。
-            hosts = setOf("openspeech.bytedance.com"),
-            sampleRate = 16000,
-            source = Source.Asset("voice/doubao-asr.js"),
-            builtIn = true,
-            originName = "doubao-asr.js",
-        ),
-        Spec(
-            id = TENCENT_ASR_ID,
-            label = appContext.getString(R.string.voice_provider_tencent_asr),
-            version = "1.0.7",
-            hosts = setOf("asr.cloud.tencent.com"),
-            sampleRate = 16000,
-            source = Source.Asset("voice/tencent-asr.js"),
-            builtIn = true,
-            originName = "tencent-asr.js",
-        ),
-        Spec(
-            id = TENCENT_TRANSLATE_ID,
-            label = appContext.getString(R.string.voice_provider_tencent_translate),
-            version = "1.0.0",
-            hosts = setOf("asr.cloud.tencent.com"),
-            sampleRate = 16000,
-            source = Source.Asset("voice/tencent-translate.js"),
-            builtIn = true,
-            originName = "tencent-translate.js",
-        ),
-    )
-
     private fun importedSpecs(): List<Spec> = JsVoicePluginStore.list().map { record ->
         Spec(
             id = record.meta.providerId,
@@ -123,18 +70,15 @@ internal object JsVoiceProviders {
         )
     }
 
-    // 用户早先导入的插件可能已被收录为内置。优先用内置实现，
-    // 保留导入文件与同一 provider id 下的设置与密钥。
-    private fun buildSpecs(): List<Spec> = (builtInSpecs() + importedSpecs()).distinctBy { it.id }
+    private fun buildSpecs(): List<Spec> = importedSpecs().distinctBy { it.id }
 
     fun all(): List<Spec> = synchronized(lock) { cached ?: buildSpecs().also { cached = it } }
 
-    fun builtInIds(): Set<String> = builtInSpecs().map { it.id }.toSet()
+    fun builtInIds(): Set<String> = emptySet()
 
     fun specOf(pluginId: String): Spec? = all().firstOrNull { it.id == pluginId }
 
     fun readScript(spec: Spec): String = when (val source = spec.source) {
-        is Source.Asset -> appContext.assets.open(source.path).bufferedReader().use { it.readText() }
         is Source.Imported -> if (source.file.isFile) source.file.readText() else ""
     }
 

@@ -37,6 +37,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <!-- Android 11+ 包可见性：不加这条，enabledInputMethodList 拿不到其他输入法，
+             语音引擎列表里就不会出现「说点啥」等系统语音输入法。 -->
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
     </queries>
 
     <application

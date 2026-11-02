@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import com.osfans.trime.R
 import timber.log.Timber
 import java.util.Locale
 
@@ -124,16 +125,16 @@ internal class SystemVoiceSession(
 
     private fun errorText(code: Int): String =
         when (code) {
-            SpeechRecognizer.ERROR_NO_MATCH -> "没有识别到内容"
-            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "没有听到声音"
-            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "缺少录音权限"
+            SpeechRecognizer.ERROR_NO_MATCH,
+            SpeechRecognizer.ERROR_SPEECH_TIMEOUT,
+            -> context.getString(R.string.voice_asr_error_no_match)
+            // 注意：这个错误码不一定是我们没给权限——MIUI 上小米语音服务会因 AppOps
+            // 「Attribution not found」拒绝录音，表现同样是 9。
+            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> context.getString(R.string.voice_asr_error_permission)
             SpeechRecognizer.ERROR_NETWORK,
             SpeechRecognizer.ERROR_NETWORK_TIMEOUT,
-            -> "网络异常，识别服务不可用"
-            SpeechRecognizer.ERROR_SERVER -> "识别服务返回错误"
-            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "识别服务忙，请稍后再试"
-            SpeechRecognizer.ERROR_CLIENT -> "识别被中断"
-            SpeechRecognizer.ERROR_AUDIO -> "录音出错"
-            else -> "语音识别失败（$code）"
+            SpeechRecognizer.ERROR_SERVER,
+            -> context.getString(R.string.voice_asr_error_network)
+            else -> context.getString(R.string.voice_asr_error_failed, code)
         }
 }

@@ -623,4 +623,8 @@
     <string name="deploy_cache_confirm">清理後首次啟動需要重新編譯詞典，可能耗時一分鐘。方案與面板不受影響。要繼續嗎？</string>
     <string name="deploy_cache_done">部署快取已清理</string>
     <string name="deploy_cache_failed">清理失敗，可能有檔案正在使用</string>
+    <string name="voice_asr_error_no_match">沒有辨識到內容</string>
+    <string name="voice_asr_error_permission">辨識服務無法錄音（可能被系統限制），請換一個語音引擎</string>
+    <string name="voice_asr_error_network">網路異常，辨識服務無法使用</string>
+    <string name="voice_asr_error_failed">語音辨識失敗（%1$d）</string>
 </resources>

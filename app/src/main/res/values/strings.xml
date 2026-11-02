@@ -639,4 +639,8 @@
     <string name="deploy_cache_done">Deploy cache cleared</string>
     <string name="deploy_cache_failed">Could not clear cache, some files may be in use</string>
     <string name="trime_app_name" translatable="false">@string/app_name_debug</string>
+    <string name="voice_asr_error_no_match">Nothing recognised</string>
+    <string name="voice_asr_error_permission">The recognition service cannot record audio (possibly restricted by the system). Try another engine.</string>
+    <string name="voice_asr_error_network">Network error, recognition service unavailable</string>
+    <string name="voice_asr_error_failed">Speech recognition failed (%1$d)</string>
 </resources>

@@ -114,7 +114,7 @@
     <string name="developer">開發者</string>
     <string name="exception_logcat_created">Logcat 行程已建立</string>
     <string name="about">關於</string>
-    <string name="about_intro">同文輸入法（Trime）的個人定製版。內建咖啡主題，輸入方案需自行匯入並手動部署；支援語音輸入、輸入統計與剪貼簿同步。</string>
+    <string name="about_intro">同文輸入法 Trime 的個人定製版：內建咖啡主題，不預置輸入方案，匯入後手動部署；附帶語音輸入、輸入統計與跨裝置剪貼簿同步。</string>
     <string name="about_credits">致謝</string>
     <string name="about_credit_stats">感謝輸入統計功能的開源實作。</string>
     <string name="about_credit_voice_sync">感謝語音輸入與剪貼簿同步相關的開源貢獻。</string>

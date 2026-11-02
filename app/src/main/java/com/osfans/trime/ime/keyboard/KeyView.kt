@@ -56,6 +56,9 @@ class KeyView(
     private var cachedIcon: IconicsDrawable? = null
     private var cachedIconName: String? = null
 
+    /** 回车键的文字随输入框变化（搜索 / 发送 / 下一步），只有它需要跟着重绘。 */
+    val isEnterLabelKey: Boolean = key.usesEnterLabel
+
     private val cachedLocation = intArrayOf(0, 0)
     private val cachedBounds = Rect()
     private var boundsValid = false

@@ -302,6 +302,10 @@ class Key(
         else -> keyAction!!.getLabel(parent) // 中文狀態顯示標籤
     }
 
+    /** 主题里回车键的 label 是占位符 `enter_labels`，实际文字跟随输入框（搜索 / 发送…）。 */
+    val usesEnterLabel: Boolean
+        get() = label == "enter_labels"
+
     fun getPreviewText(behavior: KeyBehavior): String = when (behavior) {
         KeyBehavior.CLICK -> keyAction!!.getPreview(parent)
         else -> getAction(behavior)!!.getPreview(parent)

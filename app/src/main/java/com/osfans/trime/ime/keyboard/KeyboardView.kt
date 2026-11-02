@@ -96,6 +96,13 @@ class KeyboardView(
         getChildAt(index)?.invalidate()
     }
 
+    /** 只重绘回车键：它的文字随输入框变化，没必要连带重画整把键盘。 */
+    fun invalidateEnterKeys() {
+        children.forEach { child ->
+            if (child is KeyView && child.isEnterLabelKey) child.invalidate()
+        }
+    }
+
     val isCapsOn: Boolean
         get() = keyboard.mShiftKey?.isOn == true
 

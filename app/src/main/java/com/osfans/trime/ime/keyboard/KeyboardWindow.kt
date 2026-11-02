@@ -292,7 +292,8 @@ class KeyboardWindow(di: DI) :
     }
 
     override fun onEnterKeyLabelUpdate(label: String) {
-        cachedKeyboards.values.forEach { (_, view) -> view.invalidateAllKeys() }
+        // 只有回车键的文字变了（搜索 / 发送 / 下一步），重画整把键盘没必要。
+        cachedKeyboards.values.forEach { (_, view) -> view.invalidateEnterKeys() }
     }
 
     override fun onStartInput(info: EditorInfo) {

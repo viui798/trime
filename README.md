@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
   <a href="https://github.com/viui798/trime/releases/latest"><img alt="Android 5.0+" src="https://img.shields.io/badge/Android-5.0%2B-8B6B4A?style=flat-square&logo=android&logoColor=white&labelColor=3E332A"></a>
   <a href="LICENSE"><img alt="许可证 GPL-3.0" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-GPL--3.0-8B6B4A?style=flat-square&labelColor=3E332A"></a>
   <a href="https://github.com/osfans/trime"><img alt="基于 Trime 3.3.13" src="https://img.shields.io/badge/%E5%9F%BA%E4%BA%8E-Trime%203.3.13-8B6B4A?style=flat-square&labelColor=3E332A"></a>
-  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.11-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.11--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
+  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.12-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.12--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
 </p>
 
 <br>
@@ -92,11 +92,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | **存储** | 传统 Rime 根目录，三种模式可选，切换时目标同名文件优先保留、旧目录不删 |
 | **引擎** | 弹出输入法时检查状态，停摆自动重启（失败按 2 秒间隔重试） |
 | **键盘** | 底行 `'` 换成中文逗号 `，`（长按句号）；功能键标签简繁统一；默认开启震动 |
-| **语音** | 内置通义千问、豆包、腾讯识别 / 翻译四个 JS 插件，也能导入第三方 `.js` |
+| **语音** | 直接选用手机里的语音识别服务（说点啥、语音助手等），也可导入 `.js` 插件接云端识别 |
 | **输入统计** | 输入速度、生涯段位与键盘热力，可生成图片分享 |
 | **剪贴板同步** | 多设备互通，支持多种服务端类型，可按文本长度、后缀、大小做接收过滤 |
 
-语音输入需麦克风权限、网络及所选服务的凭据，并需授权插件访问其声明的域名；剪贴板同步需配置兼容的服务端。两者都不是安装后自动启用的离线功能。
+语音可以直接用系统已有的识别服务，也可以导入 `.js` 插件接云端识别（密钥自备，并需授权其访问声明的域名）。剪贴板同步需配置兼容的服务端。两者都不是装完即用的离线功能。
 
 ## 安装
 
@@ -108,12 +108,22 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | --- | --- |
 | 应用名 | 同文输入法芝士 |
 | 包名 | `com.viui.trime.cheese` |
-| 版本 | `1.2.11-cheese` / versionCode 21 |
-| 系统 | Android 5.0 及以上；语音识别需 Android 6.0+（QuickJS 限制） |
+| 版本 | `1.2.12-cheese` / versionCode 22 |
+| 系统 | Android 5.0 及以上；语音识别需 Android 6.0+ |
 | 架构 | arm64-v8a、armeabi-v7a、x86、x86_64（模拟器） |
 | 体积 | 约 7.2 MB |
 
 ## 常见问题
+
+<details>
+<summary><b>语音需要自己装插件吗？</b></summary>
+<br>
+
+不需要。手机里只要有提供语音识别服务的应用（说点啥、ASR 助手、Google 语音…），在「设置 → 便捷功能 → 语音输入 → 首选语音输入法」选中它，长按空格就能直接在本键盘内识别，不会跳到别的输入法。
+
+想用云端识别（通义千问、豆包、腾讯云），到仓库 `docs/voice-plugins/` 下载对应 `.js`，同一页面点「导入 JS 插件」，再填自己的密钥。
+
+</details>
 
 <details>
 <summary><b>主题名没变成「咖啡芝士默认」？</b></summary>
@@ -164,6 +174,14 @@ arm64-v8a（绝大多数手机）、armeabi-v7a（老 32 位 ARM）、x86 / x86_
 </details>
 
 ## 更新记录
+
+### 1.2.12 · 语音改成可选可导入
+
+- 语音不再内置插件，两种来源：手机里已有的语音识别服务（说点啥、ASR 助手、Google 语音等），或自己导入的 `.js` 插件
+- 长按空格直接在本键盘内识别，不切换输入法；引擎列表也会列出只提供识别服务、不注册输入法的应用
+- 引擎被删或不可用时自动回退到可用引擎，不再一直提示「找不到语音插件」
+- 四个云端插件移到仓库 `docs/voice-plugins/`，需要的话自行下载导入
+- 识别失败的提示改准：系统限制导致的录音失败，不再误报成「缺少录音权限」
 
 ### 1.2.11 · 工具栏误触修复
 

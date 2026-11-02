@@ -121,7 +121,7 @@
     <string name="theme_diagnostics_no_findings">No problems found in the current theme</string>
     <string name="theme_diagnostics_unchecked">The static checks could not run for this theme</string>
     <string name="about">About</string>
-    <string name="about_intro">A personal build of Trime: Coffee theme included, no preloaded input schemas. Import your own and deploy manually. Also includes voice input, input statistics and cross-device clipboard sync.</string>
+    <string name="about_intro">Every keystroke, your way. The familiar Rime for everyday typing, with the Coffee theme included — pair it with your own input schemas.</string>
     <string name="about_credits">Acknowledgements</string>
     <string name="about_credit_stats">Thanks for the open-source input statistics implementation.</string>
     <string name="about_credit_voice_sync">Thanks for open-source contributions to voice input and clipboard sync.</string>

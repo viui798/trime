@@ -111,7 +111,7 @@
     <string name="app_crash_message">抱歉，但我们提供了日志以供调查。</string>
     <string name="virtual_keyboard">虚拟键盘</string>
     <string name="about">关于</string>
-    <string name="about_intro">同文输入法 Trime 的个人定制版：内置咖啡皮肤，不预置输入方案，导入后手动部署；附带语音输入、输入统计与跨设备剪贴板同步。</string>
+    <string name="about_intro">落字有声，输入随心。熟悉的 Rime，自由的日常输入；内置咖啡皮肤，搭配你自己的输入方案。</string>
     <string name="about_credits">致谢</string>
     <string name="about_credit_stats">感谢输入统计功能的开源实现。</string>
     <string name="about_credit_voice_sync">感谢语音输入与剪贴板同步相关的开源贡献。</string>

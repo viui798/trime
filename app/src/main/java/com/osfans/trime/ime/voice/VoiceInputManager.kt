@@ -101,7 +101,13 @@ object VoiceInputManager {
      */
     fun effectiveEngine(saved: String): String? {
         if (canHandle(saved)) return saved
+        // 1) 系统语音输入法（IME 里带 voice 子类型的）
         InputMethodUtils.voiceInputMethods().firstOrNull()?.first?.packageName?.let { return it }
+        // 2) 系统默认的语音识别服务——「ASR 助手」这类不是输入法，只能从这里拿到
+        SystemAsrEngines.defaultPackage()?.let { if (canHandle(it)) return it }
+        // 3) 任意一个可用的识别服务
+        SystemAsrEngines.all(appContext).firstOrNull()?.packageName?.let { if (canHandle(it)) return it }
+        // 4) 用户导入的插件
         return JsVoiceProviders.all().firstOrNull()?.id
     }
 

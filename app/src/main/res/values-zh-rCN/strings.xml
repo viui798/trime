@@ -484,6 +484,7 @@
     <string name="voice_engine_builtin">内置插件</string>
     <string name="voice_engine_imported">导入插件</string>
     <string name="voice_engine_system">系统语音输入</string>
+    <string name="voice_engine_recognition">识别服务</string>
     <string name="voice_network_title">批准插件网络访问</string>
     <string name="voice_network_message">%1$s 可以向以下主机发送音频和已保存的凭据：\n\n%2$s\n\n只批准你信任的主机。</string>
     <string name="voice_network_approve">批准主机</string>

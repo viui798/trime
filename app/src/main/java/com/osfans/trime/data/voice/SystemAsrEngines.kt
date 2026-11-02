@@ -5,7 +5,9 @@
 package com.osfans.trime.data.voice
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.provider.Settings
 import android.speech.RecognitionService
 import com.osfans.trime.util.appContext
 import timber.log.Timber
@@ -40,7 +42,40 @@ internal object SystemAsrEngines {
         return component
     }
 
-    /** 这个 id 是否能走进程内识别（内置 JS 插件或系统 RecognitionService 二选一）。 */
-    fun canHandle(engineId: String): Boolean =
-        engineId.isNotBlank() && (engineId.startsWith("js:") || resolve(engineId) != null)
+    data class Entry(
+        val packageName: String,
+        val label: String,
+        val component: ComponentName,
+    )
+
+    /**
+     * 扫描所有提供了 RecognitionService 的应用。
+     *
+     * 「ASR 助手」这类应用只声明识别服务、不注册输入法，靠 IME 列表永远看不到它们，
+     * 所以语音引擎列表要单独扫这一份。
+     */
+    fun all(context: Context): List<Entry> =
+        runCatching {
+            val intent = Intent(RecognitionService.SERVICE_INTERFACE)
+            context.packageManager
+                .queryIntentServices(intent, 0)
+                .mapNotNull { info ->
+                    val service = info.serviceInfo ?: return@mapNotNull null
+                    Entry(
+                        packageName = service.packageName,
+                        label = info.loadLabel(context.packageManager).toString(),
+                        component = ComponentName(service.packageName, service.name),
+                    )
+                }.distinctBy { it.packageName }
+        }.onFailure {
+            Timber.w(it, "voice: query all RecognitionService failed")
+        }.getOrDefault(emptyList())
+
+    /** 系统设置的默认语音识别服务（没有则返回 null）。 */
+    fun defaultPackage(): String? =
+        runCatching {
+            Settings.Secure.getString(appContext.contentResolver, "voice_recognition_service")
+                ?.substringBefore('/')
+                ?.takeIf { it.isNotBlank() }
+        }.getOrNull()
 }

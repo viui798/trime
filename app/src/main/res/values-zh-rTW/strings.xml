@@ -474,6 +474,7 @@
     <string name="voice_engine_builtin">內建外掛</string>
     <string name="voice_engine_imported">匯入外掛</string>
     <string name="voice_engine_system">系統語音輸入</string>
+    <string name="voice_engine_recognition">辨識服務</string>
     <string name="voice_network_title">批准外掛網路存取</string>
     <string name="voice_network_message">%1$s 可以向以下主機傳送音訊和已儲存的憑證：\n\n%2$s\n\n只批准你信任的主機。</string>
     <string name="voice_network_approve">批准主機</string>

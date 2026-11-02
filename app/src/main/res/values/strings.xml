@@ -485,6 +485,7 @@
     <string name="voice_engine_builtin">Built-in plugin</string>
     <string name="voice_engine_imported">Imported plugin</string>
     <string name="voice_engine_system">System voice input</string>
+    <string name="voice_engine_recognition">Recognition</string>
     <string name="voice_network_title">Approve plugin network access</string>
     <string name="voice_network_message">%1$s can send audio and saved credentials to these hosts:\n\n%2$s\n\nOnly approve hosts you trust.</string>
     <string name="voice_network_approve">Approve hosts</string>

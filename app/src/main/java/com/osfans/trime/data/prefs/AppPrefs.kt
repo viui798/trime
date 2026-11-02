@@ -14,13 +14,12 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.osfans.trime.R
 import com.osfans.trime.core.data.DataStorageMode
-import com.osfans.trime.data.voice.JsVoiceProviders
 import com.osfans.trime.ime.candidates.compact.CompactCandidateMode
 import com.osfans.trime.ime.candidates.popup.PopupCandidatesLayout
 import com.osfans.trime.ime.candidates.popup.PopupCandidatesMode
 import com.osfans.trime.ime.composition.PopupPosition
+import com.osfans.trime.ime.voice.VoiceInputChoices
 import com.osfans.trime.ime.core.InlinePreeditMode
-import com.osfans.trime.util.InputMethodUtils
 import com.osfans.trime.util.appContext
 import java.lang.ref.WeakReference
 
@@ -125,14 +124,9 @@ class AppPrefs(
             R.string.preferred_voice_input,
             PREFERRED_VOICE_INPUT,
             "",   // 不再内置插件：默认留空，运行时回退到系统语音输入法或已导入插件
-            {
-                JsVoiceProviders.all().map { it.id } +
-                    InputMethodUtils.voiceInputMethods().map { it.first.packageName }
-            },
-            { ctx ->
-                JsVoiceProviders.all().map { it.label } +
-                    InputMethodUtils.voiceInputMethods().map { it.first.loadLabel(ctx.packageManager) }
-            },
+            // 三个来源：已导入插件、系统语音输入法、系统语音识别服务（ASR 助手这类不是 IME）。
+            { VoiceInputChoices.list(appContext).map { it.id } },
+            { ctx -> VoiceInputChoices.list(ctx).map { it.label } },
         )
     }
 

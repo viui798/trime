@@ -88,6 +88,13 @@ object FontOverrides {
             R.string.font_scope_fallback,
             false,
         ),
+        WORD_CLOUD(
+            "font_override_word_cloud",
+            "",
+            null,
+            R.string.font_scope_word_cloud,
+            false,
+        ),
         ;
 
         companion object {

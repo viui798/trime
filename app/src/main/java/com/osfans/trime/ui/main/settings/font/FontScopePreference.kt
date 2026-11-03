@@ -17,6 +17,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.osfans.trime.R
 import com.osfans.trime.data.theme.FontOverrides
 import com.osfans.trime.data.theme.ThemeManager
+import com.osfans.trime.data.theme.model.MaybeStringList
 import com.osfans.trime.data.theme.ColorManager
 import splitties.dimensions.dp
 
@@ -49,6 +50,9 @@ class FontScopePreference(
         val ctx = context
         val fonts = FontOverrides.fontList(scope)
         val themeFont = themeFontName(scope)
+        if (scope == FontOverrides.Scope.WORD_CLOUD && fonts.isEmpty()) {
+            return ctx.getString(R.string.font_word_cloud_default)
+        }
         val fontText = when {
             fonts.isNotEmpty() -> fonts.joinToString(" → ")
             themeFont != null -> ctx.getString(R.string.font_follow_theme_named, themeFont)
@@ -76,7 +80,7 @@ class FontScopePreference(
             FontOverrides.Scope.COMMENT -> style.commentTextSize
             FontOverrides.Scope.POPUP -> style.popupTextSize
             FontOverrides.Scope.PREEDIT -> theme.preedit.foreground.fontSize
-            FontOverrides.Scope.FALLBACK -> 0f
+            FontOverrides.Scope.FALLBACK, FontOverrides.Scope.WORD_CLOUD -> 0f
         }.toInt().takeIf { it > 0 }
     }.getOrNull()
 
@@ -96,6 +100,7 @@ class FontScopePreference(
             FontOverrides.Scope.POPUP -> style.popupFont
             FontOverrides.Scope.PREEDIT -> style.textFont
             FontOverrides.Scope.FALLBACK -> style.hanbFont
+            FontOverrides.Scope.WORD_CLOUD -> MaybeStringList.Empty
         }.toList().joinToString(" → ").takeIf { it.isNotBlank() }
     }.getOrNull()
 

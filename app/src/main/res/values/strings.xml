@@ -145,6 +145,8 @@
     <string name="font_scope_comment">Candidate comment font</string>
     <string name="font_scope_popup">Popup font</string>
     <string name="font_scope_preedit">Preedit font</string>
+    <string name="font_word_cloud_default">Serif (default)</string>
+    <string name="font_scope_word_cloud">Word cloud font</string>
     <string name="font_scope_fallback">Fallback font</string>
     <string name="font_follow_theme">Follow theme</string>
     <string name="font_follow_theme_named">Follow theme (%1$s)</string>

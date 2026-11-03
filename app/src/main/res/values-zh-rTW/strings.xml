@@ -159,6 +159,8 @@
     <string name="font_scope_comment">候選註釋字體</string>
     <string name="font_scope_popup">彈出鍵字體</string>
     <string name="font_scope_preedit">預編輯字體</string>
+    <string name="font_word_cloud_default">襯線（預設）</string>
+    <string name="font_scope_word_cloud">詞雲字體</string>
     <string name="font_scope_fallback">後備字體</string>
     <string name="font_follow_theme">跟隨主題</string>
     <string name="font_follow_theme_named">跟隨主題（%1$s）</string>

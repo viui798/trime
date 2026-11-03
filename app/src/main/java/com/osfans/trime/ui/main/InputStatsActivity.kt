@@ -146,6 +146,7 @@ class InputStatsActivity : AppCompatActivity() {
         super.onResume()
         currentSchema = InputStats.activeSchemaId
         reload()
+        if (::wordCloudView.isInitialized) wordCloudView.refreshTypeface()
     }
 
     override fun onPause() {

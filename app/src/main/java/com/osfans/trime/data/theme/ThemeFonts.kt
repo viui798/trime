@@ -94,6 +94,17 @@ class ThemeFonts(private val theme: Theme) {
     val symbol: Typeface
         get() = cached("symbol_font", style.symbolFont.toList())
 
+    /** 字词云不跟随皮肤字体；默认用衬线体，用户可在「字体与字号」单独选。 */
+    val wordCloud: Typeface
+        get() {
+            val names = FontOverrides.fontList(FontOverrides.Scope.WORD_CLOUD)
+            return if (names.isEmpty()) {
+                Typeface.create("serif", Typeface.NORMAL)
+            } else {
+                getTypeface(names)
+            }
+        }
+
     val text: Typeface
         get() = cached("text_font", style.textFont.toList())
 

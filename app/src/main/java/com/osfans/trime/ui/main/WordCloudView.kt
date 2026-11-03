@@ -17,7 +17,9 @@ import android.view.View
 import androidx.core.graphics.ColorUtils
 import com.google.android.material.color.MaterialColors
 import com.osfans.trime.R
+import com.osfans.trime.data.theme.ThemeManager
 import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
@@ -86,12 +88,36 @@ class WordCloudView @JvmOverloads constructor(
                 com.google.android.material.R.attr.colorPrimary,
                 Color.BLACK,
             )
+        val onSurface =
+            MaterialColors.getColor(
+                this,
+                com.google.android.material.R.attr.colorOnSurface,
+                Color.DKGRAY,
+            )
         intArrayOf(
             primary,
-            ColorUtils.setAlphaComponent(primary, 220),
-            ColorUtils.setAlphaComponent(primary, 180),
-            ColorUtils.setAlphaComponent(primary, 140),
+            ColorUtils.blendARGB(primary, onSurface, 0.20f),
+            ColorUtils.blendARGB(primary, onSurface, 0.40f),
+            ColorUtils.blendARGB(primary, onSurface, 0.60f),
         )
+    }
+
+    private fun resolveTypeface(): Typeface =
+        runCatching { ThemeManager.activeTheme.fonts.wordCloud }
+            .getOrElse { Typeface.create("serif", Typeface.NORMAL) }
+
+    init {
+        val typeface = resolveTypeface()
+        textPaint.typeface = typeface
+        maskPaint.typeface = typeface
+    }
+
+    /** 从「字体与字号」改完词云字体回来时刷新，不需要重建 Activity。 */
+    fun refreshTypeface() {
+        val typeface = resolveTypeface()
+        textPaint.typeface = typeface
+        maskPaint.typeface = typeface
+        rebuild()
     }
 
     fun setEntries(value: List<Entry>) {
@@ -146,8 +172,8 @@ class WordCloudView @JvmOverloads constructor(
         val sorted = entries.sortedByDescending { it.count }.take(MAX_WORDS)
         val maxCount = sorted.maxOf { it.count }.toDouble().coerceAtLeast(1.0)
         val minCount = sorted.minOf { it.count }.toDouble().coerceAtLeast(1.0)
-        val minSize = 13f * density
-        val maxSize = 42f * density
+        val minSize = 12f * density
+        val maxSize = 38f * density
         val padding = (4 * density).toInt()
 
         mask = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -178,7 +204,16 @@ class WordCloudView @JvmOverloads constructor(
             val (left, top) = position
             val drawX = (left - bounds.left).toFloat()
             val drawY = (top - bounds.top).toFloat()
-            val color = palette[index * palette.size / sorted.size]
+            val centerX = width / 2f
+            val centerY = height / 2f
+            val distance = hypot(left + wordWidth / 2f - centerX, top + wordHeight / 2f - centerY)
+            val maxRadius = min(width, height) / 2f
+            val rank = if (sorted.size > 1) index.toFloat() / (sorted.size - 1) else 0f
+            val alpha =
+                (255 - rank * 55 - (distance / maxRadius.coerceAtLeast(1f)) * 65)
+                    .toInt()
+                    .coerceIn(105, 255)
+            val color = ColorUtils.setAlphaComponent(palette[index * palette.size / sorted.size], alpha)
 
             maskPaint.color = Color.WHITE
             maskCanvas?.drawText(entry.text, drawX, drawY, maskPaint)
@@ -196,7 +231,7 @@ class WordCloudView @JvmOverloads constructor(
     ): Pair<Int, Int>? {
         val centerX = width / 2
         val centerY = height / 2
-        val maxRadius = width.toFloat() + height.toFloat()
+        val maxRadius = min(width, height) / 2f
         var step = 0
         while (step < MAX_SPIRAL_STEPS) {
             val angle = step * 0.22f + index * 0.9f
@@ -208,6 +243,7 @@ class WordCloudView @JvmOverloads constructor(
                 y >= padding &&
                 x + wordWidth <= width - padding &&
                 y + wordHeight <= height - padding &&
+                insideBall(x, y, wordWidth, wordHeight, padding) &&
                 !collides(x, y, wordWidth, wordHeight)
             ) {
                 return x to y
@@ -215,6 +251,23 @@ class WordCloudView @JvmOverloads constructor(
             step++
         }
         return null
+    }
+
+    /** 整体限制在圆内，让词云看起来是一团而不是铺满矩形。 */
+    private fun insideBall(
+        x: Int,
+        y: Int,
+        wordWidth: Int,
+        wordHeight: Int,
+        padding: Int,
+    ): Boolean {
+        val centerX = width / 2f
+        val centerY = height / 2f
+        val radius = min(width, height) / 2f - padding
+        if (radius <= 0f) return false
+        val dx = x + wordWidth / 2f - centerX
+        val dy = y + wordHeight / 2f - centerY
+        return hypot(dx, dy) <= radius
     }
 
     private fun collides(

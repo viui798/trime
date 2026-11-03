@@ -331,8 +331,19 @@ class KeyView(
             val centerY = (height - paddingTop - paddingBottom) / 2f + paddingTop
             val fontMetrics = textPaint.fontMetrics
             val adjustmentY = -(fontMetrics.ascent + fontMetrics.descent) / 2f
-
-            canvas.drawText(label, centerX + sp(key.keyTextOffsetX), centerY + adjustmentY + sp(key.keyTextOffsetY), textPaint)
+            val textX = centerX + sp(key.keyTextOffsetX)
+            val textY = centerY + adjustmentY + sp(key.keyTextOffsetY)
+            val stretchY = keyboardView.fontStretchY
+            if (stretchY == 1f) {
+                canvas.drawText(label, textX, textY, textPaint)
+            } else {
+                // Only stretch Y. Scaling textSize instead would also widen glyphs
+                // and make the strokes look bold.
+                val saved = canvas.save()
+                canvas.scale(1f, stretchY, centerX, centerY)
+                canvas.drawText(label, textX, textY, textPaint)
+                canvas.restoreToCount(saved)
+            }
         }
     }
 

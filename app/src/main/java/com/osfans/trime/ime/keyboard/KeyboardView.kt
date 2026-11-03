@@ -39,8 +39,11 @@ class KeyboardView(
         FontOverrides.sizeOrNull(FontOverrides.Scope.KEY)
             ?: theme.style.keyTextSize
 
-    /** 开启「字体跟随变形」时，以主题/自定义布局的原高度为 1.0 缩放字号。 */
-    private val fontScale: Float =
+    /**
+     * 开启「字体跟随变形」时只做 Y 轴拉伸：字号、字宽、笔画粗细都不变，
+     * 避免整体放大后看起来变粗。以主题/自定义布局原高度为 1.0。
+     */
+    internal val fontStretchY: Float =
         if (!KeyboardSizePreview.fontFollowsHeight()) {
             1f
         } else {
@@ -52,21 +55,15 @@ class KeyboardView(
             }
         }
 
-    private fun scaledFont(size: Float): Float = (size * fontScale).coerceAtLeast(1f)
-
-    internal val keyTextSize = scaledFont(baseKeyTextSize)
+    internal val keyTextSize = baseKeyTextSize
     internal val keyLongTextSize =
-        scaledFont(
-            FontOverrides.sizeOrNull(FontOverrides.Scope.KEY)
-                ?: theme.style.keyLongTextSize.takeIf { it > 0 }
-                ?: baseKeyTextSize,
-        )
+        FontOverrides.sizeOrNull(FontOverrides.Scope.KEY)
+            ?: theme.style.keyLongTextSize.takeIf { it > 0 }
+            ?: baseKeyTextSize
     internal val symbolTextSize =
-        scaledFont(
-            FontOverrides.sizeOrNull(FontOverrides.Scope.SYMBOL)
-                ?: theme.style.symbolTextSize.takeIf { it > 0 }
-                ?: baseKeyTextSize,
-        )
+        FontOverrides.sizeOrNull(FontOverrides.Scope.SYMBOL)
+            ?: theme.style.symbolTextSize.takeIf { it > 0 }
+            ?: baseKeyTextSize
     internal val popupOnKeyPress by AppPrefs.defaultInstance().keyboard.popupOnKeyPress
     internal val hookShiftArrow: Boolean by AppPrefs.defaultInstance().keyboard.hookShiftArrow
     internal val hideKeySymbol: Boolean by AppPrefs.defaultInstance().keyboard.hideKeySymbol

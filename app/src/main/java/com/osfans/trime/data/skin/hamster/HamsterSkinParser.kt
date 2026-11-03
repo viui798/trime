@@ -135,11 +135,11 @@ object HamsterSkinParser {
         val flexible = defs.count { (_, def) -> def?.widthPercent() == null }
         val share = if (flexible > 0) ((1.0 - fixed).coerceAtLeast(0.01) / flexible).toFloat() else 0f
 
-        return defs.map { (_, def) ->
+        return defs.map { (name, def) ->
             if (def == null) {
                 HamsterKey(widthPercent = share * 100f)
             } else {
-                resolveKey(root, def, share)
+                resolveKey(root, def, share, name)
             }
         }
     }
@@ -150,13 +150,18 @@ object HamsterSkinParser {
             ?.let { (it as? JsonPrimitive)?.contentOrNullSafe() }
             ?.toFloatOrNull()
 
-    private fun resolveKey(root: JsonObject, def: JsonObject, fallbackShare: Float): HamsterKey {
+    private fun resolveKey(
+        root: JsonObject,
+        def: JsonObject,
+        fallbackShare: Float,
+        buttonName: String?,
+    ): HamsterKey {
         val action = def["action"]
         val click = actionToken(action)
         val label = foregroundText(root, def["foregroundStyle"])
             ?.takeUnless { it.startsWith("$") }
             ?: actionCharacter(action)
-            ?: fallbackLabel(actionToken(action))
+            ?: fallbackLabel(actionToken(action)).ifEmpty { namedLabel(buttonName) }
 
         val fg = style(root, def["foregroundStyle"])
         val bg = style(root, def["backgroundStyle"])
@@ -206,6 +211,14 @@ object HamsterSkinParser {
         else -> ""
     }
 
+    /** 少数键在 cskin 里只有名字（英文切换等），按名字给个可读标签。 */
+    private fun namedLabel(buttonName: String?): String = when {
+        buttonName == null -> ""
+        "ascii" in buttonName.lowercase() -> "英"
+        "emoji" in buttonName.lowercase() -> "☺"
+        else -> ""
+    }
+
     private fun actionCharacter(action: JsonElement?): String? =
         (action as? JsonObject)?.get("character")?.asString()
 
@@ -246,6 +259,12 @@ object HamsterSkinParser {
 
 /** 把解析出的行落成同文可用的 [Theme]。 */
 object HamsterThemeBuilder {
+    private const val KEYBOARD_HEIGHT_DP = 268
+    private const val KEYBOARD_HEIGHT_LAND_DP = 200
+    private const val DEFAULT_TEXT_SIZE = 22.5f
+    private const val DEFAULT_LONG_TEXT_SIZE = 16f
+    private const val DEFAULT_SYMBOL_TEXT_SIZE = 12f
+
     fun build(skinName: String, parsed: HamsterSkinParser.HamsterRows, dark: Boolean): Theme {
         val keys = parsed.rows.flatten().map { key ->
             TextKeyboard.TextKey(
@@ -278,7 +297,17 @@ object HamsterThemeBuilder {
 
         return Theme(
             name = skinName,
-            style = GeneralStyle(),
+            // 底座样式：键盘高度必须给值，否则按键区高度为 0（只剩工具栏一条）。
+            style = GeneralStyle(
+                keyboardHeight = KEYBOARD_HEIGHT_DP,
+                keyboardHeightLand = KEYBOARD_HEIGHT_LAND_DP,
+                keyTextSize = DEFAULT_TEXT_SIZE,
+                keyLongTextSize = DEFAULT_LONG_TEXT_SIZE,
+                symbolTextSize = DEFAULT_SYMBOL_TEXT_SIZE,
+                horizontalGap = 4,
+                verticalGap = 4,
+                keyBorder = 0,
+            ),
             presetKeyboards = mapOf("default" to keyboard),
             presetColorSchemes = mapOf("default" to scheme),
         )

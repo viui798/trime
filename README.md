@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <p align="center"><b>简体中文</b></p>
 
 <p align="center">
-  <a href="https://github.com/viui798/trime/releases/latest"><img src="docs/images/hero.png" width="100%" alt="同文输入法芝士：落字有声，输入随心。内置咖啡皮肤、自选 Rime 方案与手动部署，支持语音输入、输入统计及跨设备剪贴板同步。"></a>
+  <a href="https://github.com/viui798/trime/releases/latest"><img src="docs/images/hero.png" width="100%" alt="同文输入法芝士：落字有声，输入随心。内置咖啡皮肤，按住空格说话，自选 Rime 方案与手动部署，支持输入统计字词云、跨设备剪贴板同步与应用内更新。"></a>
 </p>
 
 <p align="center">
@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
   <a href="https://github.com/viui798/trime/releases/latest"><img alt="Android 5.0+" src="https://img.shields.io/badge/Android-5.0%2B-8B6B4A?style=flat-square&logo=android&logoColor=white&labelColor=3E332A"></a>
   <a href="LICENSE"><img alt="许可证 GPL-3.0" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-GPL--3.0-8B6B4A?style=flat-square&labelColor=3E332A"></a>
   <a href="https://github.com/osfans/trime"><img alt="基于 Trime 3.3.13" src="https://img.shields.io/badge/%E5%9F%BA%E4%BA%8E-Trime%203.3.13-8B6B4A?style=flat-square&labelColor=3E332A"></a>
-  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.13-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.13--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
+  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.18-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.18--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
 </p>
 
 <br>
@@ -27,7 +27,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <a id="download"></a>
 <h3 align="center">下载</h3>
 
-<p align="center">从 GitHub Releases 取最新 APK，绝大多数手机选 <b>arm64-v8a</b>。</p>
+<p align="center">从 GitHub Releases 取最新 APK，绝大多数手机选 <b>arm64-v8a</b>。装好之后也可以直接在「设置 → 高级 → 更新」里检查并安装新版本。</p>
 
 <p align="center">
   <a href="https://github.com/viui798/trime/releases/latest"><img alt="从 GitHub Releases 下载" src="https://img.shields.io/badge/GitHub%20Releases-%E4%B8%8B%E8%BD%BD%20APK-8B6B4A?style=for-the-badge&logo=github&logoColor=white&labelColor=3E332A"></a>
@@ -35,7 +35,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <p align="center">
   <sub>包名 <code>com.viui.trime.cheese</code>，可与官方同文同时安装，互不影响。</sub><br>
-  <sub>Release 附 <code>SHA256SUMS.txt</code> 可核对完整性；换签名或从官方版切换时不能直接覆盖安装。</sub>
+  <sub>Release 附 <code>SHA256SUMS.txt</code> 可核对完整性；应用内更新同样按它校验。换签名或从官方版切换时不能直接覆盖安装。</sub>
 </p>
 
 <br>
@@ -45,6 +45,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 <p align="center">皮肤「<b>咖啡芝士默认</b>」随安装包一起进：简白、简黑两套配色，14 张按键背景图也打包好了，新装打开就是一个完整键盘。</p>
 
 <p align="center">咖啡皮肤的按键底色全部来自图片而不是色值，所以只内置 yaml 不够——两套配色实际用到的图都在 APK 里，只多 36 KB。</p>
+
+<br>
+
+<h3 align="center">按住空格，边说边写</h3>
+
+<p align="center">长按空格开始说话，识别出的文字<b>一边出一边进组字区</b>，正常的候选、选词、修改全都可用，松手即上屏。键盘不弹窗、不跳转，就是原来那把键盘。</p>
+
+<p align="center">识别引擎可以用手机里已有的语音服务（说点啥、ASR 助手、Google 语音等），也能导入 <code>.js</code> 插件接云端识别——密钥自备，插件联网的域名需要你逐个授权。</p>
 
 <br>
 
@@ -92,9 +100,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | **存储** | 传统 Rime 根目录，三种模式可选，切换时目标同名文件优先保留、旧目录不删 |
 | **引擎** | 弹出输入法时检查状态，停摆自动重启（失败按 2 秒间隔重试） |
 | **键盘** | 底行 `'` 换成中文逗号 `，`（长按句号）；功能键标签简繁统一；默认开启震动 |
-| **语音** | 直接选用手机里的语音识别服务（说点啥、语音助手等），也可导入 `.js` 插件接云端识别 |
-| **输入统计** | 输入速度、生涯段位与键盘热力，可生成图片分享 |
+| **语音** | 按住空格说话，识别结果流式进组字区；可用系统语音服务，也可导入 `.js` 插件接云端（密钥自备、域名授权） |
+| **输入统计** | 输入速度、生涯段位、键盘热力与字词云（球状布局、词频字号），可生成图片分享 |
 | **剪贴板同步** | 多设备互通，支持多种服务端类型，可按文本长度、后缀、大小做接收过滤 |
+| **应用内更新** | 读取 GitHub 最新 Release，自动匹配 ABI 下载、SHA256 校验后拉起系统安装器 |
 
 语音可以直接用系统已有的识别服务，也可以导入 `.js` 插件接云端识别（密钥自备，并需授权其访问声明的域名）。剪贴板同步需配置兼容的服务端。两者都不是装完即用的离线功能。
 
@@ -108,10 +117,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | --- | --- |
 | 应用名 | 同文输入法芝士 |
 | 包名 | `com.viui.trime.cheese` |
-| 版本 | `1.2.13-cheese` / versionCode 23 |
+| 版本 | `1.2.18-cheese` / versionCode 28 |
 | 系统 | Android 5.0 及以上；语音识别需 Android 6.0+ |
 | 架构 | arm64-v8a、armeabi-v7a、x86、x86_64（模拟器） |
-| 体积 | 约 7.2 MB |
+| 体积 | 约 7.3 MB |
 
 ## 常见问题
 
@@ -122,6 +131,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 不需要。手机里只要有提供语音识别服务的应用（说点啥、ASR 助手、Google 语音…），在「设置 → 便捷功能 → 语音输入 → 首选语音输入法」选中它，长按空格就能直接在本键盘内识别，不会跳到别的输入法。
 
 想用云端识别（通义千问、豆包、腾讯云），到仓库 `docs/voice-plugins/` 下载对应 `.js`，同一页面点「导入 JS 插件」，再填自己的密钥。
+
+</details>
+
+<details>
+<summary><b>字词云为什么是空的？</b></summary>
+<br>
+
+字词云优先读用户词典导出（`user_ngram.tsv` 会一并并入），之后上屏的 2–8 字中文词条也会继续累积。刚装、还没怎么打字时会显示「继续输入后生成词云」；用带词库的方案正常上屏一段时间就有了。最多展示 100 个词，单字和停用词会被过滤。
 
 </details>
 
@@ -174,6 +191,34 @@ arm64-v8a（绝大多数手机）、armeabi-v7a（老 32 位 ARM）、x86 / x86_
 </details>
 
 ## 更新记录
+
+### 1.2.18 · 词云字体与球状布局
+
+- 字词云可单独选字体（默认衬线体，不再直接吃系统无衬线体）
+- 词云整体改为圆形约束：中心高频词更大更深，边缘低频词更小更浅，接近球状而不是铺满矩形
+
+### 1.2.17 · 输入统计字词云
+
+- 统计页新增「字词云」：优先读用户词典导出（`user_ngram.tsv` 并入），之后持续累积 2–8 字中文词条
+- 字号按词频 log 映射，阿基米德螺线放置 + 掩码积分图碰撞检测，最多 100 词，配色跟随主题
+
+### 1.2.16 · 字体跟随变形修正
+
+- 键盘高度变化时字体改为 Y 轴拉伸：字号、字宽、笔画粗细不变，仅字形纵向拉长
+
+### 1.2.15 · 字体跟随开关 + 更新弹窗
+
+- 键盘高度页新增「字体跟随变形」开关，拖动实时预览、确定保存
+- 更新弹窗按钮固定一行，更新说明进限高滚动区，Markdown 标记清理成可读文本
+
+### 1.2.14 · 紧凑候选栏 + 字体管理 + 应用内更新
+
+- 紧凑候选栏：长句不再缩字，按实际宽度分配并支持横向滚动；展开、选词、长按忘记该词均补测
+- 外观 → 字体与字号：按键 / 符号 / 候选 / 注释 / 弹出 / 预编辑分别覆盖字体与字号，支持有序多字体补字、一键跟随主题
+- 字体管理页：识别用户目录 `fonts/Fonts`，导入 TTF / OTF / TTC（单文件 64 MiB 上限），内置字体不可删
+- 键盘高度 120–500 dp、底部安全区 0–120 dp，拖动实时预览、确定保存
+- **应用内检查更新**：读取 GitHub 最新 Release，自动匹配 ABI 下载、按 `SHA256SUMS.txt` 校验后拉起系统安装器
+- 修复手动部署未捕获异常退出、主题诊断误报等
 
 ### 1.2.13 · 回车键重绘优化
 

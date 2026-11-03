@@ -71,6 +71,8 @@ data class TextKeyboard(
         val labelSymbol: String = "",
         /** 芝版：角标是否画在左上角（元书的上滑提示就是这种位置）。 */
         val symbolAtTopLeft: Boolean = false,
+        /** 芝版：右上角标（元书的下滑提示，如 q 键的 `!`）。 */
+        val labelSymbolRight: String = "",
         val hint: String = "",
         val sendBindings: Boolean = true,
         val keyTextSize: Float = 0f,

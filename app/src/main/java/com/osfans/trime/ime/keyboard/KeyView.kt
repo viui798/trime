@@ -308,6 +308,11 @@ class KeyView(
             drawSymbol(canvas, symbol)
         }
 
+        val symbolRight = key.symbolLabelRight
+        if (symbolRight.isNotEmpty()) {
+            drawSymbol(canvas, symbolRight, isTop = true, alignRight = true)
+        }
+
         val hint = key.hint
         if (hint.isNotEmpty()) {
             drawSymbol(canvas, hint, isTop = false)
@@ -435,7 +440,12 @@ class KeyView(
         icon.draw(canvas)
     }
 
-    private fun drawSymbol(canvas: Canvas, text: String, isTop: Boolean = true) {
+    private fun drawSymbol(
+        canvas: Canvas,
+        text: String,
+        isTop: Boolean = true,
+        alignRight: Boolean = false,
+    ) {
         if (isTop && keyboardView.hideKeySymbol) return
         if (!isTop && keyboardView.hideKeyHint) return
 
@@ -460,13 +470,15 @@ class KeyView(
 
             // 元书的角标贴在左上角，同文默认的角标是上方居中。
             val leftAligned = isTop && key.symbolAtTopLeft
-            val centerX = if (leftAligned) {
-                paddingLeft + dp(5f) + symbolPaint.measureText(lines.maxByOrNull { it.length } ?: "") / 2f + sp(offsetX)
-            } else {
-                (width - paddingLeft - paddingRight) / 2f + paddingLeft + sp(offsetX)
+            val textWidth = symbolPaint.measureText(lines.maxByOrNull { it.length } ?: "")
+            val centerX = when {
+                // 元书的角标：左上、右上各一个，长按命令在下方。
+                leftAligned -> paddingLeft + dp(5f) + textWidth / 2f + sp(offsetX)
+                alignRight -> width - paddingRight - dp(5f) - textWidth / 2f + sp(offsetX)
+                else -> (width - paddingLeft - paddingRight) / 2f + paddingLeft + sp(offsetX)
             }
             val startY = if (isTop) {
-                paddingTop - fontMetrics.top + sp(offsetY) + if (leftAligned) dp(2f) else 0f - (totalHeight - lineHeight) / 2
+                paddingTop - fontMetrics.top + sp(offsetY) + if (leftAligned || alignRight) dp(2f) else 0f - (totalHeight - lineHeight) / 2
             } else {
                 height - paddingBottom - fontMetrics.bottom + sp(offsetY) - (totalHeight - lineHeight) / 2
             }

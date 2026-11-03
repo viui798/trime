@@ -322,6 +322,9 @@ class Key(
     val symbolLabel: String
         get() = labelSymbol.ifEmpty { longClick?.getLabel(parent) ?: "" }
 
+    /** 芝版：右上角标（元书的下滑提示）。 */
+    val symbolLabelRight: String = keyDef?.labelSymbolRight ?: ""
+
     private val appearanceType: Int
         get() {
             return when {

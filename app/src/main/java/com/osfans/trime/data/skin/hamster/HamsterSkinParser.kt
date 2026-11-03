@@ -51,8 +51,12 @@ object HamsterSkinParser {
         val backImagePressed: ImageRef? = null,
         /** cskin 的 fileImage 前景（字母本身是图片），画在键帽上而不是画文字。 */
         val foregroundImage: ImageRef? = null,
-        /** 键位左上角的小字（元书的角标，如 `1 !`）。 */
+        /** 键位左上角的小字（元书的上滑提示，如 q 键的 `1`）。 */
         val symbol: String = "",
+        /** 键位右上角的小字（元书的下滑提示，如 q 键的 `!`）。 */
+        val symbolRight: String = "",
+        /** 键位下方的长按命令（如 z 键的「撤销」）。 */
+        val hint: String = "",
     )
 
     /** 元书精灵图里的一张切片引用。 */
@@ -101,6 +105,7 @@ object HamsterSkinParser {
             "symbolic" to listOfNotNull(declared["symbolic"], "symbolic_portrait", "symbolic"),
         )
 
+        val roots = mutableMapOf<String, JsonObject>()
         val keyboards = specs.mapNotNull { (id, names) ->
             val file = names
                 .asSequence()
@@ -113,6 +118,7 @@ object HamsterSkinParser {
                 Timber.w(it, "hamster: 解析 %s 失败", file.name)
                 return@mapNotNull null
             }
+            roots[id] = root
             val rows = runCatching { buildKeyboard(root, file.nameWithoutExtension) }
                 .onFailure { Timber.w(it, "hamster: 构造按键失败 %s", file.name) }
                 .getOrNull()
@@ -121,6 +127,17 @@ object HamsterSkinParser {
         }.toMap()
 
         if (keyboards.isEmpty()) return null
+
+        // 数字键盘的符号条可能有多屏，其余屏各生成一个键盘（滑动切换）。
+        val numericPages = mutableMapOf<String, HamsterRows>()
+        roots["numeric"]?.let { numericRoot ->
+            val total = parseSymbolList(numericRoot["symbols"]).size
+            val screens = ((total + 3) / 4).coerceAtLeast(1)
+            for (screen in 1 until screens) {
+                buildKeyboard(numericRoot, "numeric_s$screen", symbolPage = screen)
+                    ?.let { numericPages["numeric_s$screen"] = it }
+            }
+        }
 
         // 解析出 0 个键的键盘视为不可用：元书的数字 / 符号键盘是 VStack 列式布局，
         // 目前只支持 HStack 行式，解析不出来时先回落到生成的版本，避免切过去是空白。
@@ -136,18 +153,29 @@ object HamsterSkinParser {
         val enterCap = mainKeys.firstOrNull { it.click?.contains("Return") == true }?.backImage
             ?: alphaCap
 
+        // 符号页：按 cskin 的 category 列表与各类符号展开成「一个分类的一页一个键盘」。
+        val symbolicPages = buildSymbolicPages(
+            root = roots["symbolic"],
+            keyCap = alphaCap,
+            enterCap = enterCap,
+        )
+
         // 先补符号键盘，数字键盘底行的 #+= 才知道能不能切过去。
-        val withSymbolic = if ("symbolic" in valid) {
-            valid
-        } else {
-            valid + ("symbolic" to defaultSymbolicRows(dark, alphaCap))
+        val withSymbolic = when {
+            symbolicPages.isNotEmpty() ->
+                valid - "symbolic" + symbolicPages + mapOf(
+                    "symbolic" to symbolicPages.values.first(),
+                )
+
+            "symbolic" in valid -> valid
+            else -> valid + ("symbolic" to defaultSymbolicRows(dark, alphaCap))
         }
         val withNumeric = if ("numeric" in withSymbolic) {
             withSymbolic
         } else {
             withSymbolic + ("numeric" to defaultNumericRows(dark, hasSymbolic = true, alphaCap, enterCap))
         }
-        return HamsterSkin(dir.name, dir, withNumeric)
+        return HamsterSkin(dir.name, dir, withNumeric + numericPages)
     }
 
     /**
@@ -180,6 +208,168 @@ object HamsterSkinParser {
             }
         }
         return result
+    }
+
+    /**
+     * 读 cskin 的 `symbols` 数组。
+     *
+     * 条目有两种写法：`{"action": {"character": "+"}, "label": "+"}` 和裸字符串 `"()"`。
+     * 返回 `(显示文字, 要输入的字符)`。
+     */
+    private fun parseSymbolList(element: JsonElement?): List<Pair<String, String>> {
+        val array = element as? JsonArray ?: return emptyList()
+        return array.mapNotNull { item ->
+            when (item) {
+                is JsonPrimitive -> item.contentOrNullSafe()?.let { it to it }
+                is JsonObject -> {
+                    val click = actionCharacter(item["action"])
+                    val label = item["label"]?.asString() ?: click
+                    if (label.isNullOrBlank() || click.isNullOrBlank()) null else label to click
+                }
+
+                else -> null
+            }
+        }
+    }
+
+    /** 把 cskin 的 category / 各类符号展开成一组符号页；数据缺失时返回空。 */
+    private fun buildSymbolicPages(
+        root: JsonObject?,
+        keyCap: ImageRef?,
+        enterCap: ImageRef?,
+    ): Map<String, HamsterRows> {
+        if (root == null) return emptyMap()
+        val categories = (root["category"] as? JsonArray)
+            ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNullSafe() }
+            ?.filter { it.isNotBlank() }
+            ?: return emptyMap()
+        if (categories.isEmpty()) return emptyMap()
+
+        val symbolsByCategory = categories.associateWith { category ->
+            (root[category] as? JsonArray)
+                ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNullSafe() }
+                ?.filter { it.isNotBlank() }
+                .orEmpty()
+        }
+
+        val pageSize = 25
+        val result = mutableMapOf<String, HamsterRows>()
+        categories.forEachIndexed { index, _ ->
+            val count = symbolsByCategory[categories[index]].orEmpty().size
+            val pages = ((count + pageSize - 1) / pageSize).coerceAtLeast(1)
+            for (page in 0 until pages) {
+                val id = "symbolic_${index}_$page"
+                result[id] = buildSymbolicPage(categories, symbolsByCategory, index, page, keyCap, enterCap)
+            }
+        }
+        return result
+    }
+
+    /**
+     * 生成一页符号键盘（按 cskin 的 symbolic 定义）。
+     *
+     * 版面取自 skin 的 keyboardLayout：
+     * - 上方 227/281：左侧分类列（56/375 宽）+ 右侧符号网格（319/375 宽，5 列 × 5 行）
+     * - 下方 54/281：返回 / 上翻 / 下翻 / 锁定 / 退格
+     *
+     * 分类有 21 个、符号 1600 多个，全部展开会得到几十个键盘；
+     * 这里「一个分类的一页」生成一个键盘，靠 preset_keys 互相切换。
+     */
+    private fun buildSymbolicPage(
+        categories: List<String>,
+        symbolsByCategory: Map<String, List<String>>,
+        catIndex: Int,
+        page: Int,
+        keyCap: ImageRef?,
+        enterCap: ImageRef?,
+    ): HamsterRows {
+        val topHeight = 227f / 281f
+        val bottomHeight = 1f - topHeight
+        val categoryWidth = 56f / 375f
+        val gridX = categoryWidth
+        val gridW = 1f - categoryWidth
+        val columns = 5
+        val rows = 5
+        val pageSize = columns * rows
+
+        val cells = mutableListOf<PlacedKey>()
+
+        // 左侧分类列：以当前分类为中心取 5 个，点击切到该分类的第一页。
+        val windowSize = 5
+        val start = (catIndex - 2).coerceIn(0, (categories.size - windowSize).coerceAtLeast(0))
+        val slotHeight = topHeight / windowSize
+        for (i in 0 until windowSize) {
+            val index = start + i
+            val name = categories.getOrNull(index) ?: continue
+            val active = index == catIndex
+            cells += PlacedKey(
+                key = HamsterKey(
+                    label = name,
+                    click = "Hamster_sym_${index}_0",
+                    textColor = if (active) "0xFF2E2E2E" else "0xFF8A8A8A",
+                    backImage = keyCap,
+                ),
+                x = 0f,
+                y = slotHeight * i,
+                w = categoryWidth,
+                h = slotHeight,
+            )
+        }
+
+        // 右侧符号网格。
+        val symbols = symbolsByCategory[categories[catIndex]].orEmpty()
+        val pageCount = ((symbols.size + pageSize - 1) / pageSize).coerceAtLeast(1)
+        val safePage = page.coerceIn(0, pageCount - 1)
+        val cellW = gridW / columns
+        val cellH = topHeight / rows
+        symbols.drop(safePage * pageSize).take(pageSize).forEachIndexed { i, symbol ->
+            val col = i % columns
+            val row = i / columns
+            cells += PlacedKey(
+                key = HamsterKey(
+                    label = symbol,
+                    click = symbol,
+                    backImage = keyCap,
+                ),
+                x = gridX + cellW * col,
+                y = cellH * row,
+                w = cellW,
+                h = cellH,
+            )
+        }
+
+        // 底行五个按钮。
+        val bottomKeys = listOf(
+            HamsterKey(label = "返回", click = "Hamster_alpha", backImage = keyCap),
+            HamsterKey(
+                label = "▲",
+                click = if (safePage > 0) "Hamster_sym_${catIndex}_${safePage - 1}" else "Hamster_sym_${catIndex}_0",
+                backImage = keyCap,
+            ),
+            HamsterKey(
+                label = "▼",
+                click = if (safePage + 1 < pageCount) {
+                    "Hamster_sym_${catIndex}_${safePage + 1}"
+                } else {
+                    "Hamster_sym_${catIndex}_${pageCount - 1}"
+                },
+                backImage = keyCap,
+            ),
+            HamsterKey(label = "锁", click = null, textColor = "0xFF8A8A8A", backImage = keyCap),
+            HamsterKey(label = "⌫", click = "BackSpace", backImage = enterCap ?: keyCap),
+        )
+        val buttonW = 1f / bottomKeys.size
+        bottomKeys.forEachIndexed { i, key ->
+            cells += PlacedKey(
+                key = key.copy(widthPercent = buttonW * 100f),
+                x = buttonW * i,
+                y = topHeight,
+                w = buttonW,
+                h = bottomHeight,
+            )
+        }
+
+        return HamsterRows("symbolic_${catIndex}_$safePage", cells = cells)
     }
 
     /**
@@ -318,21 +508,35 @@ object HamsterSkinParser {
      * 优先按布局树求值（支持 HStack/VStack、分数尺寸、跨行），
      * 求不出来时退回旧的「一行一个 HStack」解析。
      */
-    private fun buildKeyboard(root: JsonObject, name: String): HamsterRows? {
+    private fun buildKeyboard(
+        root: JsonObject,
+        name: String,
+        symbolPage: Int = 0,
+    ): HamsterRows? {
         val layoutCells = runCatching { HamsterLayout.layout(root) }.getOrDefault(emptyList())
         if (layoutCells.isNotEmpty()) {
+            // 数字键盘左列是可滑动的符号条：cskin 的 `symbols` 数组给出符号表，
+            // 单元格里一屏放 4 个，上下滑切换下一页。
+            val symbolList = parseSymbolList(root["symbols"])
+            val perScreen = 4
+            val screenCount = ((symbolList.size + perScreen - 1) / perScreen).coerceAtLeast(1)
+            val screen = symbolPage.coerceIn(0, screenCount - 1)
+
             val placed = layoutCells.flatMap { cell ->
-                // 元书的 `collection` 是一组内置符号（@ % - +），cskin 里没有它的内容定义，
-                // 按元书默认的四个符号在单元格内纵向等高展开。
                 if (cell.name == "collection") {
-                    val symbols = listOf("@", "%", "-", "+")
-                    val step = cell.height / symbols.size
-                    symbols.mapIndexed { index, symbol ->
+                    val items = if (symbolList.isNotEmpty()) {
+                        symbolList.drop(screen * perScreen).take(perScreen)
+                    } else {
+                        listOf("@", "%", "-", "+").map { it to it }
+                    }
+                    val step = cell.height / items.size
+                    items.mapIndexed { index, item ->
                         PlacedKey(
                             key = HamsterKey(
-                                label = symbol,
-                                click = symbol,
-                                symbol = "",
+                                label = item.first,
+                                click = item.second,
+                                swipeUp = if (screen + 1 < screenCount) "Hamster_num_s${screen + 1}" else null,
+                                swipeDown = if (screen > 0) "Hamster_num_s${screen - 1}" else null,
                             ),
                             x = cell.x,
                             y = cell.y + step * index,
@@ -409,11 +613,17 @@ object HamsterSkinParser {
         val fg = fgChain.firstOrNull()
         // 元书把「上滑 / 下滑提示」也放在 foregroundStyle 的数组里，例如 q 键是
         // [字母图片, "1", "!"]，显示在键帽左上角。
-        val symbol = fgChain.drop(1)
-            .mapNotNull { it["text"]?.asString() }
-            // `$rimeSchemaName` 这类是元书的宿主变量，同文没有对应值，直接丢掉。
-            .filter { text -> text.isNotBlank() && !text.startsWith("$") }
-            .joinToString(" ")
+        // 元书的角标不是单独的样式，而是「上滑 / 下滑动作」的提示：
+        // q 键 swipeUp=1、swipeDown=!；z 键 swipeDown={shortcut: "#undo"} → 「撤销」。
+        // 字符类画在左上 / 右上，命令类（shortcut）画在键位下方。
+        val upLabel = actionLabel(def["swipeUpAction"])
+        val downLabel = actionLabel(def["swipeDownAction"])
+        val symbol = upLabel?.takeIf { !it.second }?.first.orEmpty()
+        val symbolRight = downLabel?.takeIf { !it.second }?.first.orEmpty()
+        val hint = (downLabel?.takeIf { it.second } ?: upLabel?.takeIf { it.second })
+            ?.first
+            ?.takeIf { it.isNotBlank() }
+            .orEmpty()
         val bg = style(root, def["backgroundStyle"])
         val isFileImage = bg?.get("buttonStyleType")?.asString() == "fileImage"
         val isFgImage = fg?.get("buttonStyleType")?.asString() == "fileImage"
@@ -432,6 +642,8 @@ object HamsterSkinParser {
             backColorPressed = bg?.let { if (it["buttonStyleType"]?.asString() == "geometry") it["highlightColor"]?.asString() else null },
             cornerRadius = bg?.get("cornerRadius")?.asFloat() ?: -1f,
             symbol = symbol,
+            symbolRight = symbolRight,
+            hint = hint,
             foregroundImage = if (isFgImage) fg?.get("normalImage").toImageRef() else null,
             backImage = if (isFileImage) bg?.get("normalImage").toImageRef() else null,
             backImagePressed = if (isFileImage) bg?.get("highlightImage").toImageRef() else null,
@@ -444,6 +656,52 @@ object HamsterSkinParser {
         val file = obj["file"]?.asString() ?: return null
         val image = obj["image"]?.asString() ?: return null
         return ImageRef(file, image)
+    }
+
+    /**
+     * 把上滑 / 下滑动作转成显示文字。
+     *
+     * 返回 `(文字, 是否命令)`：命令类（shortcut）显示在键位下方，字符类显示在角上。
+     */
+    private fun actionLabel(action: JsonElement?): Pair<String, Boolean>? = when (action) {
+        null -> null
+        is JsonPrimitive -> {
+            val raw = action.contentOrNullSafe() ?: return null
+            val text = when (raw) {
+                "tab" -> "⇤"
+                "shift" -> "⇧"
+                "backspace" -> "⌫"
+                "enter", "return" -> "⏎"
+                "space" -> "空格"
+                else -> raw.takeIf { it.isNotBlank() }
+            } ?: return null
+            text to false
+        }
+
+        is JsonObject -> {
+            action["character"]?.asString()?.let { return it to false }
+            action["symbol"]?.asString()?.let { return it to false }
+            action["shortcut"]?.asString()?.let { return shortcutLabel(it) to true }
+            null
+        }
+
+        else -> null
+    }
+
+    /** 元书的 shortcut 用 `#` 前缀，显示成用户看得懂的中文。 */
+    private fun shortcutLabel(shortcut: String): String = when (shortcut) {
+        "#undo" -> "撤销"
+        "#redo" -> "重做"
+        "#cut" -> "剪切"
+        "#copy" -> "复制"
+        "#paste" -> "粘贴"
+        "#selectAll" -> "全选"
+        "#selectall" -> "全选"
+        "#textEditing" -> "文本编辑"
+        "#moveCursorLeft" -> "左移"
+        "#moveCursorRight" -> "右移"
+        // 未知命令宁可不显示，也不要塞一个同文自造的词。
+        else -> ""
     }
 
     /** 降级链上的所有样式（有序），用于同时读取主前景与角标。 */
@@ -598,6 +856,14 @@ object HamsterThemeBuilder {
                     put("Hamster_symbolic", PresetKey(send = "Eisu_toggle", select = "symbolic"))
                 }
                 put("Hamster_alpha", PresetKey(send = "Eisu_toggle", select = ".default"))
+                // 符号页：分类切换与翻页都靠这些预设键（symbolic_<分类>_<页>）。
+                available.filter { it.startsWith("symbolic_") }.forEach { id ->
+                    put("Hamster_sym_" + id.removePrefix("symbolic_"), PresetKey(send = "Eisu_toggle", select = id))
+                }
+                // 数字键盘符号条的翻页。
+                available.filter { it.startsWith("numeric_s") }.forEach { id ->
+                    put("Hamster_num_" + id.removePrefix("numeric_"), PresetKey(send = "Eisu_toggle", select = id))
+                }
             },
             presetColorSchemes = mapOf("default" to scheme),
         )
@@ -723,6 +989,10 @@ object HamsterThemeBuilder {
             fixedLabel = !key.label.isSingleAsciiLetter(),
             labelSymbol = key.symbol,
             symbolAtTopLeft = key.symbol.isNotEmpty(),
+            labelSymbolRight = key.symbolRight,
+            hint = key.hint,
+            // 角标与长按命令都是小字，元书大约 10pt，这里按屏幕密度用 9sp。
+            symbolTextSize = if (key.symbol.isNotEmpty() || key.symbolRight.isNotEmpty() || key.hint.isNotEmpty()) 9f else 0f,
             keyTextSize = key.textSize,
             roundCorner = key.cornerRadius,
             keyTextColor = key.textColor?.toTrimeColor() ?: fallbackText,

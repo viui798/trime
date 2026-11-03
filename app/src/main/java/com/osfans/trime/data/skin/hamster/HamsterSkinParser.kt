@@ -8,6 +8,7 @@ package com.osfans.trime.data.skin.hamster
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.model.GeneralStyle
 import com.osfans.trime.data.theme.model.KeyActionToken
+import com.osfans.trime.data.theme.model.PresetKey
 import com.osfans.trime.data.theme.model.TextKeyboard
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -30,6 +31,7 @@ import java.io.File
  * [HamsterThemeBuilder] 落成同文的 [Theme]。
  */
 object HamsterSkinParser {
+    private val KINDS = setOf("pinyin", "numeric", "symbolic")
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     /** 一个按钮解析后需要的全部信息。 */
@@ -51,46 +53,64 @@ object HamsterSkinParser {
         val rows: List<List<HamsterKey>>,
     )
 
-    /** 读取 [dir] 下的元书皮肤；结构不对时返回 null。 */
-    fun parse(dir: File, dark: Boolean = false): HamsterRows? {
-        val config = runCatching { readConfig(File(dir, "config.yaml")) }.getOrNull()
+    /** 一套皮肤：[default] 主键盘 + 可选的 [numeric] / [symbolic]。 */
+    data class HamsterSkin(
+        val name: String,
+        val keyboards: Map<String, HamsterRows>,
+    )
+
+    /** 读取 [dir] 下的元书皮肤；一套键盘都读不出来时返回 null。 */
+    fun parse(dir: File, dark: Boolean = false): HamsterSkin? {
         val modeDir = File(dir, if (dark) "dark" else "light")
         if (!modeDir.isDirectory) {
             Timber.w("hamster: %s 缺少 %s 目录", dir.name, modeDir.name)
             return null
         }
+        val declared = runCatching { readConfig(File(dir, "config.yaml")) }.getOrDefault(emptyMap())
 
-        val candidates = buildList {
-            config?.let { add(it) }
-            add("pinyinPortrait")
-            add("pinyin_26_portrait")
-        }
-        val file = candidates
-            .asSequence()
-            .map { File(modeDir, "$it.yaml") }
-            .firstOrNull { it.isFile }
-            ?: modeDir.listFiles { f -> f.isFile && f.name.endsWith(".yaml") }
-                ?.sortedBy { it.name }
-                ?.firstOrNull()
-            ?: return null
+        // cskin 的 config 只声明它自己有的键盘，缺的一律按常见文件名回落。
+        val specs = listOf(
+            "default" to listOfNotNull(declared["pinyin"], "pinyinPortrait", "pinyin_26_portrait"),
+            "numeric" to listOfNotNull(declared["numeric"], "numeric_9_portrait", "numeric_9"),
+            "symbolic" to listOfNotNull(declared["symbolic"], "symbolic_portrait", "symbolic"),
+        )
 
-        val root = runCatching {
-            json.parseToJsonElement(file.readText()).jsonObject
-        }.getOrElse {
-            Timber.w(it, "hamster: 解析 %s 失败", file.name)
-            return null
+        val keyboards = specs.mapNotNull { (id, names) ->
+            val file = names
+                .asSequence()
+                .map { File(modeDir, "$it.yaml") }
+                .firstOrNull { it.isFile }
+                ?: return@mapNotNull null
+            val root = runCatching {
+                json.parseToJsonElement(file.readText()).jsonObject
+            }.getOrElse {
+                Timber.w(it, "hamster: 解析 %s 失败", file.name)
+                return@mapNotNull null
+            }
+            val rows = runCatching { buildRows(root, file.nameWithoutExtension) }
+                .onFailure { Timber.w(it, "hamster: 构造按键失败 %s", file.name) }
+                .getOrNull()
+                ?: return@mapNotNull null
+            id to rows
+        }.toMap()
+
+        if (keyboards.isEmpty()) return null
+        // 元书默认皮肤只带主键盘，123 键就无处可去；补一套同风格的九宫格。
+        val withFallback = if ("numeric" in keyboards) {
+            keyboards
+        } else {
+            keyboards + ("numeric" to defaultNumericRows())
         }
-        return runCatching { buildRows(root, file.nameWithoutExtension) }
-            .onFailure { Timber.w(it, "hamster: 构造按键失败 %s", file.name) }
-            .getOrNull()
+        return HamsterSkin(dir.name, withFallback)
     }
 
     /**
-     * config.yaml 只需取出 `pinyin.phone.portrait`（或 iPhone.portrait）。
+     * config.yaml 只需取出 pinyin / numeric / symbolic 的竖屏文件名。
      * 文件很小，逐行读缩进足够，避免为它引入完整 YAML 解析。
      */
-    private fun readConfig(file: File): String? {
-        if (!file.isFile) return null
+    private fun readConfig(file: File): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+        if (!file.isFile) return result
         var section = ""
         var device = ""
         for (raw in file.readLines()) {
@@ -106,14 +126,30 @@ object HamsterSkinParser {
                 device = line.substringBefore(':').trim()
                 continue
             }
-            if (section == "pinyin" && (device == "phone" || device == "iPhone")) {
+            if (section in KINDS && (device == "phone" || device == "iPhone")) {
                 val key = line.substringBefore(':').trim()
                 if (key == "portrait") {
-                    return line.substringAfter(':').trim().trim('"', '\'')
+                    result[section] = line.substringAfter(':').trim().trim('"', '\'')
                 }
             }
         }
-        return null
+        return result
+    }
+
+    /** 皮肤没带数字键盘时的兜底：标准九宫格，键帽样式沿用主键盘首键。 */
+    private fun defaultNumericRows(): HamsterRows {
+        fun digit(text: String) = HamsterKey(label = text, widthPercent = 100f / 3f, click = text)
+        val rows = listOf(
+            listOf(digit("1"), digit("2"), digit("3")),
+            listOf(digit("4"), digit("5"), digit("6")),
+            listOf(digit("7"), digit("8"), digit("9")),
+            listOf(
+                HamsterKey(label = "abc", widthPercent = 100f / 3f, click = "Hamster_alpha"),
+                digit("0"),
+                HamsterKey(label = "⌫", widthPercent = 100f / 3f, click = "BackSpace"),
+            ),
+        )
+        return HamsterRows("numeric", rows)
     }
 
     private fun buildRows(root: JsonObject, name: String): HamsterRows? {
@@ -226,7 +262,8 @@ object HamsterSkinParser {
     private fun actionToken(action: JsonElement?): String? = when (action) {
         null -> null
         is JsonPrimitive -> when (val raw = action.contentOrNullSafe()) {
-            "enter" -> "Return"
+            "enter", "return" -> "Return"
+            "delete" -> "BackSpace"
             "space" -> "space"
             "backspace" -> "BackSpace"
             "shift" -> "Shift"
@@ -265,34 +302,39 @@ object HamsterThemeBuilder {
     private const val DEFAULT_LONG_TEXT_SIZE = 16f
     private const val DEFAULT_SYMBOL_TEXT_SIZE = 12f
 
-    fun build(skinName: String, parsed: HamsterSkinParser.HamsterRows, dark: Boolean): Theme {
-        val keys = parsed.rows.flatten().map { key ->
-            TextKeyboard.TextKey(
-                width = key.widthPercent,
-                label = key.label,
-                keyTextSize = key.textSize,
-                roundCorner = key.cornerRadius,
-                keyTextColor = key.textColor?.toTrimeColor().orEmpty(),
-                keyBackColor = key.backColor?.toTrimeColor().orEmpty(),
-                hilitedKeyBackColor = key.backColorPressed?.toTrimeColor().orEmpty(),
-                click = key.click?.let(KeyActionToken::Plain),
-                swipeUp = key.swipeUp?.let(KeyActionToken::Plain),
-                swipeDown = key.swipeDown?.let(KeyActionToken::Plain),
-            )
-        }
+    fun build(skinName: String, skin: HamsterSkinParser.HamsterSkin, dark: Boolean): Theme {
+        val available = skin.keyboards.keys
+        val keyboards = skin.keyboards.mapValues { (id, rows) -> toKeyboard(skinName, id, rows, available, dark) }
 
-        val keyboard = TextKeyboard(
-            name = skinName,
-            width = 100f,
-            height = parsed.rows.size.toFloat(),
-            columns = -1,
-            keys = keys,
-        )
-
+        // 兜底配色：cskin 里没有显式文字色的键（图标键）也要能看见。
         val scheme = if (dark) {
-            mapOf("back_color" to "0xFF1C1C1E".toULongColor(), "text_color" to "0xFFFFFFFF".toULongColor())
+            mapOf(
+                "back_color" to "0xFF1C1C1E".toULongColor(),
+                "text_color" to "0xFFFFFFFF".toULongColor(),
+                "key_back_color" to "0xFF2C2C2E".toULongColor(),
+                "key_text_color" to "0xFFFFFFFF".toULongColor(),
+                "key_symbol_color" to "0xFFB0B0B5".toULongColor(),
+                "hilited_key_back_color" to "0xFF3A3A3C".toULongColor(),
+                "hilited_key_text_color" to "0xFFFFFFFF".toULongColor(),
+                "off_key_back_color" to "0xFF2C2C2E".toULongColor(),
+                "off_key_text_color" to "0xFFFFFFFF".toULongColor(),
+                "on_key_back_color" to "0xFF3A3A3C".toULongColor(),
+                "on_key_text_color" to "0xFFFFFFFF".toULongColor(),
+            )
         } else {
-            mapOf("back_color" to "0xFFD1D3D9".toULongColor(), "text_color" to "0xFF000000".toULongColor())
+            mapOf(
+                "back_color" to "0xFFD1D3D9".toULongColor(),
+                "text_color" to "0xFF000000".toULongColor(),
+                "key_back_color" to "0xFFFFFFFF".toULongColor(),
+                "key_text_color" to "0xFF000000".toULongColor(),
+                "key_symbol_color" to "0xFF6B6B70".toULongColor(),
+                "hilited_key_back_color" to "0xFFE6E6E6".toULongColor(),
+                "hilited_key_text_color" to "0xFF000000".toULongColor(),
+                "off_key_back_color" to "0xFFFFFFFF".toULongColor(),
+                "off_key_text_color" to "0xFF000000".toULongColor(),
+                "on_key_back_color" to "0xFFE6E6E6".toULongColor(),
+                "on_key_text_color" to "0xFF000000".toULongColor(),
+            )
         }
 
         return Theme(
@@ -308,10 +350,94 @@ object HamsterThemeBuilder {
                 verticalGap = 4,
                 keyBorder = 0,
             ),
-            presetKeyboards = mapOf("default" to keyboard),
+            presetKeyboards = keyboards,
+            // cskin 的「切键盘」动作落到同文的 Eisu 上；皮肤没有的键盘不生成入口。
+            presetKeys = buildMap {
+                if ("numeric" in available) {
+                    put("Hamster_numeric", PresetKey(send = "Eisu_toggle", select = "numeric"))
+                }
+                if ("symbolic" in available) {
+                    put("Hamster_symbolic", PresetKey(send = "Eisu_toggle", select = "symbolic"))
+                }
+                put("Hamster_alpha", PresetKey(send = "Eisu_toggle", select = ".default"))
+            },
             presetColorSchemes = mapOf("default" to scheme),
         )
     }
+
+    private fun toKeyboard(
+        skinName: String,
+        id: String,
+        rows: HamsterSkinParser.HamsterRows,
+        available: Set<String>,
+        dark: Boolean,
+    ): TextKeyboard {
+        // 皮肤里用图标、没写文字色的键（英文切换等）用一个可见的缺省色兜住。
+        val fallbackText = if (dark) "0xFFFFFFFF" else "0xFF000000"
+
+        val keys = rows.rows.flatMap { row ->
+            val out = mutableListOf<TextKeyboard.TextKey>()
+            row.forEach { key ->
+                val token = key.click?.let { translateAction(it, available) }
+                val unsupported = key.click == null ||
+                    (key.click.startsWith("Keyboard_") && token == null)
+                if (unsupported) {
+                    // 没有可执行动作（元书私有 shortcut 等）：并进前一个键，
+                    // 否则会留下一个「看不见、按了也没反应」的空白键。
+                    val prev = out.lastOrNull()
+                    if (prev != null) {
+                        out[out.lastIndex] = prev.copy(width = prev.width + key.widthPercent)
+                    }
+                    return@forEach
+                }
+                out += TextKeyboard.TextKey(
+                    width = key.widthPercent,
+                    label = key.label,
+                    // cskin 的标签是字面值，英文模式下也要照用；只有单个字母交给大写转换。
+                    fixedLabel = !key.label.isSingleAsciiLetter(),
+                    keyTextSize = key.textSize,
+                    roundCorner = key.cornerRadius,
+                    keyTextColor = key.textColor?.toTrimeColor() ?: fallbackText,
+                    keyBackColor = key.backColor?.toTrimeColor().orEmpty(),
+                    hilitedKeyBackColor = key.backColorPressed?.toTrimeColor().orEmpty(),
+                    click = token?.let(KeyActionToken::Plain),
+                    swipeUp = key.swipeUp?.let(KeyActionToken::Plain),
+                    swipeDown = key.swipeDown?.let(KeyActionToken::Plain),
+                )
+            }
+            // 去掉空键后整行未必是 100%，按比例归一，免得右侧留缺口。
+            val total = out.sumOf { it.width.toDouble() }.toFloat()
+            if (total > 0f && kotlin.math.abs(total - 100f) > 0.01f) {
+                out.map { it.copy(width = it.width * 100f / total) }
+            } else {
+                out
+            }
+        }
+
+        Timber.i(
+            "hamster: keyboard %s keys=%s",
+            id,
+            keys.joinToString(" ") { "${it.label.ifBlank { "·" }}:${it.width}" },
+        )
+        return TextKeyboard(
+            name = skinName,
+            width = 100f,
+            height = rows.rows.size.toFloat(),
+            columns = -1,
+            keys = keys,
+        )
+    }
+
+    /** 元书的键盘切换动作 → 同文预设键；目标键盘不存在时置空，避免点了没反应还丢键。 */
+    private fun translateAction(token: String, available: Set<String>): String? = when (token) {
+        "Keyboard_numeric" -> "Hamster_numeric".takeIf { "numeric" in available }
+        "Keyboard_symbolic" -> "Hamster_symbolic".takeIf { "symbolic" in available }
+        "Keyboard_default" -> "Hamster_alpha"
+        else -> token
+    }
+
+    private fun String.isSingleAsciiLetter(): Boolean =
+        length == 1 && this[0].code < 128 && this[0].isLetter()
 
     private fun String.toTrimeColor(): String = toULongColor()
 

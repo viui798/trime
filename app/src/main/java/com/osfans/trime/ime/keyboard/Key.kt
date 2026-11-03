@@ -72,6 +72,7 @@ class Key(
     var extraWidthRight = 0
 
     private val label = keyDef?.label ?: ""
+    private val fixedLabel = keyDef?.fixedLabel == true
     private val labelSymbol = keyDef?.labelSymbol ?: ""
     val hint: String = keyDef?.hint ?: ""
     val popup = keyDef?.popup ?: emptyList()
@@ -295,9 +296,12 @@ class Key(
 
     fun getLabel(): String = when {
         label.isNotEmpty() &&
-            keyAction == click &&
-            !keyActions.containsKey(KeyBehavior.ASCII) &&
-            !rime.peek { statusCached }.let { it.isAsciiMode || it.isAsciiPunct } -> label
+            (fixedLabel ||
+                (
+                    keyAction == click &&
+                        !keyActions.containsKey(KeyBehavior.ASCII) &&
+                        !rime.peek { statusCached }.let { it.isAsciiMode || it.isAsciiPunct }
+                    )) -> label
 
         else -> keyAction!!.getLabel(parent) // 中文狀態顯示標籤
     }

@@ -52,6 +52,8 @@ data class TextKeyboard(
         val roundCorner: Float = -1f,
         val keyBorder: Int = -1,
         val label: String = "",
+        /** 字面标签：真实输入模式（英文/ASCII）下也照用，不回退到动作名。 */
+        val fixedLabel: Boolean = false,
         val labelSymbol: String = "",
         val hint: String = "",
         val sendBindings: Boolean = true,

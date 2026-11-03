@@ -22,8 +22,10 @@ class HamsterSkinParseTest : FunSpec({
         val parsed = if (dir.isDirectory) HamsterSkinParser.parse(dir, dark = false) else null
         println("目录存在=${dir.isDirectory} parsed=${parsed != null}")
         if (parsed != null) {
-            println("键盘=${parsed.name} 行数=${parsed.rows.size}")
-            parsed.rows.forEachIndexed { i, row ->
+            println("键盘=${parsed.name} 套数=${parsed.keyboards.size} ids=${parsed.keyboards.keys}")
+            val main = parsed.keyboards["default"]
+            println("主键盘行数=${main?.rows?.size}")
+            main?.rows?.forEachIndexed { i, row ->
                 println("行${i + 1}: " + row.joinToString(" | ") { "${it.label.ifBlank { "·" }}(${it.widthPercent})/${it.click}" })
             }
             val theme = HamsterThemeBuilder.build("hamster", parsed, dark = false)

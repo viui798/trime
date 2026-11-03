@@ -14,6 +14,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.isVisible
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.sizeDp
+import com.osfans.trime.data.theme.FontOverrides
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.ThemeScope
 import com.osfans.trime.ime.core.AutoScaleTextView
@@ -72,7 +73,7 @@ class PopupKeyboardUi(
 
         val textView = view(::AutoScaleTextView) {
             scaleMode = AutoScaleTextView.Mode.Proportional
-            textSize = theme.style.popupTextSize
+            textSize = FontOverrides.sizeOrNull(FontOverrides.Scope.POPUP) ?: theme.style.popupTextSize
             setTextColor(scope.colors.popupTextColor)
             typeface = theme.fonts.popup
         }
@@ -98,7 +99,8 @@ class PopupKeyboardUi(
             if (text.isIconFont) {
                 imageView.setImageDrawable(
                     IconicsDrawable(ctx, text.toIconName()).apply {
-                        sizeDp = theme.style.popupTextSize.toInt()
+                        sizeDp = (FontOverrides.sizeOrNull(FontOverrides.Scope.POPUP)
+                            ?: theme.style.popupTextSize).toInt()
                         colorFilter = PorterDuffColorFilter(scope.colors.popupTextColor, PorterDuff.Mode.SRC_IN)
                     },
                 )

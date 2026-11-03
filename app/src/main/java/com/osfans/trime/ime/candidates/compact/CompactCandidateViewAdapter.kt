@@ -48,10 +48,11 @@ open class CompactCandidateViewAdapter(
         data: Array<CandidateProto>,
         total: Int,
         highlightedIndex: Int,
+        onApplied: () -> Unit = {},
     ) {
-        super.submitList(data.toList(), null)
         this.total = total
         this.highlightedIdx = highlightedIndex
+        super.submitList(data.toList(), Runnable { onApplied() })
     }
 
     override fun onCreateViewHolder(
@@ -59,7 +60,7 @@ open class CompactCandidateViewAdapter(
         parent: ViewGroup,
         viewType: Int,
     ): CandidateViewHolder {
-        val ui = CandidateItemUi(context, scope)
+        val ui = CandidateItemUi(context, scope, preserveTextSize = true)
         ui.root.apply {
             minimumWidth = dp(40)
             layoutParams = FlexboxLayoutManager.LayoutParams(wrapContent, matchParent)
@@ -81,6 +82,7 @@ open class CompactCandidateViewAdapter(
         holder.ui.root.updateLayoutParams<FlexboxLayoutManager.LayoutParams> {
             minWidth = this@CompactCandidateViewAdapter.layoutMinWidth
             flexGrow = this@CompactCandidateViewAdapter.layoutFlexGrow
+            flexShrink = 0f
         }
     }
 }

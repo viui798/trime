@@ -33,6 +33,8 @@ object ThemeTestSupport {
         return yaml.decodeFromYamlNode<Theme>(mapping) to mapping
     }
 
-    /** Decodes a built-in theme source file (app/src/main/assets/shared/). */
-    fun decodeBuiltinTheme(fileName: String): Theme = decodeThemeFile("src/main/assets/shared/$fileName")
+    /** Official upstream fixtures are kept separate from Cheese shipping assets.
+     * Golden expectations describe upstream themes, not the deliberately stripped Cheese theme.
+     */
+    fun decodeBuiltinTheme(fileName: String): Theme = decodeThemeFile("src/test/assets/upstream-themes/$fileName")
 }

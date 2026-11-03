@@ -62,6 +62,19 @@ class ThemeDiagnosticsTest :
         }
 
         Given("unknown keys") {
+            Then("theme anchor containers and librime build metadata are not reported") {
+                lintCodes(
+                    """
+                    config_version: "3.0"
+                    name: t
+                    style: {}
+                    Custom: {anchor: &x 1}
+                    __build_info: {time: now}
+                    preset_color_schemes: {default: {back_color: "#000000"}}
+                    """.trimIndent(),
+                ) shouldBe emptyList()
+            }
+
             Then("top-level keys the runtime ignores are reported once each") {
                 val findings =
                     lint(
@@ -438,7 +451,7 @@ class ThemeDiagnosticsTest :
                 )
 
             fun lintBuiltin(file: String): List<ThemeDiagnostics.Finding> {
-                val (theme, node) = ThemeTestSupport.themeAndNode("src/main/assets/shared/$file")
+                val (theme, node) = ThemeTestSupport.themeAndNode("src/test/assets/upstream-themes/$file")
                 return ThemeDiagnostics.lint(theme, node, ::parseHex)
             }
 

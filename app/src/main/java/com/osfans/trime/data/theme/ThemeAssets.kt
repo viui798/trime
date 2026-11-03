@@ -47,6 +47,14 @@ object ThemeAssets {
         return resolve("Fonts/$name")
     }
 
+    /** 当前皮肤包自带的字体目录，给「字体与字号」列可用字体用。 */
+    fun fontsDir(): File? =
+        packageDir?.let { dir ->
+            listOf("fonts", "Fonts")
+                .map { File(dir, it) }
+                .firstOrNull { it.isDirectory }
+        }
+
     private fun findPackageDir(configId: String): File? {
         val fileName = "$configId.yaml"
         return DataManager.themeRootDir

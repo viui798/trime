@@ -160,7 +160,9 @@ object ThemeDiagnostics {
         // expansion, but a theme may still carry them for the librime backend.
         reportUnknownKeys(
             node,
-            Theme.TOP_LEVEL_KEYS + "__include" + "__patch",
+            // `Custom` only holds YAML anchors for theme authors; `__build_info`
+            // is written by librime's config compiler. Neither is a typo.
+            Theme.TOP_LEVEL_KEYS + "__include" + "__patch" + "Custom" + "__build_info",
             path = "",
             code = Code.UNKNOWN_TOP_LEVEL_KEY,
             severity = Severity.INFO,
@@ -350,6 +352,10 @@ object ThemeDiagnostics {
      * theme is checked once at activation time instead of on first use.
      */
     fun presetDiagnostics(presetKeys: Map<String, PresetKey>): List<String> = presetKeys.mapNotNull { (name, preset) ->
+        // `send: function` is the marker for a command-backed key. The runtime
+        // resolves it to KEYCODE_FUNCTION when `command` is set, so it is not
+        // an unresolved send.
+        if (preset.command.isNotEmpty()) return@mapNotNull null
         val (keycode, modifiers) = KeyCode.parse(preset.send)
         if (preset.send.isNotEmpty() && keycode == 0 && modifiers == 0) {
             "preset '$name' has an unrecognized send '${preset.send}'"

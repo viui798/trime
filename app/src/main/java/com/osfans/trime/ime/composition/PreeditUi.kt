@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.text.buildSpannedString
 import com.osfans.trime.core.CompositionProto
+import com.osfans.trime.data.theme.FontOverrides
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.ThemeScope
 import splitties.views.dsl.core.Ui
@@ -37,7 +38,8 @@ open class PreeditUi(
     val preedit =
         view(::PreeditTextView) {
             setTextColor(textColor)
-            textSize = theme.preedit.foreground.fontSize
+            textSize = FontOverrides.sizeOrNull(FontOverrides.Scope.PREEDIT)
+                ?: theme.preedit.foreground.fontSize
             typeface = theme.fonts.text
             setupPreeditView?.invoke(this)
             onMoveCursor = this@PreeditUi.onMoveCursor

@@ -187,6 +187,9 @@ class AppPrefs(
         }
 
         val landscapeMode = enum(R.string.enable_landscape_mode, LANDSCAPE_MODE, LandscapeMode.NEVER)
+        // 0: theme height; -1: automatic safe area. Custom values are portrait dp.
+        val heightOverride = int("keyboard_height_override_dp", 0)
+        val bottomSafeArea = int("keyboard_bottom_safe_area_dp", -1)
         val splitSpacePercent = int(
             R.string.split_space_percent,
             SPLIT_SPACE_PERCENT,

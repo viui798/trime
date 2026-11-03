@@ -98,6 +98,8 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
     private var cursorUpdateIndex = 0
 
     private val recreateInputViewPrefs: Array<PreferenceDelegate<*>> = arrayOf(
+        prefs.keyboard.heightOverride,
+        prefs.keyboard.bottomSafeArea,
         prefs.keyboard.expandKeypressArea,
         prefs.keyboard.hideKeySymbol,
         prefs.keyboard.hideKeyHint,
@@ -110,8 +112,11 @@ open class TrimeInputMethodService : LifecycleInputMethodService() {
 
     @Keep
     private val recreateInputViewListener =
-        PreferenceDelegate.OnChangeListener<Any> { _, _ ->
-            themeScope?.let { replaceInputView(it) }
+        PreferenceDelegate.OnChangeListener<Any> { preference, _ ->
+            themeScope?.let {
+                if (preference == prefs.keyboard.bottomSafeArea.key) replaceInputViews(it)
+                else replaceInputView(it)
+            }
         }
 
     @Keep

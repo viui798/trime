@@ -102,7 +102,10 @@ class Keyboard(
     val asciiKeyboard: String? = selfConfig?.asciiKeyboard // 英文鍵盤
 
     val keyboardHeight: Int =
-        resolvePositive(
+        com.osfans.trime.data.prefs.KeyboardSizePreview.height()
+            .takeIf { it > 0 && context.resources.configuration.orientation != android.content.res.Configuration.ORIENTATION_LANDSCAPE }
+            ?.let { context.dp(it.coerceIn(120, 500)) }
+            ?: resolvePositive(
             selfConfig?.let {
                 pickLandscape(it.keyboardHeight, it.keyboardHeightLand, context.isLandscapeMode())
             },

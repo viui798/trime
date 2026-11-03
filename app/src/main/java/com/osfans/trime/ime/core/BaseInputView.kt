@@ -114,6 +114,10 @@ abstract class BaseInputView(
     private val ignoreSystemGestureInsets by AppPrefs.defaultInstance().advanced.ignoreSystemGestureInsets
 
     protected fun getNavBarBottomInset(windowInsets: WindowInsets): Int {
+        val safeArea = com.osfans.trime.data.prefs.KeyboardSizePreview.safeArea()
+        if (resources.configuration.orientation != android.content.res.Configuration.ORIENTATION_LANDSCAPE && safeArea >= 0) {
+            return dp(safeArea.coerceIn(0, 120))
+        }
         if (navBarBackground != ThemePrefs.NavbarBackground.FULL) {
             return 0
         }

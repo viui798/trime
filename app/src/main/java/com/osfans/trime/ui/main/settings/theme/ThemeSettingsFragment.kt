@@ -19,18 +19,20 @@ import android.widget.LinearLayout
 import android.widget.PopupWindow
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceScreen
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.osfans.trime.R
-import com.osfans.trime.ui.common.ImportFab
 import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.core.data.RimeDataLayout
 import com.osfans.trime.data.importer.RimeResourceImporter
 import com.osfans.trime.data.prefs.PreferenceDelegateFragment
 import com.osfans.trime.data.theme.ColorManager
 import com.osfans.trime.data.theme.ThemeManager
+import com.osfans.trime.ui.common.ImportFab
+import com.osfans.trime.ui.main.NavigationRoute
 import com.osfans.trime.ui.main.settings.ColorPickerDialog
 import com.osfans.trime.ui.main.settings.ThemePickerDialog
 import com.osfans.trime.util.addPreference
@@ -40,15 +42,26 @@ import kotlinx.coroutines.launch
 import splitties.resources.styledColor
 
 class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
+    private var openingThemes = false
     override fun onCreatePreferences(
         savedInstanceState: Bundle?,
         rootKey: String?,
     ) {
         super.onCreatePreferences(savedInstanceState, rootKey)
         findPreference<Preference>("selected_theme")?.setOnPreferenceClickListener {
-            lifecycleScope.launch {
-                ThemePickerDialog.build(lifecycleScope, requireContext()).show()
-                updateSummaries()
+            if (!openingThemes) viewLifecycleOwner.lifecycleScope.launch {
+                openingThemes = true
+                val loading = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.selected_theme)
+                    .setView(android.widget.ProgressBar(requireContext()).apply {
+                        setPadding(48, 48, 48, 48)
+                    }).setCancelable(false).show()
+                try {
+                    ThemePickerDialog.build(viewLifecycleOwner.lifecycleScope, requireContext()).show()
+                } finally {
+                    loading.dismiss()
+                    openingThemes = false
+                }
             }
             true
         }
@@ -104,11 +117,17 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
     }
 
     private fun currentThemeName(): String? {
-        val id = ThemeManager.prefs.selectedTheme.getValue()
-        return runCatching { ThemeManager.getAllThemes().firstOrNull { it.configId == id }?.name }.getOrNull()
+        return runCatching { ThemeManager.activeTheme.name }.getOrNull()
     }
 
     override fun onPreferenceUiCreated(screen: PreferenceScreen) {
+        // 芝版同文：字体从皮肤里剥出来，单独一页给用户改。
+        screen.addPreference(
+            R.string.font_settings,
+            R.string.font_settings_summary,
+        ) {
+            findNavController().navigate(NavigationRoute.FontSettings)
+        }
         screen.addPreference(
             R.string.theme_diagnostics,
             R.string.theme_diagnostics_summary,
@@ -160,8 +179,12 @@ class ThemeSettingsFragment : PreferenceDelegateFragment(ThemeManager.prefs) {
     private fun deployTheme() {
         viewLifecycleOwner.lifecycleScope.launch {
             val id = ThemeManager.prefs.selectedTheme.getValue()
-            runCatching { ThemeManager.selectTheme(id) }
-            requireContext().toast(R.string.setup__deploy_ok)
+            val result = runCatching {
+                com.osfans.trime.data.theme.FontOverrides.applyPending()
+                ThemeManager.selectTheme(id)
+            }
+            if (!isAdded) return@launch
+            requireContext().toast(if (result.isSuccess) R.string.setup__deploy_ok else R.string.setup__deploy_failed)
             updateSummaries()
         }
     }

@@ -95,6 +95,14 @@ object ThemeManager {
         onChangeListeners.remove(listener)
     }
 
+    /**
+     * 芝版同文：字体、字号这类改动不改变主题解析结果，但会影响渲染，
+     * 需要让输入视图重建一次（[fireChange] 的监听方负责重建）。
+     */
+    fun notifyRenderingChanged() {
+        if (::_activeTheme.isInitialized) fireChange()
+    }
+
     private fun fireChange() {
         onChangeListeners.forEach { it.onThemeChange(_activeTheme) }
     }

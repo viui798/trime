@@ -56,5 +56,20 @@ class KeyActionManagerTest :
                     ).shouldBeEmpty()
                 }
             }
+            `when`("the send is the function marker backed by a command") {
+                then("it is not reported") {
+                    diagnostics(
+                        "lua" to PresetKey(send = "function", command = "run"),
+                    ).shouldBeEmpty()
+                }
+            }
+            `when`("the send is a legacy coffee-theme alias") {
+                then("Find and Help resolve without a platform lookup") {
+                    diagnostics(
+                        "search" to PresetKey(send = "Find"),
+                        "help" to PresetKey(send = "Help"),
+                    ).shouldBeEmpty()
+                }
+            }
         }
     })

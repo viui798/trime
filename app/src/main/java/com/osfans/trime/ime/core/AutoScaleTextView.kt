@@ -15,7 +15,6 @@ import android.view.Gravity
 import android.widget.TextView
 import androidx.core.graphics.withSave
 import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -103,23 +102,29 @@ constructor(
             val paint = paint
             paint.getFontMetrics(fontMetrics)
             val codePointCount = Character.codePointCount(text, 0, text.length)
+            val inkBounds = Rect()
+            if (text.isNotEmpty()) {
+                CharArray(text.length).also {
+                    TextUtils.getChars(text, 0, text.length, it, 0)
+                    paint.getTextBounds(it, 0, text.length, inkBounds)
+                }
+            }
             if (codePointCount == 1) {
                 // use actual text bounds when there is only one "character",
                 // eg. full-width punctuation
-                CharArray(text.length).also {
-                    TextUtils.getChars(text, 0, text.length, it, 0)
-                    paint.getTextBounds(it, 0, text.length, textBounds)
-                }
+                textBounds.set(inkBounds)
             } else {
                 textBounds.set(
                     // left =
                     0,
-                    // top =
-                    floor(fontMetrics.top).toInt(),
+                    // top/bottom = the actual glyph ink box. The font line box
+                    // (fontMetrics) may be much taller than the container even
+                    // when every glyph fits, which made multi-character text
+                    // get scaled down while a single character stayed full size.
+                    inkBounds.top,
                     // right =
                     ceil(paint.measureText(text, 0, text.length)).toInt(),
-                    // bottom =
-                    ceil(fontMetrics.bottom).toInt(),
+                    inkBounds.bottom,
                 )
             }
             needsMeasureText = false

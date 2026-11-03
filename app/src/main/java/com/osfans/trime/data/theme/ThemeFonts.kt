@@ -35,7 +35,10 @@ class ThemeFonts(private val theme: Theme) {
         }
 
     private fun names(key: String, fallback: List<String>): List<String> =
-        ColorManager.fontNames(theme, key) ?: fallback
+        // 芝版同文：设置里的「字体与字号」优先于皮肤声明，其次才是配色里的字体列表。
+        FontOverrides.fontsForThemeKey(key)
+            ?: ColorManager.fontNames(theme, key)
+            ?: fallback
 
     /**
      * 具名字体的强缓存。
@@ -50,15 +53,19 @@ class ThemeFonts(private val theme: Theme) {
      */
     private val typefaceByName = HashMap<String, Typeface>()
     private var typefaceByNameGeneration = -1L
+    private var typefaceByFontGeneration = -1L
 
     private fun cached(
         name: String,
         fallback: List<String>,
     ): Typeface {
         val generation = ColorManager.colorGeneration
-        if (generation != typefaceByNameGeneration) {
+        // 设置里改了字体也要整体失效，否则键盘会一直用旧 Typeface。
+        val fontGeneration = FontOverrides.generation
+        if (generation != typefaceByNameGeneration || fontGeneration != typefaceByFontGeneration) {
             typefaceByName.clear()
             typefaceByNameGeneration = generation
+            typefaceByFontGeneration = fontGeneration
         }
         return typefaceByName.getOrPut(name) { getTypeface(names(name, fallback)) }
     }
@@ -99,14 +106,15 @@ class ThemeFonts(private val theme: Theme) {
         // 皮肤包里的 fonts 直读，其次才是「运行数据」和 shared。
         .mapNotNull { ThemeAssets.resolveFont(it) }
         .map { FileState(it.path, it.lastModified(), it.length()) }
+        .distinctBy { it.path }
         .toList()
 
     private fun resolveKey(fonts: List<String>): TypefaceKey {
         val existing = makeFileStateList(fonts)
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && existing.isNotEmpty()) {
-            TypefaceKey(makeFileStateList(names("latin_font", style.latinFont.toList()) + fonts + names("hanb_font", style.hanbFont.toList())))
+            TypefaceKey(makeFileStateList(fonts + names("latin_font", style.latinFont.toList()) + names("hanb_font", style.hanbFont.toList())))
         } else {
-            TypefaceKey(existing.take(1))
+            TypefaceKey(existing)
         }
     }
 
@@ -118,7 +126,10 @@ class ThemeFonts(private val theme: Theme) {
             val newTypeface = if (key.files.isEmpty()) {
                 Typeface.DEFAULT
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val fontFamilies = key.files.map { getFontFamily(it) }
+                val fontFamilies = key.files.mapNotNull { state ->
+                    runCatching { getFontFamily(state) }.onFailure { Timber.w(it, "Invalid font: %s", state.path) }.getOrNull()
+                }.take(Typeface.CustomFallbackBuilder.getMaxCustomFallbackCount())
+                if (fontFamilies.isEmpty()) return Typeface.DEFAULT.also { typefaceCache.put(key, it) }
                 Typeface.CustomFallbackBuilder(fontFamilies.first())
                     .apply {
                         for (i in 1 until fontFamilies.size) {
@@ -128,7 +139,7 @@ class ThemeFonts(private val theme: Theme) {
                     }
                     .build()
             } else {
-                Typeface.createFromFile(key.files.first().path)
+                key.files.firstNotNullOfOrNull { runCatching { Typeface.createFromFile(it.path) }.getOrNull() } ?: Typeface.DEFAULT
             }
             typefaceCache.put(key, newTypeface)
             newTypeface

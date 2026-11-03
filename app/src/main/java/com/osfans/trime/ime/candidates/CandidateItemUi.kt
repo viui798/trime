@@ -12,6 +12,7 @@ import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.osfans.trime.core.CandidateProto
+import com.osfans.trime.data.theme.FontOverrides
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.data.theme.ThemeScope
 import com.osfans.trime.data.theme.model.GeneralStyle
@@ -45,12 +46,16 @@ import splitties.views.horizontalPadding
 class CandidateItemUi(
     override val ctx: Context,
     private val scope: ThemeScope,
+    private val preserveTextSize: Boolean = false,
 ) : Ui {
     private val theme: Theme
         get() = scope.theme
 
-    private val textSize = theme.style.candidateTextSize
-    private val commentSize = theme.style.commentTextSize
+    // 芝版同文：设置里的「字体与字号」可覆盖，未设置时跟随主题。
+    private val textSize =
+        FontOverrides.sizeOrNull(FontOverrides.Scope.CANDIDATE) ?: theme.style.candidateTextSize
+    private val commentSize =
+        FontOverrides.sizeOrNull(FontOverrides.Scope.COMMENT) ?: theme.style.commentTextSize
 
     // Read at use time so a scheme switch re-binds rows with the new colors.
     private val textColor: Int get() = scope.colors.candidateTextColor
@@ -70,7 +75,7 @@ class CandidateItemUi(
             typeface = theme.fonts.candidate
             isSingleLine = true
             gravity = gravityCenter
-            scaleMode = AutoScaleTextView.Mode.Proportional
+            scaleMode = if (preserveTextSize) AutoScaleTextView.Mode.None else AutoScaleTextView.Mode.Proportional
         }
 
     private val comment =
@@ -171,6 +176,19 @@ class CandidateItemUi(
         content.background = roundedRippleDrawable(hlBackColor, cornerRadius, contentColor)
         text.text = item.text
         text.setTextColor(tColor)
+
+        if (preserveTextSize) {
+            // Give the full word its natural width; following words move along the strip.
+            val textWidth = text.paint.measureText(item.text)
+            val commentWidth = if (item.comment.isEmpty()) 0f else comment.paint.measureText(item.comment)
+            val width = if (commentPosition == GeneralStyle.CommentPosition.RIGHT) {
+                textWidth + commentWidth + ctx.dp(1)
+            } else maxOf(textWidth, commentWidth)
+            root.layoutParams?.let { params ->
+                params.width = kotlin.math.ceil(width).toInt() + ctx.dp(theme.style.candidatePadding) * 2
+                root.layoutParams = params
+            }
+        }
 
         val commentText = item.comment
         comment.text = commentText

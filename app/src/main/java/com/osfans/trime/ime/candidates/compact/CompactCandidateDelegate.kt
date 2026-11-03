@@ -69,6 +69,7 @@ class CompactCandidateDelegate(override val di: DI) :
      */
     private var secondLayoutPassNeeded = false
     private var secondLayoutPassDone = false
+    private var followLatestText = false
 
     private val _unrolledCandidateOffset =
         MutableSharedFlow<Int>(
@@ -79,11 +80,14 @@ class CompactCandidateDelegate(override val di: DI) :
     val unrolledCandidateOffset = _unrolledCandidateOffset.asSharedFlow()
 
     fun refreshUnrolled(childCount: Int) {
-        _unrolledCandidateOffset.tryEmit(childCount)
+        // A scrolling strip owns every loaded item, including the off-screen ones.
+        // Attached child count changes while scrolling and is not a candidate index.
+        val offset = if (adapter.itemCount > 0) adapter.itemCount else childCount
+        _unrolledCandidateOffset.tryEmit(offset)
         bar.unrollButtonStateMachine.push(
             UnrollButtonStateMachine.TransitionEvent.UnrolledCandidatesUpdated,
             UnrollButtonStateMachine.BooleanKey.UnrolledCandidatesEmpty to
-                (adapter.total == childCount),
+                (adapter.total >= 0 && adapter.total <= offset),
         )
     }
 
@@ -110,9 +114,13 @@ class CompactCandidateDelegate(override val di: DI) :
         layoutFlexGrow = flexGrow
     }
 
-    val layoutManager by lazy {
+    val layoutManager: FlexboxLayoutManager by lazy {
         object : FlexboxLayoutManager(context) {
-            override fun canScrollHorizontally(): Boolean = false
+            init {
+                flexWrap = com.google.android.flexbox.FlexWrap.NOWRAP
+            }
+
+            override fun canScrollHorizontally(): Boolean = true
 
             override fun canScrollVertically(): Boolean = false
 
@@ -136,6 +144,21 @@ class CompactCandidateDelegate(override val di: DI) :
                     }
                 }
                 refreshUnrolled(cnt)
+                if (followLatestText) {
+                    followLatestText = false
+                    view.post {
+                        val item = findViewByPosition(adapter.highlightedIdx.coerceAtLeast(0))
+                            ?: return@post
+                        // Long composing candidates keep their new suffix visible at the right edge.
+                        val viewport = view.width - view.paddingLeft - view.paddingRight
+                        val delta = if (getDecoratedMeasuredWidth(item) > viewport) {
+                            getDecoratedRight(item) - (view.width - view.paddingRight)
+                        } else if (getDecoratedLeft(item) < view.paddingLeft) {
+                            getDecoratedLeft(item) - view.paddingLeft
+                        } else 0
+                        if (delta != 0) view.scrollBy(delta, 0)
+                    }
+                }
             }
         }
     }
@@ -150,7 +173,7 @@ class CompactCandidateDelegate(override val di: DI) :
         }
     }
 
-    val view by lazy {
+    val view: RecyclerView by lazy {
         object : RecyclerView(context) {
             override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
                 super.onSizeChanged(w, h, oldw, oldh)
@@ -201,7 +224,11 @@ class CompactCandidateDelegate(override val di: DI) :
         }
 
         adapter.updateLayoutParams(layoutMinWidth, layoutFlexGrow)
-        adapter.updateCandidates(candidates, total, highlighted)
+        adapter.updateCandidates(candidates, total, highlighted) {
+            followLatestText = true
+            layoutManager.scrollToPosition(highlighted.coerceAtLeast(0))
+            view.requestLayout()
+        }
 
         // not sure why empty candidates won't trigger `FlexboxLayoutManager#onLayoutCompleted()`
         if (candidates.isEmpty()) {

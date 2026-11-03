@@ -22,6 +22,7 @@ import com.osfans.trime.ui.main.settings.hub.DataBackupFragment
 import com.osfans.trime.ui.main.settings.hub.InputCandidatesFragment
 import com.osfans.trime.ui.main.settings.hub.UtilitiesFragment
 import com.osfans.trime.ui.main.settings.phrase.PhraseFragment
+import com.osfans.trime.ui.main.settings.font.FontSettingsFragment
 import com.osfans.trime.ui.main.settings.schema.SchemaListFragment
 import com.osfans.trime.ui.main.settings.theme.ThemeSettingsFragment
 import com.osfans.trime.ui.main.settings.userdict.UserDictionaryFragment
@@ -53,6 +54,12 @@ sealed class NavigationRoute : Parcelable {
     data object Appearance : NavigationRoute()
 
     @Serializable
+    data object FontSettings : NavigationRoute()
+
+    @Serializable
+    data object FontFiles : NavigationRoute()
+
+    @Serializable
     data object Utilities : NavigationRoute()
 
     @Serializable
@@ -60,6 +67,12 @@ sealed class NavigationRoute : Parcelable {
 
     @Serializable
     data object VirtualKeyboard : NavigationRoute()
+
+    @Serializable
+    data object KeyboardHeight : NavigationRoute()
+
+    @Serializable
+    data object KeyboardSafeArea : NavigationRoute()
 
     @Serializable
     data object CandidatesWindow : NavigationRoute()
@@ -113,6 +126,12 @@ sealed class NavigationRoute : Parcelable {
                 // 芝版同文：外观入口直达主题/配色，不再套一层「键盘样式」汇总页
                 label = ctx.getString(R.string.appearance)
             }
+            fragment<com.osfans.trime.ui.main.settings.font.FontFilesFragment, FontFiles> {
+                label = ctx.getString(R.string.font_catalog)
+            }
+            fragment<FontSettingsFragment, FontSettings> {
+                label = ctx.getString(R.string.font_settings)
+            }
             fragment<UtilitiesFragment, Utilities> {
                 label = ctx.getString(R.string.utilities)
             }
@@ -125,6 +144,12 @@ sealed class NavigationRoute : Parcelable {
             }
             fragment<KeyboardSettingsFragment, VirtualKeyboard> {
                 label = ctx.getString(R.string.virtual_keyboard)
+            }
+            fragment<com.osfans.trime.ui.main.settings.KeyboardHeightFragment, KeyboardHeight> {
+                label = ctx.getString(R.string.keyboard_height_settings)
+            }
+            fragment<com.osfans.trime.ui.main.settings.KeyboardSafeAreaFragment, KeyboardSafeArea> {
+                label = ctx.getString(R.string.keyboard_safe_area)
             }
             fragment<CandidatesSettingsFragment, CandidatesWindow> {
                 label = ctx.getString(R.string.candidates_window)

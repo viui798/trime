@@ -180,7 +180,22 @@ class MainActivity : AppCompatActivity() {
         val menuIconTint = ContextCompat.getColor(this, R.color.settings_on_surface)
         val optionMenuItems = listOf(
             menu.item(R.string.deploy, R.drawable.ic_baseline_refresh_reversed_24, iconTint = menuIconTint, showAsAction = true) {
-                viewModel.rime.launchOnReady { it.deploy() }
+                viewModel.rime.launchOnReady {
+                    try {
+                        com.osfans.trime.data.theme.FontOverrides.applyPending()
+                        it.deploy()
+                        com.osfans.trime.data.theme.ThemeManager.selectTheme(
+                            com.osfans.trime.data.theme.ThemeManager.prefs.selectedTheme.getValue(),
+                        )
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(e, "Manual deployment failed")
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            toast(R.string.deploy_failure)
+                        }
+                    }
+                }
             },
             menu.item(R.string.test_input, R.drawable.ic_baseline_keyboard_24, iconTint = menuIconTint, showAsAction = true) {
                 testInputPanel?.show(window)
@@ -193,8 +208,8 @@ class MainActivity : AppCompatActivity() {
             },
         )
         optionMenuItems.forEach { item ->
-            viewModel.topOptionsMenu.observe(this) { enabled ->
-                item.isVisible = enabled
+            viewModel.topOptionsMenu.observe(this) {
+                item.isVisible = true
             }
         }
         menu.item(R.string.edit, R.drawable.ic_baseline_edit_24, iconTint = menuIconTint, showAsAction = true) {
@@ -212,8 +227,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
         menu.forEach { item ->
-            // show menu item on demand
-            item.isVisible = false
+            // Global actions stay visible; edit/delete remain controlled by the current page.
+            item.isVisible = item in optionMenuItems
         }
     }
 

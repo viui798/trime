@@ -165,6 +165,9 @@ class InputView(
 
     private val keyboardBottomPaddingPx: Int
         get() {
+            if (resources.configuration.orientation != android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
+                com.osfans.trime.data.prefs.KeyboardSizePreview.safeArea() >= 0
+            ) return 0 // Custom safe area replaces the theme/system bottom spacing rather than adding twice.
             val value =
                 if (context.isLandscapeMode()) keyboardBottomPaddingLandscape else keyboardBottomPadding
             return dp(value)

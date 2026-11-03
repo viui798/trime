@@ -12,9 +12,16 @@ import timber.log.Timber
 import java.io.File
 
 object ThemeFilesManager {
+    private data class Listing(val stamp: List<Triple<String, Long, Long>>, val items: List<ThemeItem>)
+    private val listings = java.util.concurrent.ConcurrentHashMap<String, Listing>()
+
     fun listThemes(dir: File): MutableList<ThemeItem> {
+        val stamp = dir.listFiles().orEmpty().filter { it.isFile && it.extension == "yaml" }
+            .sortedBy { it.name }.map { Triple(it.name, it.lastModified(), it.length()) }
+        listings[dir.absolutePath]?.takeIf { it.stamp == stamp }?.let { return it.items.toMutableList() }
+
         val files = dir.listFiles { _, name -> name.endsWith("trime.yaml") } ?: return mutableListOf()
-        return files
+        val items = files
             .sortedByDescending { it.lastModified() }
             .map { file ->
                 val configId = file.nameWithoutExtension
@@ -23,6 +30,8 @@ object ThemeFilesManager {
                     ?: configId.removeSuffix(".trime")
                 ThemeItem(configId, name)
             }.toMutableList()
+        listings[dir.absolutePath] = Listing(stamp, items)
+        return items
     }
 
     /**

@@ -23,6 +23,14 @@ object KeyCode {
         Timber.d("nameToKeyCode: $name")
         if (name.isEmpty()) return KeyEvent.KEYCODE_UNKNOWN
 
+        // Legacy theme aliases used by the coffee theme. `Find` is not an
+        // Android key name and `Help` only exists on API 23+, so resolve both
+        // explicitly to keep old theme keys working on every supported API.
+        when (name) {
+            "Find" -> return KeyEvent.KEYCODE_SEARCH
+            "Help" -> return KeyEvent.KEYCODE_HELP
+        }
+
         RimeKeyMapping.upperNameToCode(name)?.let { return it }
         RimeKeyMapping.symbolNameToCode(name)?.let { return it }
         RimeKeyMapping.charToCode(name)?.let { return it }

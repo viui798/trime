@@ -17,6 +17,9 @@ object Const {
     const val ZHI_RELEASES_URL = "$ZHI_REPO_URL/releases"
     const val ZHI_LATEST_RELEASE_URL = "$ZHI_REPO_URL/releases/latest"
 
+    /** GitHub REST API：最新 Release（未登录 60 次/小时）。 */
+    const val ZHI_API_LATEST_RELEASE = "https://api.github.com/repos/viui798/trime/releases/latest"
+
     /** 上游同文（GPL 来源）。 */
     const val UPSTREAM_REPO_URL = "https://github.com/osfans/trime"
 

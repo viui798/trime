@@ -25,6 +25,8 @@ import com.osfans.trime.util.writeAtomicText
 import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.core.data.UserDataManager
 import com.osfans.trime.BuildConfig
+import com.osfans.trime.data.userdict.UserDictManager
+import java.io.ByteArrayOutputStream
 import java.util.Calendar
 import java.util.TimeZone
 
@@ -52,6 +54,22 @@ object InputStats {
     private const val SESSION_GAP_MS = 5000L
 
     private const val HEAT_KEYS_LIMIT = 128
+
+    /** 词云只保留 2–8 字的中文词条；最多存 5000 个，防止 JSON 无限膨胀。 */
+    private const val WORD_LENGTH_MIN = 2
+    private const val WORD_LENGTH_MAX = 8
+    private const val WORD_COUNT_LIMIT = 5000
+
+    private val wordCloudStopWords = setOf(
+        "的", "了", "是", "和", "我", "你", "他", "她", "它", "们", "在", "有", "就", "不", "也", "都",
+        "很", "吗", "呢", "吧", "啊", "哦", "嗯", "这", "那", "一个", "什么", "怎么", "可以", "没有",
+        "还是", "就是", "因为", "所以", "但是", "如果", "然后", "现在", "时候", "自己", "我们", "你们",
+        "他们", "她们", "它们", "这个", "那个", "这样", "那样", "一下", "一些", "已经", "还有", "只是",
+        "不是", "要是", "会", "能", "去", "来", "说", "看", "好", "对", "又", "再", "最", "更", "没",
+        "别", "让", "被", "把", "从", "到", "与", "及", "或", "而", "且", "等",
+    )
+
+    data class WordCloudEntry(val text: String, val count: Long)
 
     /** 窗口时长（原脚本 10 秒），极速 = 任意累计 ≥ 此值的段窗口最大速率。 */
     private const val SPEED_WINDOW_S = 10.0
@@ -111,6 +129,8 @@ object InputStats {
         var yearly: PeriodStats = PeriodStats(),
         var careerTotal: Long = 0,
         var logVer: Int = SPEED_LOG_VERSION,
+        /** 全部时间的用户词频；词云用。 */
+        var wordCounts: MutableMap<String, Long> = mutableMapOf(),
     )
 
     @Serializable
@@ -570,6 +590,7 @@ object InputStats {
             }
             pendingKeys = 0
             stats.careerTotal += chars.toLong()
+            recordWordLocked(stats, text)
             // the composition is consumed by this commit, like the Lua commit_notifier
             lastRawInput = ""
 
@@ -581,6 +602,121 @@ object InputStats {
     // Maintenance operations for the UI
     // ----------------------------------------------------------------
 
+    /** 当前方案的全部时间词云，按词频倒序，过滤单字、停用词和过长串。 */
+    fun wordCloud(
+        schemaId: String,
+        limit: Int = 120,
+    ): List<WordCloudEntry> =
+        synchronized(lock) {
+            bucket(schemaId)
+                .wordCounts
+                .asSequence()
+                .filter { (word, count) -> count > 0 && isWordCloudCandidate(word) }
+                .map { WordCloudEntry(it.key, it.value) }
+                .sortedByDescending { it.count }
+                .take(limit.coerceIn(1, 200))
+                .toList()
+        }
+
+    /**
+     * 从 librime 用户词典导出历史词条（`c=commits`），补进当前方案。
+     * 只应在 IO 线程调用；导出失败时返回 false，不影响已有统计。
+     */
+    fun seedWordsFromUserDict(schemaId: String): Boolean {
+        // StatsActivity may be opened without the IME service having loaded JNI yet.
+        runCatching { System.loadLibrary("rime_jni") }
+        val names =
+            runCatching { UserDictManager.getUserDictList().toList() }
+                .onFailure { Timber.w(it, "Cannot list user dictionaries for word cloud") }
+                .getOrNull()
+                .orEmpty()
+        if (names.isEmpty()) return false
+        val merged = mutableMapOf<String, Long>()
+        names.forEach { name ->
+            runCatching {
+                val out = ByteArrayOutputStream()
+                UserDictManager.exportUserDict(out, name, "wordcloud-${name.hashCode()}.tsv").getOrThrow()
+                parseUserDbTsv(out.toString(Charsets.UTF_8.name())).forEach { (word, count) ->
+                    merged.merge(word, count, Long::plus)
+                }
+            }
+        }
+        // 有些方案会把 user_ngram.tsv 放在 Rime 根目录/学习目录，直接并入。
+        loadNgramWords().forEach { (word, count) -> merged.merge(word, count, Long::plus) }
+        if (merged.isEmpty()) return false
+        synchronized(lock) {
+            val stats = bucket(schemaId)
+            merged.forEach { (word, count) ->
+                if (isWordCloudCandidate(word)) {
+                    stats.wordCounts.merge(word, count, Long::plus)
+                }
+            }
+            trimWordCounts(stats)
+            scheduleSaveLocked()
+        }
+        return true
+    }
+
+    private fun loadNgramWords(): Map<String, Long> {
+        val candidates =
+            listOf(
+                File(DataManager.rimeRootDir, "user_ngram.tsv"),
+                File(DataManager.rimeRootDir, "user_ngram.txt"),
+                File(DataManager.learnDir, "user_ngram.tsv"),
+                File(DataManager.learnDir, "user_ngram.txt"),
+            )
+        val file = candidates.firstOrNull { it.isFile } ?: return emptyMap()
+        val result = mutableMapOf<String, Long>()
+        runCatching {
+            file.useLines { lines ->
+                lines.forEach { line ->
+                    if (line.isBlank() || line.startsWith("#")) return@forEach
+                    val parts = line.trim().split(Regex("\\s+"), limit = 2)
+                    val count = parts.getOrNull(1)?.toLongOrNull() ?: return@forEach
+                    val word = parts[0].trim()
+                    if (count > 0 && word.isNotEmpty()) result.merge(word, count, Long::plus)
+                }
+            }
+        }.onFailure { Timber.w(it, "Cannot read user_ngram.tsv") }
+        return result
+    }
+
+    /** 解析 `code \t phrase \t c=commits d=...` 的用户词典导出。 */
+    internal fun parseUserDbTsv(text: String): Map<String, Long> {
+        val result = mutableMapOf<String, Long>()
+        text.lineSequence().forEach { line ->
+            val parts = line.split('\t')
+            if (parts.size < 3) return@forEach
+            val word = parts[1].trim()
+            val commits = Regex("""(?:^|\s)c=(\d+)""").find(parts[2])?.groupValues?.getOrNull(1)?.toLongOrNull()
+            if (word.isNotEmpty() && commits != null && commits > 0) {
+                result.merge(word, commits, Long::plus)
+            }
+        }
+        return result
+    }
+
+    private fun isWordCloudCandidate(word: String): Boolean {
+        if (word in wordCloudStopWords) return false
+        if (!isAllChinese(word)) return false
+        val length = word.codePointCount(0, word.length)
+        return length in WORD_LENGTH_MIN..WORD_LENGTH_MAX
+    }
+
+    private fun recordWordLocked(stats: Stats, text: String) {
+        if (!isWordCloudCandidate(text)) return
+        stats.wordCounts[text] = (stats.wordCounts[text] ?: 0) + 1
+        trimWordCounts(stats)
+    }
+
+    private fun trimWordCounts(stats: Stats) {
+        if (stats.wordCounts.size <= WORD_COUNT_LIMIT) return
+        stats.wordCounts.entries
+            .sortedBy { it.value }
+            .take(stats.wordCounts.size - WORD_COUNT_LIMIT)
+            .forEach { stats.wordCounts.remove(it.key) }
+    }
+
     fun clearPeriodStats(schemaId: String) {
         synchronized(lock) {
             if (appContext != null && sessionSchemaId == schemaId) flushSessionLocked()
@@ -589,6 +725,7 @@ object InputStats {
             stats.weekly = PeriodStats()
             stats.monthly = PeriodStats()
             stats.yearly = PeriodStats()
+            stats.wordCounts.clear()
             normalizePeriods(stats)
             scheduleSaveLocked()
         }

@@ -564,6 +564,9 @@
     <string name="stats_fastest">極速</string>
     <string name="stats_average">均速</string>
     <string name="stats_speed_unit">字 / 分鐘</string>
+    <string name="stats_word_cloud">字詞雲</string>
+    <string name="stats_word_cloud_hint">按使用者詞頻生成 · 全部時間</string>
+    <string name="stats_word_cloud_empty">繼續輸入後生成詞雲</string>
     <string name="stats_word_length">詞長分布</string>
     <string name="stats_code_length">碼長分布</string>
     <string name="stats_word_one">單字</string>

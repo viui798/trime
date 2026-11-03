@@ -575,6 +575,9 @@
     <string name="stats_fastest">Fastest</string>
     <string name="stats_average">Average</string>
     <string name="stats_speed_unit">chars / min</string>
+    <string name="stats_word_cloud">Word cloud</string>
+    <string name="stats_word_cloud_hint">From your word history · all time</string>
+    <string name="stats_word_cloud_empty">Keep typing to grow your word cloud</string>
     <string name="stats_word_length">Word length</string>
     <string name="stats_code_length">Code length</string>
     <string name="stats_word_one">Single char</string>

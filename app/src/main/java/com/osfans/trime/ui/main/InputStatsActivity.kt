@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -30,6 +31,9 @@ import com.osfans.trime.data.stats.InputStats.Stats
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Native input statistics dashboard (day / week / month / year, career level,
@@ -67,6 +71,9 @@ class InputStatsActivity : AppCompatActivity() {
     private lateinit var wordRows: LinearLayout
     private lateinit var codeRows: LinearLayout
     private lateinit var heatGrid: LinearLayout
+    private lateinit var wordCloudView: WordCloudView
+    private var seedSchema: String? = null
+    private var seedAttempted = false
 
     private enum class Period { DAY, WEEK, MONTH, YEAR }
 
@@ -111,6 +118,7 @@ class InputStatsActivity : AppCompatActivity() {
         wordRows = findViewById(R.id.stats_word_rows)
         codeRows = findViewById(R.id.stats_code_rows)
         heatGrid = findViewById(R.id.stats_heat_grid)
+        wordCloudView = findViewById(R.id.stats_word_cloud)
 
         val toggle = findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.stats_period_toggle)
         toggle.check(
@@ -242,6 +250,7 @@ class InputStatsActivity : AppCompatActivity() {
 
         renderPeriod()
         renderHeat()
+        renderWordCloud()
     }
 
     /** 今日状态挂在方案行下方，随 renderAll 更新。 */
@@ -251,6 +260,26 @@ class InputStatsActivity : AppCompatActivity() {
                 R.string.stats_current_schema,
                 schemaDisplayName(InputStats.schemaList(), currentSchema),
             ) + "  ·  " + state
+    }
+
+    /** 字词云是全部时间维度，不随日/周/月/年切换；首次为空时从 userdb 补历史词。 */
+    private fun renderWordCloud() {
+        if (seedSchema != currentSchema) {
+            seedSchema = currentSchema
+            seedAttempted = false
+        }
+        val words = InputStats.wordCloud(currentSchema)
+        wordCloudView.setEntries(words.map { WordCloudView.Entry(it.text, it.count) })
+        if (words.isNotEmpty() || seedAttempted) return
+        seedAttempted = true
+        lifecycleScope.launch {
+            val loaded = withContext(Dispatchers.IO) { InputStats.seedWordsFromUserDict(currentSchema) }
+            if (loaded && !isFinishing) {
+                wordCloudView.setEntries(
+                    InputStats.wordCloud(currentSchema).map { WordCloudView.Entry(it.text, it.count) },
+                )
+            }
+        }
     }
 
     private fun periodOf(snapshot: Stats): PeriodStats = when (currentPeriod) {

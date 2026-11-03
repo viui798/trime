@@ -101,11 +101,9 @@ class Keyboard(
     val isLock = selfConfig?.lock ?: false // 切換程序時記憶鍵盤
     val asciiKeyboard: String? = selfConfig?.asciiKeyboard // 英文鍵盤
 
-    val keyboardHeight: Int =
-        com.osfans.trime.data.prefs.KeyboardSizePreview.height()
-            .takeIf { it > 0 && context.resources.configuration.orientation != android.content.res.Configuration.ORIENTATION_LANDSCAPE }
-            ?.let { context.dp(it.coerceIn(120, 500)) }
-            ?: resolvePositive(
+    /** 未应用高度覆盖时的基准高度；字体跟随变形以它为 1.0。 */
+    val baseKeyboardHeight: Int =
+        resolvePositive(
             selfConfig?.let {
                 pickLandscape(it.keyboardHeight, it.keyboardHeightLand, context.isLandscapeMode())
             },
@@ -115,6 +113,12 @@ class Keyboard(
                 context.isLandscapeMode(),
             ),
         ) { context.dp(it) }
+
+    val keyboardHeight: Int =
+        com.osfans.trime.data.prefs.KeyboardSizePreview.height()
+            .takeIf { it > 0 && context.resources.configuration.orientation != android.content.res.Configuration.ORIENTATION_LANDSCAPE }
+            ?.let { context.dp(it.coerceIn(120, 500)) }
+            ?: baseKeyboardHeight
 
     private val expandKeypressArea: Boolean by AppPrefs.defaultInstance().keyboard.expandKeypressArea
 

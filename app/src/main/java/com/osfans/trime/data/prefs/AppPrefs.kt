@@ -177,6 +177,7 @@ class AppPrefs(
             const val MAX_SPAN_COUNT = "max_span_count"
             const val MAX_SPAN_COUNT_LANDSCAPE = "max_span_count_landscape"
             const val HORIZONTAL_CANDIDATE_MODE = "horizontal_candidate_mode"
+            const val FONT_FOLLOWS_HEIGHT = "font_follows_keyboard_height"
         }
 
         enum class LandscapeMode(override val stringRes: Int) : PreferenceDelegateEnum {
@@ -190,6 +191,9 @@ class AppPrefs(
         // 0: theme height; -1: automatic safe area. Custom values are portrait dp.
         val heightOverride = int("keyboard_height_override_dp", 0)
         val bottomSafeArea = int("keyboard_bottom_safe_area_dp", -1)
+
+        /** 键盘字体是否随高度同比缩放；默认关闭，保持原字号。 */
+        val fontFollowsHeight = switch(R.string.font_follows_keyboard_height, FONT_FOLLOWS_HEIGHT, false)
         val splitSpacePercent = int(
             R.string.split_space_percent,
             SPLIT_SPACE_PERCENT,

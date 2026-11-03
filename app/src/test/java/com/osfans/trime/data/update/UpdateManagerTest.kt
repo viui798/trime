@@ -29,6 +29,23 @@ class UpdateManagerTest :
             }
         }
 
+        given("release notes formatting") {
+            `when`("the body is GitHub Markdown") {
+                then("headings and emphasis are removed for the dialog") {
+                    UpdateManager.formatReleaseNotes(
+                        "# 同文输入法芝士 1.2.14\n\n" +
+                            "本次更新集中在**紧凑候选栏**。\n" +
+                            "### 字体\n" +
+                            "- 使用 `fonts/` 目录\n",
+                    ) shouldBe
+                        "同文输入法芝士 1.2.14\n\n" +
+                        "本次更新集中在紧凑候选栏。\n" +
+                        "字体\n" +
+                        "- 使用 fonts/ 目录"
+                }
+            }
+        }
+
         given("checksum parsing") {
             `when`("the file contains valid lines") {
                 then("hashes are mapped to file names") {

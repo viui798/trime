@@ -11,16 +11,20 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.annotation.Keep
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceScreen
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.osfans.trime.BuildConfig
 import com.osfans.trime.R
@@ -118,18 +122,87 @@ class AdvancedSettingsFragment : PreferenceDelegateFragment(AppPrefs.defaultInst
                     .show()
                 return@launch
             }
+            showReleaseDialog(release, asset)
+        }
+    }
+
+    private fun showReleaseDialog(
+        release: GitHubRelease,
+        asset: GitHubAsset,
+    ) {
+        val ctx = requireContext()
+        val notes =
+            TextView(ctx).apply {
+                text = UpdateManager.formatReleaseNotes(release.body).ifBlank { getString(R.string.update_no_notes) }
+                textSize = 14f
+                setLineSpacing(0f, 1.15f)
+                setPadding(ctx.dp(24), ctx.dp(4), ctx.dp(24), ctx.dp(8))
+            }
+        val scroll =
+            ScrollView(ctx).apply {
+                addView(notes, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                isFillViewport = true
+                layoutParams =
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        minOf(ctx.dp(340), (resources.displayMetrics.heightPixels * 0.42f).toInt()),
+                    )
+            }
+        val browser =
+            TextView(ctx).apply {
+                setText(R.string.update_open_release)
+                textSize = 14f
+                gravity = Gravity.END
+                setTextColor(ContextCompat.getColor(ctx, R.color.colorPrimary))
+                setPadding(ctx.dp(24), 0, ctx.dp(24), ctx.dp(4))
+            }
+        val actions =
+            LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(ctx.dp(24), ctx.dp(8), ctx.dp(24), ctx.dp(8))
+            }
+        val cancel =
+            MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                setText(android.R.string.cancel)
+            }
+        val download =
+            MaterialButton(ctx).apply {
+                setText(R.string.update_download)
+            }
+        actions.addView(
+            cancel,
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
+        )
+        actions.addView(
+            download,
+            LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = ctx.dp(12)
+            },
+        )
+        val content =
+            LinearLayout(ctx).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(scroll)
+                addView(browser, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+                addView(actions, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            }
+        val dialog =
             MaterialAlertDialogBuilder(ctx)
                 .setTitle(getString(R.string.update_available_title, release.tag))
-                .setMessage(release.body.ifBlank { getString(R.string.update_no_notes) })
-                .setPositiveButton(R.string.update_download) { _, _ ->
-                    downloadAndInstall(release, asset)
-                }.setNeutralButton(R.string.update_open_release) { _, _ ->
-                    runCatching {
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UpdateManager.releasePage(release.tag))))
-                    }
-                }.setNegativeButton(android.R.string.cancel, null)
-                .show()
+                .setView(content)
+                .create()
+        cancel.setOnClickListener { dialog.dismiss() }
+        download.setOnClickListener {
+            dialog.dismiss()
+            downloadAndInstall(release, asset)
         }
+        browser.setOnClickListener {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(UpdateManager.releasePage(release.tag))))
+            }
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 
     private fun downloadAndInstall(

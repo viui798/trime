@@ -205,6 +205,26 @@ object UpdateManager {
                 }
             }.toMap()
 
+    /** Release 正文是 Markdown；应用内弹窗按纯文本显示，避免把 # / ** / 反引号原样露出来。 */
+    fun formatReleaseNotes(markdown: String): String =
+        markdown
+            .replace("&#10;", "\n")
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .lineSequence()
+            .map { raw ->
+                raw
+                    .replace(Regex("""^\s*#{1,6}\s*"""), "")
+                    .replace(Regex("""\*\*(.*?)\*\*"""), "$1")
+                    .replace(Regex("""__(.*?)__"""), "$1")
+                    .replace(Regex("""`([^`]*)`"""), "$1")
+                    .replace(Regex("""\[([^\]]+)]\(([^)]+)\)"""), "$1 ($2)")
+                    .trimEnd()
+            }.joinToString("\n")
+            .trim()
+
     fun canInstall(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
             context.packageManager.canRequestPackageInstalls()

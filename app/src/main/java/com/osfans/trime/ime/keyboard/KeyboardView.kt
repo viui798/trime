@@ -11,6 +11,7 @@ import android.graphics.Canvas
 import android.widget.FrameLayout
 import androidx.core.view.children
 import com.osfans.trime.data.prefs.AppPrefs
+import com.osfans.trime.data.prefs.KeyboardSizePreview
 import com.osfans.trime.data.theme.FontOverrides
 import com.osfans.trime.data.theme.Theme
 import com.osfans.trime.ime.broadcast.EnterKeyDisplayDelegate
@@ -34,17 +35,38 @@ class KeyboardView(
     internal val labelEnter: String
         get() = enterKeyDisplay.keyLabel
     // 芝版同文：设置里的「字体与字号」可以按用途覆盖皮肤给定的字号；未覆盖时保持原样。
-    internal val keyTextSize =
+    private val baseKeyTextSize =
         FontOverrides.sizeOrNull(FontOverrides.Scope.KEY)
             ?: theme.style.keyTextSize
+
+    /** 开启「字体跟随变形」时，以主题/自定义布局的原高度为 1.0 缩放字号。 */
+    private val fontScale: Float =
+        if (!KeyboardSizePreview.fontFollowsHeight()) {
+            1f
+        } else {
+            val base = keyboard.baseKeyboardHeight
+            if (base <= 0) {
+                1f
+            } else {
+                (keyboard.keyboardHeight.toFloat() / base).coerceIn(0.5f, 3f)
+            }
+        }
+
+    private fun scaledFont(size: Float): Float = (size * fontScale).coerceAtLeast(1f)
+
+    internal val keyTextSize = scaledFont(baseKeyTextSize)
     internal val keyLongTextSize =
-        FontOverrides.sizeOrNull(FontOverrides.Scope.KEY)
-            ?: theme.style.keyLongTextSize.takeIf { it > 0 }
-            ?: keyTextSize
+        scaledFont(
+            FontOverrides.sizeOrNull(FontOverrides.Scope.KEY)
+                ?: theme.style.keyLongTextSize.takeIf { it > 0 }
+                ?: baseKeyTextSize,
+        )
     internal val symbolTextSize =
-        FontOverrides.sizeOrNull(FontOverrides.Scope.SYMBOL)
-            ?: theme.style.symbolTextSize.takeIf { it > 0 }
-            ?: keyTextSize
+        scaledFont(
+            FontOverrides.sizeOrNull(FontOverrides.Scope.SYMBOL)
+                ?: theme.style.symbolTextSize.takeIf { it > 0 }
+                ?: baseKeyTextSize,
+        )
     internal val popupOnKeyPress by AppPrefs.defaultInstance().keyboard.popupOnKeyPress
     internal val hookShiftArrow: Boolean by AppPrefs.defaultInstance().keyboard.hookShiftArrow
     internal val hideKeySymbol: Boolean by AppPrefs.defaultInstance().keyboard.hideKeySymbol

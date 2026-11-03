@@ -692,6 +692,8 @@
     <string name="font_delete_confirm">删除字体“%1$s”？引用它的自定义设置将移除此字体，皮肤将使用后备字体。</string>
     <string name="font_delete_failed">无法删除此字体</string>
     <string name="font_builtin_file">内置字体</string>
+    <string name="font_follows_keyboard_height">字体跟随变形</string>
+    <string name="font_follows_keyboard_height_summary">开启后按键字体随键盘高度一起缩放；关闭则只改变键盘高度，字体保持不变。</string>
     <string name="keyboard_height_settings">键盘高度设置</string>
     <string name="keyboard_safe_area">键盘底部安全区域</string>
     <string name="keyboard_height_description">拖动滑条实时预览竖屏键盘高度，确定保存；未确认返回恢复原值。重置后跟随皮肤，横屏保持原有高度。</string>

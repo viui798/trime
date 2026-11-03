@@ -95,13 +95,19 @@ object HamsterSkinParser {
         }.toMap()
 
         if (keyboards.isEmpty()) return null
-        // 元书默认皮肤只带主键盘，123 键就无处可去；补一套同风格的九宫格。
-        val withFallback = if ("numeric" in keyboards) {
+        // 元书默认皮肤只带主键盘，123 / #+= 就无处可去，按元书内置的样子补上。
+        // 先补符号键盘，数字键盘底行的 #+= 才知道能不能切过去。
+        val withSymbolic = if ("symbolic" in keyboards) {
             keyboards
         } else {
-            keyboards + ("numeric" to defaultNumericRows())
+            keyboards + ("symbolic" to defaultSymbolicRows(dark))
         }
-        return HamsterSkin(dir.name, withFallback)
+        val withNumeric = if ("numeric" in withSymbolic) {
+            withSymbolic
+        } else {
+            withSymbolic + ("numeric" to defaultNumericRows(dark, hasSymbolic = true))
+        }
+        return HamsterSkin(dir.name, withNumeric)
     }
 
     /**
@@ -136,20 +142,125 @@ object HamsterSkinParser {
         return result
     }
 
-    /** 皮肤没带数字键盘时的兜底：标准九宫格，键帽样式沿用主键盘首键。 */
-    private fun defaultNumericRows(): HamsterRows {
-        fun digit(text: String) = HamsterKey(label = text, widthPercent = 100f / 3f, click = text)
+    /**
+     * 元书内置的符号键盘（cskin 里同样没有定义）。
+     *
+     * 8 列 × 4 行：三行常用中英文标点，底行返回 / 空格 / 退格。
+     */
+    private fun defaultSymbolicRows(dark: Boolean): HamsterRows {
+        val keyBack = if (dark) "0xFF2C2C2E" else "0xFFFFFFFF"
+        val fnBack = if (dark) "0xFF1F1F21" else "0xFFEDEDEF"
+        val textColor = if (dark) "0xFFFFFFFF" else "0xFF000000"
+        val corner = 8.5f
+        val cell = 12.5f
+
+        fun sym(text: String) = HamsterKey(
+            label = text,
+            widthPercent = cell,
+            click = text,
+            backColor = keyBack,
+            textColor = textColor,
+            cornerRadius = corner,
+        )
+
         val rows = listOf(
-            listOf(digit("1"), digit("2"), digit("3")),
-            listOf(digit("4"), digit("5"), digit("6")),
-            listOf(digit("7"), digit("8"), digit("9")),
+            listOf("，", "。", "？", "！", "：", "；", "、", "…").map(::sym),
+            listOf("（", "）", "《", "》", "「", "」", "·", "—").map(::sym),
+            listOf("@", "#", "￥", "%", "&", "*", "+", "=").map(::sym),
             listOf(
-                HamsterKey(label = "abc", widthPercent = 100f / 3f, click = "Hamster_alpha"),
-                digit("0"),
-                HamsterKey(label = "⌫", widthPercent = 100f / 3f, click = "BackSpace"),
+                HamsterKey(label = "返回", widthPercent = 25f, click = "Hamster_alpha", backColor = fnBack, textColor = textColor, cornerRadius = corner),
+                HamsterKey(label = "空格", widthPercent = 50f, click = "space", backColor = fnBack, textColor = textColor, cornerRadius = corner),
+                HamsterKey(label = "⌫", widthPercent = 25f, click = "BackSpace", backColor = fnBack, textColor = textColor, cornerRadius = corner),
             ),
         )
-        return HamsterRows("numeric", rows)
+        return HamsterRows("symbolic", rows)
+    }
+
+    /**
+     * 元书内置的数字键盘。
+     *
+     * cskin 的 config 里没有 numeric 条目（元书那套是应用自带的），所以按它的实际
+     * 样子生成：5 列 × 4 行——左列 @ % - +，中间 1-9，右列 ⌫ . =，
+     * 底行 返回 / 0 / 空格 / 发送（发送为蓝色高亮）。
+     *
+     * 列宽取自元书 numeric 布局（VStackStyle 的 29/183 与 125/549）。
+     * 同文是流式行布局，表达不了「左列 4 个键挤在 3 行高度里」，
+     * 所以 + 落在第四行最左，与底行同排。
+     */
+    private fun defaultNumericRows(dark: Boolean, hasSymbolic: Boolean): HamsterRows {
+        val digitBack = if (dark) "0xFF2C2C2E" else "0xFFFFFFFF"
+        val fnBack = if (dark) "0xFF1F1F21" else "0xFFEDEDEF"
+        val textColor = if (dark) "0xFFFFFFFF" else "0xFF000000"
+        val accentBack = if (dark) "0xFF0A84FF" else "0xFF4C8DF6"
+        val corner = 8.5f
+
+        val left = 15.85f
+        val mid = 22.77f
+        val right = 15.85f
+
+        fun digit(text: String) = HamsterKey(
+            label = text,
+            widthPercent = mid,
+            click = text,
+            backColor = digitBack,
+            textColor = textColor,
+            cornerRadius = corner,
+        )
+
+        fun symbol(text: String) = HamsterKey(
+            label = text,
+            widthPercent = left,
+            click = text,
+            backColor = fnBack,
+            textColor = textColor,
+            cornerRadius = corner,
+        )
+
+        fun fn(label: String, action: String?) = HamsterKey(
+            label = label,
+            widthPercent = right,
+            click = action,
+            backColor = fnBack,
+            textColor = textColor,
+            cornerRadius = corner,
+        )
+
+        val top = listOf(
+            listOf(symbol("@"), digit("1"), digit("2"), digit("3"), fn("⌫", "BackSpace")),
+            listOf(symbol("%"), digit("4"), digit("5"), digit("6"), fn(".", ".")),
+            listOf(symbol("-"), digit("7"), digit("8"), digit("9"), fn("=", "=")),
+        )
+
+        // 底行：+ / (符号页) / 返回 / 0 / 空格 / 发送
+        val bottom = mutableListOf(
+            HamsterKey(
+                label = "+",
+                widthPercent = left,
+                click = "+",
+                backColor = fnBack,
+                textColor = textColor,
+                cornerRadius = corner,
+            ),
+        )
+        val rest = 100f - left
+        val slots = mutableListOf<HamsterKey>()
+        if (hasSymbolic) {
+            slots += HamsterKey(label = "#+=", click = "Hamster_symbolic", backColor = fnBack, textColor = textColor, cornerRadius = corner)
+        }
+        slots += HamsterKey(label = "返回", click = "Hamster_alpha", backColor = fnBack, textColor = textColor, cornerRadius = corner)
+        slots += HamsterKey(label = "0", click = "0", backColor = digitBack, textColor = textColor, cornerRadius = corner)
+        slots += HamsterKey(label = "空格", click = "space", backColor = fnBack, textColor = textColor, cornerRadius = corner)
+        slots += HamsterKey(
+            label = "发送",
+            click = "Return",
+            backColor = accentBack,
+            textColor = "0xFFFFFFFF",
+            cornerRadius = corner,
+        )
+        val slotWidth = rest / slots.size
+        bottom += slots.map { it.copy(widthPercent = slotWidth) }
+
+        return HamsterRows("numeric", top + listOf(bottom))
     }
 
     private fun buildRows(root: JsonObject, name: String): HamsterRows? {

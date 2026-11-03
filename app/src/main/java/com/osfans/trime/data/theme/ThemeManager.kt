@@ -13,6 +13,7 @@ import androidx.preference.PreferenceManager
 import com.osfans.trime.core.data.DataManager
 import com.osfans.trime.core.data.RimeProfileManager
 import com.osfans.trime.data.prefs.AppPrefs
+import com.osfans.trime.data.skin.hamster.HamsterSkinManager
 import com.osfans.trime.util.WeakHashSet
 import com.osfans.trime.util.appContext
 import kotlinx.coroutines.Dispatchers
@@ -41,17 +42,10 @@ object ThemeManager {
      *   给用户挑主题的列表传 `false`（不显示「同文输入法芝士」那一项）；
      *   兜底查找必须用 `true`，否则一个主题都读不出来时没有可回退的。
      */
-    fun getAllThemes(includeBuiltin: Boolean = true): List<ThemeItem> {
-        val sharedThemes = ThemeFilesManager.listThemes(DataManager.sharedDataDir)
-        val dirs = linkedSetOf(DataManager.userDataDir)
-        // 直连方案包 / 方案库模式下，皮肤被摊平进当前方案目录而不是「运行数据」，
-        // 只扫「运行数据」会漏掉全部皮肤（新装后直接进直连时列表里只剩内置主题）。
-        if (RimeProfileManager.isProfile()) dirs += RimeProfileManager.currentDir()
-        val userThemes = dirs.flatMap { ThemeFilesManager.listThemes(it) }
-        return (sharedThemes + userThemes)
-            .distinctBy { it.configId }
-            .filter { includeBuiltin || it.configId != BUILTIN_THEME_ID }
-    }
+    fun getAllThemes(includeBuiltin: Boolean = true): List<ThemeItem> =
+        // 芝版：主题列表只列元书皮肤（.cskin 导入到 Rime 根目录后即成为一项）。
+        HamsterSkinManager.listItems()
+
 
     private lateinit var _activeTheme: Theme
 
@@ -108,6 +102,11 @@ object ThemeManager {
     )
 
     private fun getThemeById(id: String): ResolvedTheme {
+        // 元书皮肤：按其 cskin 规则现场构建主题，不走 .trime.yaml。
+        if (id.startsWith(HamsterSkinManager.PREFIX)) {
+            HamsterSkinManager.buildTheme(id)?.let { return ResolvedTheme(id, it, null) }
+            Timber.w("hamster: %s 构建失败，回退到内置底座", id)
+        }
         loadThemeOrNull(id)?.let { return it }
 
         // 全新安装 / 清数据后，内置资源可能还没同步到 shared 目录，此刻所有主题

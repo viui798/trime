@@ -72,6 +72,10 @@ class Key(
     var extraWidthRight = 0
 
     private val label = keyDef?.label ?: ""
+    /** 芝版：元书皮肤的前景图片（相对 backgrounds 的路径），非空时画图不画字。 */
+    val keyForegroundImage: String = keyDef?.keyForegroundImage ?: ""
+    /** 芝版：角标画在键帽左上角（元书的上滑提示）。 */
+    val symbolAtTopLeft: Boolean = keyDef?.symbolAtTopLeft == true
     private val fixedLabel = keyDef?.fixedLabel == true
     private val labelSymbol = keyDef?.labelSymbol ?: ""
     val hint: String = keyDef?.hint ?: ""

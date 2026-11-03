@@ -122,6 +122,11 @@ class Keyboard(
             val keys = selfConfig.keys
             val keyboardKeyWidth = selfConfig.width
 
+            // 芝版：元书皮肤直接用布局树算出每个键的矩形，不走流式排版。
+            if (keys.any { it.xPercent >= 0f }) {
+                layoutExplicit(keys)
+            } else {
+
             val maxColumns = if (selfConfig.columns == -1) Int.MAX_VALUE else selfConfig.columns
 
             val isSplit = context.isLandscapeMode() && landscapePercent > 0
@@ -317,7 +322,44 @@ class Keyboard(
             }
 
             recordHeatLayout()
+            } // end of 流式布局分支
         }
+    }
+
+    /**
+     * 按 [TextKeyboard.TextKey] 自带的百分比矩形摆放按键。
+     *
+     * 元书的布局是 HStack / VStack 树，单元格可以是分数尺寸（如 `29/183`）、
+     * 可以垂直堆叠，流式模型只有「宽度权重 + 自动换行」，表达不了这些。
+     * 所以矩形在 [com.osfans.trime.data.skin.hamster.HamsterLayout] 里算好，
+     * 这里只负责换算成像素交给 [KeyboardView]。
+     */
+    private fun layoutExplicit(keys: List<TextKeyboard.TextKey>) {
+        val widthPx = allowedWidth
+        val heightPx = keyboardHeight
+        if (widthPx <= 0 || heightPx <= 0) return
+
+        // 行号按 y 的取值分组，统计热力图与边缘标记还要用它。
+        val rows = keys.map { it.yPercent }.distinct().sorted()
+
+        var index = 0
+        keys.forEach { textKey ->
+            if (textKey.click.orAbsent == null) return@forEach
+            val key = Key(this, theme, textKey)
+            key.x = (textKey.xPercent * widthPx).toInt()
+            key.y = (textKey.yPercent * heightPx).toInt()
+            key.width = (textKey.wPercent * widthPx).toInt()
+            key.height = (textKey.hPercent * heightPx).toInt()
+            key.row = rows.indexOf(textKey.yPercent).coerceAtLeast(0)
+            key.column = index
+            key.edgeFlags = EDGE_LEFT or EDGE_TOP or EDGE_RIGHT or EDGE_BOTTOM
+            mKeys.add(key)
+            index++
+        }
+
+        height = heightPx
+        minWidth = widthPx
+        recordHeatLayout()
     }
 
     /** 键盘构建完成时记录行列结构，统计页的热力图按同一套几何渲染。 */

@@ -86,6 +86,48 @@ object HamsterSlices {
         return "$OUT_FOLDER/$outName"
     }
 
+    /**
+     * 切前景图（元书的字母、图标也是精灵图）。
+     *
+     * 前景按原比例居中绘制，不拉伸，所以不画九宫格标记，输出普通 PNG。
+     */
+    fun slicePlain(
+        skinDir: File,
+        dark: Boolean,
+        file: String,
+        image: String,
+    ): String? {
+        val resDir = resourcesDir(skinDir, dark) ?: return null
+        val sheet = File(resDir, "$file.png")
+        val meta = File(resDir, "$file.yaml")
+        if (!sheet.isFile || !meta.isFile) return null
+
+        val outName = "${skinDir.name}_${file}_$image.png"
+        val outFile = File(DataManager.userDataDir, "backgrounds/$OUT_FOLDER/$outName")
+        val fresh = outFile.isFile &&
+            outFile.lastModified() >= maxOf(sheet.lastModified(), meta.lastModified())
+        if (fresh) return "$OUT_FOLDER/$outName"
+
+        val entry = runCatching { parseMeta(meta)[image] }.getOrNull() ?: return null
+        val sheetBitmap = runCatching { BitmapFactory.decodeFile(sheet.absolutePath) }.getOrNull() ?: return null
+        val cropped = runCatching {
+            Bitmap.createBitmap(
+                sheetBitmap,
+                entry.src.left,
+                entry.src.top,
+                entry.src.width(),
+                entry.src.height(),
+            )
+        }.getOrNull() ?: return null
+
+        val ok = runCatching {
+            outFile.parentFile?.mkdirs()
+            FileOutputStream(outFile).use { cropped.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }.isSuccess
+        cropped.recycle()
+        return if (ok) "$OUT_FOLDER/$outName" else null
+    }
+
     private fun resourcesDir(skinDir: File, dark: Boolean): File? {
         val candidates = buildList {
             add(File(skinDir, if (dark) "dark/resources" else "light/resources"))

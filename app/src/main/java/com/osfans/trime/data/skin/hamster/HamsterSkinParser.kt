@@ -49,6 +49,10 @@ object HamsterSkinParser {
         /** cskin 的 fileImage 背景：精灵图文件名 + 切片名，由 [HamsterSlices] 切成九宫格。 */
         val backImage: ImageRef? = null,
         val backImagePressed: ImageRef? = null,
+        /** cskin 的 fileImage 前景（字母本身是图片），画在键帽上而不是画文字。 */
+        val foregroundImage: ImageRef? = null,
+        /** 键位左上角的小字（元书的角标，如 `1 !`）。 */
+        val symbol: String = "",
     )
 
     /** 元书精灵图里的一张切片引用。 */
@@ -57,9 +61,21 @@ object HamsterSkinParser {
         val image: String,
     )
 
+    /** 一个带位置的按键。[x]/[y]/[w]/[h] 是相对键盘的 0..1 值。 */
+    data class PlacedKey(
+        val key: HamsterKey,
+        val x: Float,
+        val y: Float,
+        val w: Float,
+        val h: Float,
+    )
+
     data class HamsterRows(
         val name: String,
-        val rows: List<List<HamsterKey>>,
+        /** 流式（行）表示，回落键盘与解析不出布局树时使用。 */
+        val rows: List<List<HamsterKey>> = emptyList(),
+        /** 布局树算出的显式矩形；非空时优先于 [rows]。 */
+        val cells: List<PlacedKey> = emptyList(),
     )
 
     /** 一套皮肤：[default] 主键盘 + 可选的 [numeric] / [symbolic]。 */
@@ -97,7 +113,7 @@ object HamsterSkinParser {
                 Timber.w(it, "hamster: 解析 %s 失败", file.name)
                 return@mapNotNull null
             }
-            val rows = runCatching { buildRows(root, file.nameWithoutExtension) }
+            val rows = runCatching { buildKeyboard(root, file.nameWithoutExtension) }
                 .onFailure { Timber.w(it, "hamster: 构造按键失败 %s", file.name) }
                 .getOrNull()
                 ?: return@mapNotNull null
@@ -108,10 +124,14 @@ object HamsterSkinParser {
 
         // 解析出 0 个键的键盘视为不可用：元书的数字 / 符号键盘是 VStack 列式布局，
         // 目前只支持 HStack 行式，解析不出来时先回落到生成的版本，避免切过去是空白。
-        val valid = keyboards.filterValues { rows -> rows.rows.any { it.isNotEmpty() } }
+        val valid = keyboards.filterValues { rows ->
+            rows.cells.isNotEmpty() || rows.rows.any { it.isNotEmpty() }
+        }
 
         // 回落键盘沿用主键盘的键帽（图片皮肤要一致，纯色会和主键盘撞车）。
-        val mainKeys = valid["default"]?.rows?.flatten().orEmpty()
+        val mainRows = valid["default"]
+        val mainKeys = mainRows?.cells?.map { it.key }
+            ?: mainRows?.rows?.flatten().orEmpty()
         val alphaCap = mainKeys.firstOrNull { it.backImage != null && it.label.length == 1 }?.backImage
         val enterCap = mainKeys.firstOrNull { it.click?.contains("Return") == true }?.backImage
             ?: alphaCap
@@ -294,6 +314,50 @@ object HamsterSkinParser {
         return HamsterRows("numeric", top + listOf(bottom))
     }
 
+    /**
+     * 优先按布局树求值（支持 HStack/VStack、分数尺寸、跨行），
+     * 求不出来时退回旧的「一行一个 HStack」解析。
+     */
+    private fun buildKeyboard(root: JsonObject, name: String): HamsterRows? {
+        val layoutCells = runCatching { HamsterLayout.layout(root) }.getOrDefault(emptyList())
+        if (layoutCells.isNotEmpty()) {
+            val placed = layoutCells.flatMap { cell ->
+                // 元书的 `collection` 是一组内置符号（@ % - +），cskin 里没有它的内容定义，
+                // 按元书默认的四个符号在单元格内纵向等高展开。
+                if (cell.name == "collection") {
+                    val symbols = listOf("@", "%", "-", "+")
+                    val step = cell.height / symbols.size
+                    symbols.mapIndexed { index, symbol ->
+                        PlacedKey(
+                            key = HamsterKey(
+                                label = symbol,
+                                click = symbol,
+                                symbol = "",
+                            ),
+                            x = cell.x,
+                            y = cell.y + step * index,
+                            w = cell.width,
+                            h = step,
+                        )
+                    }
+                } else {
+                    val def = root[cell.name] as? JsonObject ?: return@flatMap emptyList()
+                    listOf(
+                        PlacedKey(
+                            key = resolveKey(root, def, 0f, cell.name),
+                            x = cell.x,
+                            y = cell.y,
+                            w = cell.width,
+                            h = cell.height,
+                        ),
+                    )
+                }
+            }
+            if (placed.isNotEmpty()) return HamsterRows(name, cells = placed)
+        }
+        return buildRows(root, name)
+    }
+
     private fun buildRows(root: JsonObject, name: String): HamsterRows? {
         val layout = root["keyboardLayout"] as? JsonArray ?: return null
         val rows = layout.mapNotNull { row ->
@@ -341,9 +405,18 @@ object HamsterSkinParser {
             ?: actionCharacter(action)
             ?: fallbackLabel(actionToken(action)).ifEmpty { namedLabel(buttonName) }
 
-        val fg = style(root, def["foregroundStyle"])
+        val fgChain = styles(root, def["foregroundStyle"])
+        val fg = fgChain.firstOrNull()
+        // 元书把「上滑 / 下滑提示」也放在 foregroundStyle 的数组里，例如 q 键是
+        // [字母图片, "1", "!"]，显示在键帽左上角。
+        val symbol = fgChain.drop(1)
+            .mapNotNull { it["text"]?.asString() }
+            // `$rimeSchemaName` 这类是元书的宿主变量，同文没有对应值，直接丢掉。
+            .filter { text -> text.isNotBlank() && !text.startsWith("$") }
+            .joinToString(" ")
         val bg = style(root, def["backgroundStyle"])
         val isFileImage = bg?.get("buttonStyleType")?.asString() == "fileImage"
+        val isFgImage = fg?.get("buttonStyleType")?.asString() == "fileImage"
 
         val width = (def.widthPercent() ?: fallbackShare) * 100f
 
@@ -358,6 +431,8 @@ object HamsterSkinParser {
             backColor = bg?.let { if (it["buttonStyleType"]?.asString() == "geometry") it["normalColor"]?.asString() else null },
             backColorPressed = bg?.let { if (it["buttonStyleType"]?.asString() == "geometry") it["highlightColor"]?.asString() else null },
             cornerRadius = bg?.get("cornerRadius")?.asFloat() ?: -1f,
+            symbol = symbol,
+            foregroundImage = if (isFgImage) fg?.get("normalImage").toImageRef() else null,
             backImage = if (isFileImage) bg?.get("normalImage").toImageRef() else null,
             backImagePressed = if (isFileImage) bg?.get("highlightImage").toImageRef() else null,
         )
@@ -369,6 +444,16 @@ object HamsterSkinParser {
         val file = obj["file"]?.asString() ?: return null
         val image = obj["image"]?.asString() ?: return null
         return ImageRef(file, image)
+    }
+
+    /** 降级链上的所有样式（有序），用于同时读取主前景与角标。 */
+    private fun styles(root: JsonObject, ref: JsonElement?): List<JsonObject> {
+        val names = when (ref) {
+            is JsonPrimitive -> listOf(ref.contentOrNullSafe())
+            is JsonArray -> ref.mapNotNull { (it as? JsonPrimitive)?.contentOrNullSafe() }
+            else -> return emptyList()
+        }
+        return names.mapNotNull { name -> root[name] as? JsonObject }
     }
 
     /** 样式名可能是字符串，也可能是「降级链」数组；取第一个能查到的。 */
@@ -431,7 +516,7 @@ object HamsterSkinParser {
                 ?: when (action["keyboardType"]?.asString()) {
                     "numeric" -> "Keyboard_numeric"
                     "symbolic" -> "Keyboard_symbolic"
-                    "alphabetic" -> "Keyboard_default"
+                    "alphabetic", "pinyin" -> "Keyboard_default"
                     else -> null
                 }
         }
@@ -528,6 +613,26 @@ object HamsterThemeBuilder {
         // 皮肤里用图标、没写文字色的键（英文切换等）用一个可见的缺省色兜住。
         val fallbackText = if (dark) "0xFFFFFFFF" else "0xFF000000"
 
+        // 布局树路径：每个键自带矩形，直接交给 Keyboard 的显式布局。
+        if (rows.cells.isNotEmpty()) {
+            val placedKeys = rows.cells.mapNotNull { placed ->
+                toTextKey(skin, dark, placed.key, placed, available, fallbackText)
+            }
+            Timber.i(
+                "hamster: keyboard %s cells=%d keys=%s",
+                id,
+                placedKeys.size,
+                placedKeys.joinToString(" ") { "${it.label.ifBlank { "·" }}@${"%.2f".format(it.xPercent)}" },
+            )
+            return TextKeyboard(
+                name = skin.name,
+                width = 100f,
+                height = 100f,
+                columns = -1,
+                keys = placedKeys,
+            )
+        }
+
         val keys = rows.rows.flatMap { row ->
             val out = mutableListOf<TextKeyboard.TextKey>()
             row.forEach { key ->
@@ -583,6 +688,50 @@ object HamsterThemeBuilder {
             height = rows.rows.size.toFloat(),
             columns = -1,
             keys = keys,
+        )
+    }
+
+    private fun toTextKey(
+        skin: HamsterSkinParser.HamsterSkin,
+        dark: Boolean,
+        key: HamsterSkinParser.HamsterKey,
+        placed: HamsterSkinParser.PlacedKey,
+        available: Set<String>,
+        fallbackText: String,
+    ): TextKeyboard.TextKey? {
+        val token = key.click?.let { translateAction(it, available) }
+        // 没有可执行动作（元书私有 shortcut 等）直接丢弃，避免留下按了没反应的键。
+        if (key.click == null || (key.click.startsWith("Keyboard_") && token == null)) return null
+
+        val backImage = key.backImage?.let { HamsterSlices.slice(skin.dir, dark, it.file, it.image) }
+        val backImagePressed = key.backImagePressed?.let {
+            HamsterSlices.slice(skin.dir, dark, it.file, it.image)
+        }
+        val foregroundImage = key.foregroundImage?.let {
+            HamsterSlices.slicePlain(skin.dir, dark, it.file, it.image)
+        }
+
+        return TextKeyboard.TextKey(
+            width = placed.w * 100f,
+            height = placed.h * 100f,
+            xPercent = placed.x,
+            yPercent = placed.y,
+            wPercent = placed.w,
+            hPercent = placed.h,
+            label = key.label,
+            // cskin 的标签是字面值，英文模式下也要照用；只有单个字母交给大写转换。
+            fixedLabel = !key.label.isSingleAsciiLetter(),
+            labelSymbol = key.symbol,
+            symbolAtTopLeft = key.symbol.isNotEmpty(),
+            keyTextSize = key.textSize,
+            roundCorner = key.cornerRadius,
+            keyTextColor = key.textColor?.toTrimeColor() ?: fallbackText,
+            keyBackColor = backImage ?: key.backColor?.toTrimeColor().orEmpty(),
+            hilitedKeyBackColor = backImagePressed ?: key.backColorPressed?.toTrimeColor().orEmpty(),
+            click = token?.let(KeyActionToken::Plain),
+            swipeUp = key.swipeUp?.let(KeyActionToken::Plain),
+            swipeDown = key.swipeDown?.let(KeyActionToken::Plain),
+            keyForegroundImage = foregroundImage.orEmpty(),
         )
     }
 

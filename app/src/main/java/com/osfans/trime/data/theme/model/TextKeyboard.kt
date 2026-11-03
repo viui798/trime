@@ -49,12 +49,28 @@ data class TextKeyboard(
     data class TextKey(
         val width: Float = 0f,
         val height: Float = 0f,
+        /**
+         * 芝版：显式矩形（0..1 的相对值）。[xPercent] >= 0 时跳过流式布局，
+         * 直接按这四个值摆放——元书皮肤是 HStack/VStack 布局树，有跨行与不等宽的键，
+         * 流式模型表达不了。
+         */
+        val xPercent: Float = -1f,
+        val yPercent: Float = -1f,
+        val wPercent: Float = -1f,
+        val hPercent: Float = -1f,
         val roundCorner: Float = -1f,
         val keyBorder: Int = -1,
         val label: String = "",
+        /**
+         * 芝版：按键前景图片（相对 backgrounds 的路径）。
+         * 元书皮肤的字母本身是精灵图切片，非空时画图而不是画文字。
+         */
+        val keyForegroundImage: String = "",
         /** 字面标签：真实输入模式（英文/ASCII）下也照用，不回退到动作名。 */
         val fixedLabel: Boolean = false,
         val labelSymbol: String = "",
+        /** 芝版：角标是否画在左上角（元书的上滑提示就是这种位置）。 */
+        val symbolAtTopLeft: Boolean = false,
         val hint: String = "",
         val sendBindings: Boolean = true,
         val keyTextSize: Float = 0f,

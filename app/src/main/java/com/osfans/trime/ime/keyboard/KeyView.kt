@@ -53,6 +53,24 @@ class KeyView(
         textAlign = Paint.Align.CENTER
     }
 
+    /** 元书皮肤的前景图片（字母本身是图），懒加载并复用。 */
+    private val foregroundBitmap: android.graphics.Bitmap? by lazy {
+        val path = key.keyForegroundImage
+        if (path.isEmpty()) {
+            null
+        } else {
+            runCatching {
+                val file = com.osfans.trime.data.theme.ThemeAssets.resolve("backgrounds/$path")
+                file?.let { android.graphics.BitmapFactory.decodeFile(it.absolutePath) }
+            }.getOrNull()
+        }
+    }
+
+    private val foregroundPaint = Paint().apply {
+        isAntiAlias = true
+        isFilterBitmap = true
+    }
+
     private var cachedIcon: IconicsDrawable? = null
     private var cachedIconName: String? = null
 
@@ -314,6 +332,11 @@ class KeyView(
     }
 
     private fun drawLabel(canvas: Canvas, label: String) {
+        val foreground = foregroundBitmap
+        if (foreground != null) {
+            drawForegroundImage(canvas, foreground)
+            return
+        }
         val textColor = key.getTextColor()
         val textSize = sp(key.keyTextSize.takeIf { it > 0 } ?: if (label.length > 1 && !label.isIconFont) keyboardView.keyLongTextSize else keyboardView.keyTextSize)
 
@@ -334,6 +357,40 @@ class KeyView(
 
             canvas.drawText(label, centerX + sp(key.keyTextOffsetX), centerY + adjustmentY + sp(key.keyTextOffsetY), textPaint)
         }
+    }
+
+    /**
+     * 画元书的前景图（字母 / 图标）。
+     *
+     * 元书用 `contentMode: center` 按原始尺寸居中；这里按内容区高度等比缩放，
+     * 因为两边屏幕密度不同，直接按像素画会大小不一。
+     */
+    private fun drawForegroundImage(
+        canvas: Canvas,
+        bitmap: android.graphics.Bitmap,
+    ) {
+        if (bitmap.width <= 0 || bitmap.height <= 0) return
+        val contentH = (height - paddingTop - paddingBottom).toFloat()
+        val contentW = (width - paddingLeft - paddingRight).toFloat()
+        if (contentH <= 0f || contentW <= 0f) return
+
+        val scale = minOf(contentH * 0.60f / bitmap.height, contentW * 0.72f / bitmap.width)
+        val drawW = bitmap.width * scale
+        val drawH = bitmap.height * scale
+        val centerX = paddingLeft + contentW / 2f + sp(key.keyTextOffsetX)
+        val centerY = paddingTop + contentH / 2f + sp(key.keyTextOffsetY)
+
+        canvas.drawBitmap(
+            bitmap,
+            null,
+            android.graphics.RectF(
+                centerX - drawW / 2f,
+                centerY - drawH / 2f,
+                centerX + drawW / 2f,
+                centerY + drawH / 2f,
+            ),
+            foregroundPaint,
+        )
     }
 
     private fun drawIcon(
@@ -401,9 +458,15 @@ class KeyView(
             val lineHeight = fontMetrics.descent - fontMetrics.ascent
             val totalHeight = lineHeight * lines.size
 
-            val centerX = (width - paddingLeft - paddingRight) / 2f + paddingLeft + sp(offsetX)
+            // 元书的角标贴在左上角，同文默认的角标是上方居中。
+            val leftAligned = isTop && key.symbolAtTopLeft
+            val centerX = if (leftAligned) {
+                paddingLeft + dp(5f) + symbolPaint.measureText(lines.maxByOrNull { it.length } ?: "") / 2f + sp(offsetX)
+            } else {
+                (width - paddingLeft - paddingRight) / 2f + paddingLeft + sp(offsetX)
+            }
             val startY = if (isTop) {
-                paddingTop - fontMetrics.top + sp(offsetY) - (totalHeight - lineHeight) / 2
+                paddingTop - fontMetrics.top + sp(offsetY) + if (leftAligned) dp(2f) else 0f - (totalHeight - lineHeight) / 2
             } else {
                 height - paddingBottom - fontMetrics.bottom + sp(offsetY) - (totalHeight - lineHeight) / 2
             }

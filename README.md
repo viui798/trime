@@ -19,7 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
   <a href="https://github.com/viui798/trime/releases/latest"><img alt="Android 5.0+" src="https://img.shields.io/badge/Android-5.0%2B-8B6B4A?style=flat-square&logo=android&logoColor=white&labelColor=3E332A"></a>
   <a href="LICENSE"><img alt="许可证 GPL-3.0" src="https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-GPL--3.0-8B6B4A?style=flat-square&labelColor=3E332A"></a>
   <a href="https://github.com/osfans/trime"><img alt="基于 Trime 3.3.13" src="https://img.shields.io/badge/%E5%9F%BA%E4%BA%8E-Trime%203.3.13-8B6B4A?style=flat-square&labelColor=3E332A"></a>
-  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.18-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.18--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
+  <a href="https://github.com/viui798/trime/releases"><img alt="当前版本 1.2.19-cheese" src="https://img.shields.io/badge/%E7%89%88%E6%9C%AC-1.2.18--cheese-8B6B4A?style=flat-square&labelColor=3E332A"></a>
 </p>
 
 <br>
@@ -117,7 +117,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 | --- | --- |
 | 应用名 | 同文输入法芝士 |
 | 包名 | `com.viui.trime.cheese` |
-| 版本 | `1.2.18-cheese` / versionCode 28 |
+| 版本 | `1.2.19-cheese` / versionCode 29 |
 | 系统 | Android 5.0 及以上；语音识别需 Android 6.0+ |
 | 架构 | arm64-v8a、armeabi-v7a、x86、x86_64（模拟器） |
 | 体积 | 约 7.3 MB |
@@ -191,6 +191,14 @@ arm64-v8a（绝大多数手机）、armeabi-v7a（老 32 位 ARM）、x86 / x86_
 </details>
 
 ## 更新记录
+
+### 1.2.19 · 候选栏四连修复
+
+- 多候选（含拆字注释）不再整片铺出屏幕盖住展开按钮：候选条宽度改为双端约束，展开按钮固定在最右、始终可点
+- 展开面板不再重复候选栏已显示的首选：面板从「候选栏真实露出的候选个数」接着加载
+- 修复「有时点不动候选」：关闭候选条触摸横向滚动，避免 RecyclerView 拦截手势吃掉点击；越界候选走 ∨ 展开面板查看
+- 修复重复候选叠画：候选卡片的稳定 id 改用位置（重码时内容相同，hashCode 会撞车）
+- 展开面板第一行不再被压扁：候选项禁用 flex 收缩，装不下就换行
 
 ### 1.2.18 · 词云字体与球状布局
 

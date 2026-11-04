@@ -55,7 +55,8 @@ class PagedCandidatesUi(
                 setHasStableIds(true)
             }
 
-            override fun getItemId(position: Int): Long = items.getOrNull(position).hashCode().toLong()
+            // 芝版同文：同上，用位置做 id，避免重复候选（hashCode 相同）叠在一起。
+            override fun getItemId(position: Int): Long = position.toLong()
 
             override fun getItemCount(items: List<CandidateProto>) = items.size + (if (candidates.hasPrevPage || candidates.hasNextPage) 1 else 0)
 

@@ -25,7 +25,14 @@ open class CompactCandidateViewAdapter(
         setHasStableIds(true)
     }
 
-    override fun getItemId(position: Int): Long = items.getOrNull(position).hashCode().toLong()
+    /**
+     * 芝版同文：用位置当稳定 id，不要用 `hashCode()`。
+     *
+     * 候选里出现两个内容完全相同的条目（虎码里同一字不同重码很常见）时，
+     * hashCode 相同 → RecyclerView 拿到重复的 stable id，会把两个卡片叠在
+     * 同一个位置画，看起来就是「候选文字重复/互相压住」。
+     */
+    override fun getItemId(position: Int): Long = position.toLong()
 
     var total: Int = -1
         private set

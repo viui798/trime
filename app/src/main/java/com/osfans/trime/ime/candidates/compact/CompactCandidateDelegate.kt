@@ -79,16 +79,40 @@ class CompactCandidateDelegate(override val di: DI) :
 
     val unrolledCandidateOffset = _unrolledCandidateOffset.asSharedFlow()
 
-    fun refreshUnrolled(childCount: Int) {
-        // A scrolling strip owns every loaded item, including the off-screen ones.
-        // Attached child count changes while scrolling and is not a candidate index.
-        val offset = if (adapter.itemCount > 0) adapter.itemCount else childCount
-        _unrolledCandidateOffset.tryEmit(offset)
+    fun refreshUnrolled(visibleCount: Int) {
+        // 芝版同文：展开面板的 offset 语义是「候选条里已经露出来的候选个数」，
+        // CandidatesPagingSource 会从这个下标开始加载，所以面板里不会重复出现条上的候选。
+        //
+        // 不能直接用 childCount / itemCount：Flexbox 是单行 NOWRAP，为了分配 flexGrow
+        // 会把**整行所有候选**都 attach 上（包括屏幕外的），childCount 恒等于已加载总数。
+        // 所以这里传的是按子 View 位置算出来的「真正进了可视区的个数」。
+        _unrolledCandidateOffset.tryEmit(visibleCount)
+        // 注意：Rime 在多候选时会把 total 报成 -1（未知），所以「还有没有更多候选」
+        // 不能看 total，要看已加载条数是不是都已经露出来了。
         bar.unrollButtonStateMachine.push(
             UnrollButtonStateMachine.TransitionEvent.UnrolledCandidatesUpdated,
             UnrollButtonStateMachine.BooleanKey.UnrolledCandidatesEmpty to
-                (adapter.total >= 0 && adapter.total <= offset),
+                (adapter.itemCount <= visibleCount),
         )
+    }
+
+    /**
+     * 候选条里「至少露出一点」的候选个数。
+     *
+     * 单行布局下候选按 x 顺序排列，`getDecoratedLeft` 是相对 RecyclerView 的坐标
+     * （已含滚动偏移），左边界小于视口宽度的就算露出。
+     */
+    private fun visibleCandidateCount(): Int {
+        val viewportRight = view.width - view.paddingRight
+        if (viewportRight <= 0) return 0
+        var count = 0
+        for (i in 0 until layoutManager.childCount) {
+            val child = layoutManager.getChildAt(i) ?: continue
+            if (layoutManager.getDecoratedLeft(child) < viewportRight) {
+                count = maxOf(count, layoutManager.getPosition(child) + 1)
+            }
+        }
+        return count
     }
 
     /** Restyles the compact list after a scheme switch; visible rows re-bind. */
@@ -120,7 +144,19 @@ class CompactCandidateDelegate(override val di: DI) :
                 flexWrap = com.google.android.flexbox.FlexWrap.NOWRAP
             }
 
-            override fun canScrollHorizontally(): Boolean = true
+            /**
+             * 芝版同文：**不要**开启触摸横向滚动，否则候选会「有时点不动」。
+             *
+             * 候选 item 是 [com.osfans.trime.ime.keyboard.GestureFrame]，它自己吃 ACTION_DOWN
+             * 并在 ACTION_UP 里派发 CLICK。而 RecyclerView 一旦 canScrollHorizontally = true，
+             * 手指按下后有超过 touchSlop 的横向位移就会被它拦截，直接给 item 发 ACTION_CANCEL —
+             * 点击就此丢失。用户手指稳就没事，稍微一飘就选不中，所以表现成「有时候」、
+             * 而且在桌面模拟器上很难复现。
+             *
+             * 关掉触摸滚动后，越界候选仍然可以用右侧 ∨ 展开面板查看；
+             * 程序化的 scrollBy（跟随高亮项）不受这个开关影响，照样生效。
+             */
+            override fun canScrollHorizontally(): Boolean = false
 
             override fun canScrollVertically(): Boolean = false
 
@@ -143,7 +179,7 @@ class CompactCandidateDelegate(override val di: DI) :
                         secondLayoutPassNeeded = false
                     }
                 }
-                refreshUnrolled(cnt)
+                refreshUnrolled(visibleCandidateCount())
                 if (followLatestText) {
                     followLatestText = false
                     view.post {

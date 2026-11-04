@@ -116,13 +116,15 @@ abstract class BaseUnrolledCandidateWindow(di: DI) :
         bar.unrollButtonStateMachine.push(UnrollButtonStateMachine.TransitionEvent.UnrolledCandidatesAttached)
         offsetJob =
             lifecycleCoroutineScope.launch {
-                compactCandidate.unrolledCandidateOffset.collect {
-                    if (it <= 0) {
+                compactCandidate.unrolledCandidateOffset.collect { visibleCount ->
+                    // 芝版同文：visibleCount 是候选条里已经露出来的候选数，
+                    // 面板从它开始加载，避免「首选在条上和面板里各出现一次」。
+                    if (visibleCount <= 0 && compactCandidate.adapter.itemCount <= 0) {
                         windowManager.attachWindow(KeyboardWindow)
                     } else {
                         candidateLayout.resetPosition()
                         adapter.refreshWith(
-                            offset = it,
+                            offset = visibleCount.coerceAtLeast(0),
                             highlightedIndex = compactCandidate.adapter.highlightedIdx,
                         )
                     }
@@ -152,7 +154,7 @@ abstract class BaseUnrolledCandidateWindow(di: DI) :
         bar.unrollButtonStateMachine.push(
             UnrollButtonStateMachine.TransitionEvent.UnrolledCandidatesDetached,
             UnrollButtonStateMachine.BooleanKey.UnrolledCandidatesEmpty to
-                (compactCandidate.adapter.total == adapter.offset),
+                (compactCandidate.adapter.itemCount <= 0),
         )
         offsetJob?.cancel()
         candidatesSubmitJob?.cancel()

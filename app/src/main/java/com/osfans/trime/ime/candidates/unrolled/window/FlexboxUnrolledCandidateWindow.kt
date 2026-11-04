@@ -38,7 +38,14 @@ class FlexboxUnrolledCandidateWindow(di: DI) : BaseUnrolledCandidateWindow(di) {
                     layoutParams =
                         FlexboxLayoutManager
                             .LayoutParams(wrapContent, itemHeight)
-                            .apply { flexGrow = 1f }
+                            .apply {
+                                flexGrow = 1f
+                                // 芝版同文：必须禁用收缩。flexbox 默认 flexShrink = 1，
+                                // 一行塞不下时会把候选压窄（文字本身不缩放，于是溢出、互相压住），
+                                // 表现就是「展开后第一行挤成一团、后面的行才正常」。
+                                // 置 0 后装不下就换行，每行按 flexGrow 均分。
+                                flexShrink = 0f
+                            }
                 }
             }
 
